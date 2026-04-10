@@ -1,0 +1,1 @@
+export type CommonProps = { className?: string }; // Placeholder
