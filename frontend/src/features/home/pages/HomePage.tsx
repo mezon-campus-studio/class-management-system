@@ -124,7 +124,7 @@ export const HomePage = () => {
               onClick={() => window.location.reload()}
               className="mt-4 px-6 py-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-100 transition-colors shadow-sm text-sm font-bold"
             >
-              THỬ LẠI NGAY
+              THỬ LẠI
             </button>
           </div>
         )}
