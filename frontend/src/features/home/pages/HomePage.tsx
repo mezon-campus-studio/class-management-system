@@ -1,18 +1,133 @@
-import React from 'react';
-import { MainLayout } from '@shared/components/layout/MainLayout';
-// Import hình ảnh từ thư mục assets
-// import EmptyStateIllustration from '@assets/images/home-illustration.png';
+import React from "react";
+import { MainLayout } from "@shared/components/layout/MainLayout";
+import { useHome } from "@features/home/hooks/useHome";
+import { Lock, MoreVertical, ArrowRight } from "lucide-react";
+import { Plus } from 'lucide-react';
 
 export const HomePage = () => {
+  const { classes, isLoading, error } = useHome();
+
   return (
     <MainLayout>
-      <div className="w-full max-w-3xl flex flex-col items-center justify-center">
-        {/* Vị trí đặt hình ảnh minh họa cô gái đang làm việc */}
-        <div className="w-full aspect-[16/9] bg-pink-50 rounded-xl flex items-center justify-center border-2 border-dashed border-pink-200">
-          <p className="text-pink-400 font-medium">
-            nội dung
-          </p>
-        </div>
+      <div className="w-full max-w-7xl mx-auto px-4 py-6">
+        {/* 1. Trạng thái đang tải (Loading) */}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-32">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+            <p className="mt-4 text-gray-500 text-sm italic font-medium">
+              Đang đồng bộ dữ liệu lớp học...
+            </p>
+          </div>
+        )}
+
+        {/* 2. Trạng thái có danh sách lớp */}
+        {!isLoading && classes.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {classes.map((item) => (
+              <div
+                key={item.id}
+                className="group bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer flex flex-col h-[260px]"
+              >
+                {/* Banner lớp học - Cao 100px */}
+                <div
+                  className={`relative h-[100px] p-4 ${
+                    item.status === "public"
+                      ? "bg-gradient-to-br from-indigo-600 to-blue-500"
+                      : "bg-gradient-to-br from-slate-700 to-slate-900"
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <h3 className="text-white font-bold text-lg leading-tight truncate pr-6 group-hover:underline">
+                      {item.className}
+                    </h3>
+                    <button className="text-white/70 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10">
+                      <MoreVertical size={18} />
+                    </button>
+                  </div>
+                  <p className="text-indigo-100 text-xs mt-1 truncate opacity-90">
+                    {item.owner}
+                  </p>
+
+                  {/* Avatar chủ sở hữu (Profile pic nhỏ) */}
+                  <div className="absolute -bottom-6 right-4 w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center border-4 border-white overflow-hidden">
+                    <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold text-sm">
+                      {item.owner.charAt(0).toUpperCase()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Nội dung bên dưới banner */}
+                <div className="p-4 pt-8 flex-1 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    {/* Badge Trạng thái */}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-[10px] px-2.5 py-0.5 rounded-md font-extrabold uppercase tracking-wider ${
+                          item.status === "public"
+                            ? "bg-green-100 text-green-700 border border-green-200"
+                            : "bg-amber-100 text-amber-700 border border-amber-200"
+                        }`}
+                      >
+                        {item.status === "public" ? "Cộng đồng" : "Nhóm kín"}
+                      </span>
+                    </div>
+
+                    {/* Meta data */}
+                    <div className="flex flex-col gap-2">
+                      {item.status === "private" && (
+                        <div className="flex items-center gap-2 text-xs text-amber-600 font-medium">
+                          <Lock size={14} />
+                          <span>Yêu cầu mật khẩu</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Nút vào lớp chân thẻ */}
+                  <div className="pt-3 border-t border-gray-50 flex justify-end">
+                    <span className="text-xs font-bold text-indigo-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      VÀO LỚP <ArrowRight size={14} />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 3. Trạng thái trống (Empty State) - Hiện khi user chưa join lớp nào */}
+        {!isLoading && classes.length === 0 && !error && (
+          <div className="w-full flex flex-col items-center justify-center py-24">
+            <div className="relative mb-8">
+              <div className="w-32 h-32 bg-indigo-50 rounded-full flex items-center justify-center">
+                <span className="text-6xl">🏫</span>
+              </div>
+              <div className="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-lg border border-gray-100">
+                <Plus className="text-indigo-600" size={24} />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Bắt đầu hành trình học tập
+            </h2>
+            <p className="text-gray-500 mt-2 text-center max-w-sm font-medium">
+              Bạn chưa tham gia lớp học nào. Hãy sử dụng tính năng trên Header
+              để tham gia hoặc tạo lớp mới.
+            </p>
+          </div>
+        )}
+
+        {/* 4. Trạng thái lỗi (Error) */}
+        {error && (
+          <div className="text-center py-20 bg-red-50 rounded-2xl border border-red-100 mx-4">
+            <p className="text-red-600 font-bold text-lg">⚠️ {error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-6 py-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-100 transition-colors shadow-sm text-sm font-bold"
+            >
+              THỬ LẠI NGAY
+            </button>
+          </div>
+        )}
       </div>
     </MainLayout>
   );
