@@ -4,5 +4,5 @@ export interface ClassItems {
   owner: string;
   status: "public" | "private";
   classCode: string;
-  password?: string; // Mật khẩu (Chỉ nhóm kín cần)
+  userJoinStatus: "joined" | "pending"
 }

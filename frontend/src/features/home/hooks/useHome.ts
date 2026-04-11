@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-// import { homeAPI } from "@features/home/api"; bỏ cmt khi gọi api thật
+import { homeAPI } from "@features/home/api";
 import type { ClassItems } from "@features/home/types";
 
 export const useHome = () => {
@@ -10,30 +10,8 @@ export const useHome = () => {
   const loadData = async () => {
     try {
       setIsLoading(true);
-
-      /*dữ liệu chạy test */
-      const mockData: ClassItems[] = [
-        {
-          id: "1",
-          className: "Lập trình .NET nâng cao",
-          owner: "Nguyễn Văn A",
-          status: "public",
-          classCode: "DOTNET123", // Chỉ cần mã
-        },
-        {
-          id: "2",
-          className: "Phát triển Web với React",
-          owner: "Trần Thị B",
-          status: "private",
-          classCode: "REACT456",
-          password: "123", // Nhóm kín có thêm pass
-        },
-      ];
-      setClasses(mockData);
-
-      /*bỏ cmt khi gọi api*/
-      // const data = await homeAPI.getClasses();
-      // setClasses(data);
+      const data = await homeAPI.getClasses();
+      setClasses(data);
     } catch {
       setError("Không thể tải danh sách lớp học");
     } finally {
