@@ -1,6 +1,5 @@
 import type { StudentSeat } from "@features/classDiagram/types";
 
-// Thêm chữ export ở đây nè
 export const Seat = ({ student }: { student?: StudentSeat }) => {
   if (!student) {
     return <div className="h-12 bg-gray-100/50 border border-dashed border-gray-200 rounded" />;
