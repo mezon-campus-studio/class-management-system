@@ -54,7 +54,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         )}
 
         {/* 5. Vùng nội dung chính */}
-        <main className="flex-1 overflow-y-auto p-6 transition-all duration-300 ease-in-out relative z-0">
+        <main className="flex-1 overflow-y-auto p-0 transition-all duration-300 ease-in-out relative z-0">
           {children}
         </main>
       </div>

@@ -2,6 +2,8 @@ package com.mezon.classmanagement.backend.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -43,6 +45,15 @@ public class Class {
 	@Column(name = "avatar_url", nullable = true)
 	String avatarUrl;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "privacy", nullable = false)
+	Privacy privacy;
+
 	@Column(name = "created_at", nullable = false, insertable = false, updatable = false)
 	Instant createdAt;
+
+	public enum Privacy {
+		PUBLIC,
+		PRIVATE
+	}
 }

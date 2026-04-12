@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Menu, Plus, User,  Hash, LogIn } from "lucide-react";
+import { Menu, Plus, User, Hash, LogIn, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@features/auth";
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -9,9 +10,16 @@ interface HeaderProps {
 export const Header = ({ toggleSidebar }: HeaderProps) => {
   const navigate = useNavigate();
   const [classCode, setClassCode] = useState("");
+  const { user, isAuthenticated, logout } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleLoginClick = () => {
-    navigate("/auth/login");
+    navigate("/login");
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
   };
 
   const handleJoinClass = (e: React.FormEvent) => {
@@ -42,7 +50,7 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
         </div>
       </div>
 
-      {/* CỤM Ở GIỮA: Thanh tìm lớp (Giữ lại nếu bạn muốn dùng song song) */}
+      {/* CỤM Ở GIỮA: Thanh tìm lớp */}
       <div className="flex-[2] max-w-md mx-4 hidden sm:block">
         <form onSubmit={handleJoinClass} className="relative group">
           <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
@@ -61,26 +69,52 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
       {/* CỤM BÊN PHẢI: Actions & User */}
       <div className="flex items-center justify-end gap-2 sm:gap-3 flex-1">
         
-        {/* NÚT THAM GIA MỚI THÊM */}
-        <button 
-          className="flex items-center gap-1.5 px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg font-bold transition-colors text-sm border border-transparent hover:border-indigo-100"
-        >
-          <LogIn size={18} />
-          <span className="hidden sm:inline">Tham gia</span>
-        </button>
+        {isAuthenticated && (
+          <>
+            <button 
+              className="flex items-center gap-1.5 px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg font-bold transition-colors text-sm border border-transparent hover:border-indigo-100"
+            >
+              <LogIn size={18} />
+              <span className="hidden sm:inline">Tham gia</span>
+            </button>
 
-        {/* Nút Tạo lớp */}
-        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-bold transition-all shadow-sm active:scale-95 text-sm">
-          <Plus size={18} />
-          <span className="hidden lg:inline">Tạo lớp</span>
-        </button>
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-bold transition-all shadow-sm active:scale-95 text-sm">
+              <Plus size={18} />
+              <span className="hidden lg:inline">Tạo lớp</span>
+            </button>
+          </>
+        )}
 
         {/* User Profile */}
-        <div
-          onClick={handleLoginClick}
-          className="ml-1 w-9 h-9 bg-gradient-to-tr from-orange-100 to-orange-200 rounded-full flex items-center justify-center overflow-hidden border border-orange-300 cursor-pointer shrink-0 hover:ring-4 hover:ring-orange-50 transition-all"
-        >
-          <User size={20} className="text-orange-700" />
+        <div className="relative">
+          <div
+            onClick={isAuthenticated ? () => setShowUserMenu(!showUserMenu) : handleLoginClick}
+            className={`ml-1 w-9 h-9 ${isAuthenticated ? 'bg-indigo-100 border-indigo-200' : 'bg-gradient-to-tr from-orange-100 to-orange-200 border-orange-300'} rounded-full flex items-center justify-center overflow-hidden border cursor-pointer shrink-0 hover:ring-4 hover:ring-indigo-50 transition-all`}
+          >
+            {isAuthenticated ? (
+              <span className="text-indigo-700 font-bold text-sm">
+                {user?.displayName.charAt(0).toUpperCase()}
+              </span>
+            ) : (
+              <User size={20} className="text-orange-700" />
+            )}
+          </div>
+
+          {showUserMenu && isAuthenticated && (
+            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 animate-scale-in">
+              <div className="px-4 py-2 border-b border-gray-100">
+                <p className="text-sm font-bold text-gray-800 truncate">{user?.displayName}</p>
+                <p className="text-xs text-gray-500 truncate">@{user?.username}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+              >
+                <LogOut size={16} />
+                Đăng xuất
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

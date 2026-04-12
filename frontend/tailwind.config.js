@@ -1,4 +1,5 @@
 /**
+ * EduAdmin — tailwind.config.js
  * Design System: Modern Editorial × Humanist
  *
  * PHONG CÁCH: Tạp chí hiện đại pha chất Humanist — ấm áp, rõ chữ, có hồn.
@@ -14,11 +15,15 @@
  *
  * @type {import('tailwindcss').Config}
  */
-export default {
+
+module.exports = {
 	content: [
-		"./index.html",
-		"./src/**/*.{js,ts,jsx,tsx}",
+		"./src/**/*.{js,ts,jsx,tsx,html}",
+		"./app/**/*.{js,ts,jsx,tsx}",
+		"./pages/**/*.{js,ts,jsx,tsx}",
+		"./components/**/*.{js,ts,jsx,tsx}",
 	],
+
 	darkMode: "class",
 
 	theme: {
@@ -425,7 +430,7 @@ export default {
 					alignItems: "center",
 					justifyContent: "center",
 					gap: "6px",
-					fontFamily: theme("fontFamily.sans").join(", "),
+					fontFamily: `var(--font-sans)`,
 					fontSize: theme("fontSize.base[0]"),
 					fontWeight: theme("fontWeight.medium"),
 					letterSpacing: "0.01em",
@@ -449,7 +454,7 @@ export default {
 				".btn-secondary": {
 					background: theme("colors.surface.DEFAULT"),
 					color: theme("colors.ink.1"),
-					borderColor: theme("colors.rule.DEFAULT"),
+					borderColor: "rgba(0,0,0,0.08)",
 					"&:hover": { background: theme("colors.surface.2") },
 					"&:active": { transform: "scale(0.98)" },
 				},
@@ -487,7 +492,7 @@ export default {
 					fontSize: theme("fontSize.xs[0]"),
 					fontWeight: theme("fontWeight.semibold"),
 					letterSpacing: theme("letterSpacing.wide"),
-					fontFamily: theme("fontFamily.sans").join(", "),
+					fontFamily: `var(--font-sans)`,
 					border: "1px solid transparent",
 				},
 				".pill-dot": {
@@ -524,7 +529,7 @@ export default {
 					border: "none",
 					outline: "none",
 					background: "transparent",
-					fontFamily: theme("fontFamily.sans").join(", "),
+					fontFamily: `var(--font-sans)`,
 					fontSize: theme("fontSize.base[0]"),
 					color: theme("colors.ink.1"),
 					padding: "9px 0",
@@ -561,7 +566,7 @@ export default {
 					marginBottom: "10px",
 				},
 				".stat-value": {
-					fontFamily: theme("fontFamily.serif").join(", "),
+					fontFamily: `var(--font-serif)`,
 					fontSize: "28px",
 					fontWeight: theme("fontWeight.semibold"),
 					color: theme("colors.ink.1"),
@@ -572,7 +577,7 @@ export default {
 				".stat-unit": {
 					fontSize: "14px",
 					opacity: "0.45",
-					fontFamily: theme("fontFamily.sans").join(", "),
+					fontFamily: `var(--font-sans)`,
 					fontWeight: theme("fontWeight.regular"),
 				},
 
@@ -591,7 +596,7 @@ export default {
 					borderBottom: "1px solid rgba(0,0,0,0.08)",
 				},
 				".card-title": {
-					fontFamily: theme("fontFamily.serif").join(", "),
+					fontFamily: `var(--font-serif)`,
 					fontSize: theme("fontSize.base[0]"),
 					fontWeight: theme("fontWeight.semibold"),
 					color: theme("colors.ink.1"),
@@ -642,7 +647,7 @@ export default {
 
 				// SIDEBAR
 				".sidebar": {
-					width: theme("spacing.sidebar-w"),
+					width: "208px",
 					background: theme("colors.sidebar.bg"),
 					display: "flex",
 					flexDirection: "column",
@@ -661,11 +666,11 @@ export default {
 					fontWeight: theme("fontWeight.regular"),
 					marginBottom: "1px",
 					transition: "all 150ms ease",
-					"&:hover": { background: theme("colors.sidebar.active"), color: theme("colors.sidebar.text-active") },
+					"&:hover": { background: "rgba(255,255,255,0.07)", color: "#FAF9F7" },
 				},
 				".sidebar-item.active": {
-					background: theme("colors.sidebar.active"),
-					color: theme("colors.sidebar.text-active"),
+					background: "rgba(255,255,255,0.07)",
+					color: "#FAF9F7",
 					fontWeight: theme("fontWeight.medium"),
 				},
 
@@ -713,7 +718,7 @@ export default {
 
 				// EDITORIAL PULL QUOTE (humanist touch)
 				".pull-quote": {
-					fontFamily: theme("fontFamily.serif").join(", "),
+					fontFamily: `var(--font-serif)`,
 					fontStyle: "italic",
 					fontSize: theme("fontSize.md[0]"),
 					color: theme("colors.ink.2"),
@@ -787,6 +792,4 @@ export default {
 			});
 		},
 	],
-}
-
-
+};
