@@ -23,11 +23,11 @@ public class UserController {
 	@GetMapping("/{username}")
 	public ResponseDTO<UserResponseDto> getUser(@PathVariable String username) {
 		UserResponseDto userResponseDto = userService.findByUsername(username);
-		return new ResponseDTO<>(
-				true,
-				"User found",
-				userResponseDto
-		);
+		return ResponseDTO.<UserResponseDto>builder()
+				.success(true)
+				.message("User found")
+				.data(userResponseDto)
+				.build();
 	}
 
 	// test
