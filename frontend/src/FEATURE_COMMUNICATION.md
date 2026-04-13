@@ -37,7 +37,7 @@ src/features/<feature-name>/
 **Ví dụ chuẩn (`src/features/auth/index.ts`):**
 
 ```ts
-import { useAuthStore } from '@app/store';
+import { useAuthStore } from './hooks/useAuthStore';
 import { useAuthInternal } from './hooks/useAuthInternal';
 
 // Public Facade Hook: Feature khác chỉ thấy thông tin cần thiết
