@@ -169,13 +169,26 @@
 @layer base {
   html {
     font-family: var(--font-sans);
-    font-size:   14px;
+    font-size:   15px; /* Tăng từ 14px lên 15px làm mặc định */
     line-height: 1.6;
     color:       var(--ink-1);
     background:  var(--bg-paper);
     -webkit-font-smoothing:  antialiased;
     -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
+  }
+
+  /* Desktop scaling — giúp giao diện to rõ hơn trên màn hình lớn */
+  @media (min-width: 1024px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
+  @media (min-width: 1440px) {
+    html {
+      font-size: 17px;
+    }
   }
 
   body {
@@ -186,7 +199,7 @@
   /* Heading scale — Lora serif */
   h1 {
     font-family:    var(--font-serif);
-    font-size:      2rem;          /* 32px */
+    font-size:      2.25rem;       /* ~36px - 38px */
     font-weight:    600;
     letter-spacing: -0.04em;
     line-height:    1.1;
@@ -194,7 +207,7 @@
   }
   h2 {
     font-family:    var(--font-serif);
-    font-size:      1.75rem;       /* 28px */
+    font-size:      1.875rem;      /* ~30px - 32px */
     font-weight:    600;
     letter-spacing: -0.035em;
     line-height:    1.15;
@@ -202,7 +215,7 @@
   }
   h3 {
     font-family:    var(--font-serif);
-    font-size:      1.5rem;        /* 24px */
+    font-size:      1.5rem;        /* ~24px - 26px */
     font-weight:    600;
     letter-spacing: -0.03em;
     line-height:    1.2;
