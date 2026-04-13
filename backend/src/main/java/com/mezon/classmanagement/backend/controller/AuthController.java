@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@SuppressWarnings({"SpellCheckingInspection"})
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @RestController
@@ -17,29 +16,26 @@ public class AuthController {
 
 	@PostMapping("/signin")
 	public ResponseDTO<String> signIn() {
-		return new ResponseDTO<>(
-				true,
-				"Đăng nhập thành công",
-				null
-		);
+		return ResponseDTO.<String>builder()
+				.success(true)
+				.message("Sign in successful")
+				.build();
 	}
 
 	@PostMapping("/signup")
 	public ResponseDTO<String> signUp() {
-		return new ResponseDTO<>(
-				true,
-				"Đăng ký thành công",
-				null
-		);
+		return ResponseDTO.<String>builder()
+				.success(true)
+				.message("Sign up successful")
+				.build();
 	}
 
 	@PostMapping("/signout")
 	public ResponseDTO<String> signOut() {
-		return new ResponseDTO<>(
-				true,
-				"Đăng xuất thành công",
-				null
-		);
+		return ResponseDTO.<String>builder()
+				.success(true)
+				.message("Sign out successful")
+				.build();
 	}
 
 }
