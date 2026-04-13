@@ -3,8 +3,12 @@ import { authApi } from '@features/auth/api';
 import type { User, LoginRequest, RegisterRequest } from '@features/auth/types';
 import { useAuthStore } from '@app/store';
 
-export const useAuth = () => {
-  const { user, isAuthenticated, setUser, logout: storeLogout } = useAuthStore();
+/**
+ * useAuthInternal: Chỉ dùng nội bộ trong feature auth (LoginPage, RegisterPage)
+ * Chứa các logic xử lý form, loading state và error handling.
+ */
+export const useAuthInternal = () => {
+  const { setUser, logout: storeLogout } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,8 +81,6 @@ export const useAuth = () => {
   }, [storeLogout]);
 
   return {
-    user,
-    isAuthenticated,
     isLoading,
     error,
     login,

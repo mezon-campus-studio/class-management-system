@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@features/auth/hooks/useAuth';
+import { useAuthInternal } from '@features/auth/hooks/useAuthInternal';
 import { User } from 'lucide-react';
 
 export const LoginPage = () => {
   const [username, setUsername] = useState('');
-  const { login, isLoading, error } = useAuth();
+  const { login, isLoading, error } = useAuthInternal();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
