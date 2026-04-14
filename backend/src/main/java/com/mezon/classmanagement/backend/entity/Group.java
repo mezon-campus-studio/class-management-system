@@ -17,6 +17,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.time.Instant;
+
 @Entity
 @Setter
 @Getter
@@ -34,4 +36,14 @@ public class Group {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "class_id", nullable = false)
 	Class clazz;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "leader_user_id", nullable = false)
+	User leader;
+
+	@Column(name = "name", nullable = true)
+	String name;
+
+	@Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+	Instant createdAt;
 }
