@@ -46,21 +46,21 @@ public class User implements UserDetails {
 	@Column(name = "id", nullable = false)
 	Long id;
 
-	@Enumerated(EnumType.STRING)
-	@Column(name = "type", nullable = false)
-	Type type;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    Type type;
 
-	@Column(name = "username", nullable = false, unique = true)
-	String username;
+    @Column(name = "username", nullable = false, unique = true)
+    String username;
 
-	@Column(name = "hashed_password", nullable = true)
-	String hashedPassword;
+    @Column(name = "hashed_password", nullable = true)
+    String hashedPassword;
 
-	@Column(name = "display_name", nullable = true)
-	String displayName;
+    @Column(name = "display_name", nullable = true)
+    String displayName;
 
-	@Column(name = "avatar_url", nullable = true)
-	String avatarUrl;
+    @Column(name = "avatar_url", nullable = true)
+    String avatarUrl;
 
 	@Column(name = "phone", nullable = true, unique = true)
 	String phone;
