@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -30,12 +31,20 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "users")
+@Table(
+		name = "users",
+		indexes = {
+				@Index(name = "index_users_username", columnList = "username"),
+				@Index(name = "index_users_phone", columnList = "phone"),
+				@Index(name = "index_users_email", columnList = "email")
+
+		}
+)
 public class User implements UserDetails {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
-    Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", nullable = false)
+	Long id;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
@@ -53,43 +62,49 @@ public class User implements UserDetails {
     @Column(name = "avatar_url", nullable = true)
     String avatarUrl;
 
-    @Column(name = "joined_at", nullable = false, insertable = false, updatable = false)
-    Instant joinedAt;
+	@Column(name = "phone", nullable = true, unique = true)
+	String phone;
 
-    public enum Type {
-        GOOGLE,
-        MEZON,
-        INTERNAL
-    }
+	@Column(name = "email", nullable = true, unique = true)
+	String email;
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
-    }
+	@Column(name = "joined_at", nullable = false, insertable = false, updatable = false)
+	Instant joinedAt;
 
-    @Override
-    public @Nullable String getPassword() {
-        return "";
-    }
+	public enum Type {
+		GOOGLE,
+		MEZON,
+		INTERNAL
+	}
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return UserDetails.super.isAccountNonExpired();
-    }
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return List.of();
+	}
 
-    @Override
-    public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
-    }
+	@Override
+	public @Nullable String getPassword() {
+		return "";
+	}
 
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
-    }
+	@Override
+	public boolean isAccountNonExpired() {
+		return UserDetails.super.isAccountNonExpired();
+	}
 
-    @Override
-    public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
-    }
+	@Override
+	public boolean isAccountNonLocked() {
+		return UserDetails.super.isAccountNonLocked();
+	}
+
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return UserDetails.super.isCredentialsNonExpired();
+	}
+
+	@Override
+	public boolean isEnabled() {
+		return UserDetails.super.isEnabled();
+	}
 
 }

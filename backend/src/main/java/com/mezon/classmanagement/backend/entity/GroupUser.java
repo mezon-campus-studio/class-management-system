@@ -2,12 +2,15 @@ package com.mezon.classmanagement.backend.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -18,6 +21,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.time.Instant;
+
 @Entity
 @Setter
 @Getter
@@ -25,17 +30,41 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "user_permissions", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "permission_id"}))
-public class UserPermission {
+@Table(name = "group_users", uniqueConstraints = @UniqueConstraint(columnNames = {"class_id", "group_id", "user_id"}))
+public class GroupUser {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id", nullable = false)
 	Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "class_id", nullable = false)
+	Class clazz;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "group_id", nullable = false)
+	Group group;
+
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
 	User user;
 
-	@Column(name = "permission_id", nullable = false)
-	Long permission_id;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "role", nullable = false)
+	Role role;
+
+	@PrePersist
+	public void prePersist() {
+		if (role == null) {
+			role = Role.GROUP_MEMBER;
+		}
+	}
+
+	@Column(name = "joined_at", nullable = false, insertable = false, updatable = false)
+	Instant joinedAt;
+
+	public enum Role {
+		GROUP_LEADER,
+		GROUP_MEMBER
+	}
 }

@@ -10,8 +10,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +20,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.time.Instant;
+
 @Entity
 @Setter
 @Getter
@@ -27,27 +29,41 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "row_users", uniqueConstraints = @UniqueConstraint(columnNames = {"row_id", "user_id"}))
-public class RowUser {
+@Table(name = "activity_registrations")
+public class ActivityRegistration {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "id", nullable = false)
+	@Column(name = "id")
 	Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "row_id", nullable = false)
-	Row row;
+	@JoinColumn(name = "activity_id", nullable = false)
+	Activity activity;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
-	User user;
+	@JoinColumn(name = "registered_user_id", nullable = false)
+	User registered;
+
+	@Column(name = "proof_image_url", nullable = true)
+	String proofImageUrl;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "role", nullable = false)
-	Role role;
+	@Column(name = "status", nullable = false)
+	Status status;
 
-	public enum Role {
-		ROW_LEADER,
-		ROW_MEMBER
+	@PrePersist
+	public void prePersist() {
+		if (status == null) {
+			status = Status.PENDING;
+		}
+	}
+
+	@Column(name = "registered_at", nullable = false, insertable = false, updatable = false)
+	Instant registeredAt;
+
+	public enum Status {
+		APPROVED,
+		REJECTED,
+		PENDING
 	}
 }

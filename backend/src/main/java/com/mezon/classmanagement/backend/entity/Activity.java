@@ -17,6 +17,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.time.Instant;
+
 @Entity
 @Setter
 @Getter
@@ -35,9 +37,27 @@ public class Activity {
 	@JoinColumn(name = "class_id", nullable = false)
 	Class clazz;
 
-	@Column(name = "name")
+	@Column(name = "name", nullable = false)
 	String name;
 
-	@Column(name = "point")
+	@Column(name = "description", nullable = true)
+	String description;
+
+	@Column(name = "start_at", nullable = true)
+	Instant startAt;
+
+	@Column(name = "end_at", nullable = true)
+	Instant endAt;
+
+	@Column(name = "location", nullable = true)
+	String location;
+
+	@Column(name = "point", nullable = true)
 	Short point;
+
+	@Column(name = "is_mandatory", nullable = false)
+	Boolean isMandatory;
+
+	@Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+	Instant createdAt;
 }

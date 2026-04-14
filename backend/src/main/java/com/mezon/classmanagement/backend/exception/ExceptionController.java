@@ -24,11 +24,12 @@ public class ExceptionController {
 	public ResponseEntity<ResponseDTO<Object>> handleNotFoundException(NotFoundException exception) {
 		return ResponseEntity
 				.status(HttpStatus.NOT_FOUND)
-				.body(new ResponseDTO<>(
-						false,
-						exception.getMessage(),
-						null
-				));
+				.body(
+						ResponseDTO.<Object>builder()
+								.success(false)
+								.message(exception.getMessage())
+								.build()
+				);
 	}
 
 }
