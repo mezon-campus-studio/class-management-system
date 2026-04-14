@@ -169,7 +169,7 @@
 @layer base {
   html {
     font-family: var(--font-sans);
-    font-size:   14px;
+    font-size:   16px;
     line-height: 1.6;
     color:       var(--ink-1);
     background:  var(--bg-paper);
@@ -377,4 +377,16 @@
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.35; }
+}
+
+//ẨN THANH CUỘN
+/* Ẩn thanh cuộn cho Chrome, Safari và Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ẩn thanh cuộn cho IE, Edge và Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE và Edge */
+  scrollbar-width: none;  /* Firefox */
 }
