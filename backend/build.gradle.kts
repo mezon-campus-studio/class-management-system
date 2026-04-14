@@ -27,6 +27,7 @@ dependencies {
 	implementation("org.mapstruct:mapstruct:1.6.3")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.security:spring-security-crypto")
+	implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
 	testImplementation("org.springframework.security:spring-security-test")
 	annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
 	compileOnly("org.projectlombok:lombok")
