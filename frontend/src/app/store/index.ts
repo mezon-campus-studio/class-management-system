@@ -1,2 +1,1 @@
-export * from './useAuthStore';
-export * from './useUIStore';
+export * from '@app/store/useUIStore';
