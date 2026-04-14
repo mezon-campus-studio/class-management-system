@@ -19,15 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
 	AuthenticationService authenticationService;
+
 	@PostMapping("/signin")
-	public ResponseDTO<SignInRespone> authenticate(@RequestBody SignInRequest request){
+	public ResponseDTO<SignInRespone> signIn(@RequestBody SignInRequest request){
 		var result = authenticationService.SignIn(request);
 
-		return new ResponseDTO<>(
-				true,
-				"Login success",
-				result
-		);
+		return ResponseDTO.<SignInRespone>builder()
+				.success(true)
+				.message("Sign in successful")
+				.data(result)
+				.build();
 	}
 
 	@PostMapping("/signup")
