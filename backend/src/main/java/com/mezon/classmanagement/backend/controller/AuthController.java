@@ -1,8 +1,8 @@
 package com.mezon.classmanagement.backend.controller;
 
-import com.mezon.classmanagement.backend.dto.request.SignInRequest;
+import com.mezon.classmanagement.backend.dto.request.SignInRequestDto;
 import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
-import com.mezon.classmanagement.backend.dto.response.SignInRespone;
+import com.mezon.classmanagement.backend.dto.response.SignInResponseDto;
 import com.mezon.classmanagement.backend.service.AuthenticationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -21,13 +21,13 @@ public class AuthController {
 	AuthenticationService authenticationService;
 
 	@PostMapping("/signin")
-	public ResponseDTO<SignInRespone> signIn(@RequestBody SignInRequest request){
-		var result = authenticationService.SignIn(request);
+	public ResponseDTO<SignInResponseDto> signIn(@RequestBody SignInRequestDto request){
+		SignInResponseDto signInResponseDto = authenticationService.signIn(request);
 
-		return ResponseDTO.<SignInRespone>builder()
+		return ResponseDTO.<SignInResponseDto>builder()
 				.success(true)
 				.message("Sign in successful")
-				.data(result)
+				.data(signInResponseDto)
 				.build();
 	}
 

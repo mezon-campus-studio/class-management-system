@@ -16,6 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -77,6 +78,7 @@ public class User implements UserDetails {
 		INTERNAL
 	}
 
+	@NullMarked
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return List.of();
@@ -84,7 +86,7 @@ public class User implements UserDetails {
 
 	@Override
 	public @Nullable String getPassword() {
-		return "";
+		return this.hashedPassword;
 	}
 
 	@Override
