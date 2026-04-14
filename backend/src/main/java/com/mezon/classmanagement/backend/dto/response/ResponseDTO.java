@@ -15,7 +15,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ResponseDTO<Data> {
+public final class ResponseDTO<Data> {
 	@JsonProperty(value = "success")
 	boolean success;
 

@@ -1,7 +1,8 @@
 package com.mezon.classmanagement.backend.service;
 
-import com.mezon.classmanagement.backend.dto.request.SignInRequest;
-import com.mezon.classmanagement.backend.dto.response.SignInRespone;
+import com.mezon.classmanagement.backend.dto.request.SignInRequestDto;
+import com.mezon.classmanagement.backend.dto.response.SignInResponseDto;
+import com.mezon.classmanagement.backend.exception.NotFoundException;
 import com.mezon.classmanagement.backend.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -10,35 +11,33 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
-@Service
-@RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
+@Service
 public class AuthenticationService {
-    AuthenticationManager authenticationManager;
-    UserRepository userRepository;
-    JwtService jwtService;
 
-    public SignInRespone SignIn(SignInRequest request){
+	AuthenticationManager authenticationManager;
+	UserRepository userRepository;
+	JwtService jwtService;
 
-        long ACCESS_TOKEN_EXPIRY_MINUTES = 15;
+	public SignInResponseDto signIn(SignInRequestDto request) {
+		long ACCESS_TOKEN_EXPIRY_MINUTES = 15;
+		long REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
-        long REFRESH_TOKEN_EXPIRY_DAYS = 7;
+		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
+		authenticationManager.authenticate(authenticationToken);
 
+		var user = userRepository
+				.findByUsername(request.getUsername())
+				.orElseThrow(() -> new NotFoundException("User not found"));
 
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(request.getUserName() , request.getPassWord());
-        authenticationManager.authenticate(authenticationToken);
+		String accessToken = jwtService.generateAccessToken(user.getUsername());
+		String refreshToken = jwtService.generateRefreshToken(user.getUsername());
 
-        var user = userRepository.findByUsername(request.getUserName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+		return SignInResponseDto.builder()
+				.accessToken(accessToken)
+				.refreshToken(refreshToken)
+				.build();
+	}
 
-
-        String accessToken = jwtService.generateAccessToken(user.getUsername());
-        String refreshToken = jwtService.generateRefreshToken(user.getUsername());
-
-        //Trả về token
-        return SignInRespone.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
-    }
 }
