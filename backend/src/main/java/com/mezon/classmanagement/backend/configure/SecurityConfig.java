@@ -1,5 +1,6 @@
 package com.mezon.classmanagement.backend.configure;
 
+import com.mezon.classmanagement.backend.component.CustomAuthenticationEntryPoint;
 import com.mezon.classmanagement.backend.constant.JwtConstant;
 import com.mezon.classmanagement.backend.service.UserDetailsServiceImpl;
 import lombok.AccessLevel;
@@ -34,12 +35,16 @@ import java.util.List;
 public class SecurityConfig {
 
 	UserDetailsServiceImpl userDetailsService;
+	CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
 		httpSecurity
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.csrf(AbstractHttpConfigurer::disable)
+				.exceptionHandling(exception -> exception
+						.authenticationEntryPoint(customAuthenticationEntryPoint)
+				)
 				.authorizeHttpRequests(authorize ->
 						authorize
 								.requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
