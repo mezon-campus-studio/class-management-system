@@ -26,7 +26,6 @@ public class ClassController {
 
 	@PostMapping
 	public ResponseDTO<String> createClass() {
-		// huy
 		return ResponseDTO.<String>builder()
 				.success(true)
 				.message("Class created successfully")
