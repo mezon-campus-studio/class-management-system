@@ -5,6 +5,7 @@ import App from "@/App";
 import { HomePage } from "@features/home/pages/HomePage";
 import { ClassDiagram } from "@features/classDiagram/pages/ClassDiagram";
 import { ClassLayout } from "@shared/components/layout/ClassLayout";
+import {Emulation} from "@features/emulation/pages/Emulation"
 
 /**
  * Global application router configuration using React Router
@@ -29,7 +30,13 @@ export const router = createBrowserRouter([
       {
         path: "class/:classId",
         element: <ClassLayout />,
-        children: [{ index: true, element: <ClassDiagram /> }],
+        children: [
+          { index: true, element: <ClassDiagram /> },
+          {
+            path: "thidua", // Đường dẫn sẽ là /class/:classId/thidua
+            element: <Emulation />
+          },
+        ],
       },
     ],
   },

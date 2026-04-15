@@ -22,8 +22,12 @@ export const ClassLayout = () => {
         {menuItems.map((item) => (
           <NavLink
             key={item.path}
-            to={item.path === "" ? `/class/${classId}` : `/class/${classId}/${item.path}`}
-            // end={item.path === ""} // Nên dùng end cho path trống để tránh highlight nhầm
+            to={
+              item.path === ""
+                ? `/class/${classId}`
+                : `/class/${classId}/${item.path}`
+            }
+            end={item.path === ""} // Nên dùng end cho path trống để tránh highlight nhầm
             className={({ isActive }) =>
               `px-5 py-4 text-[13px] md:text-sm font-bold transition-all border-b-2 whitespace-nowrap shrink-0 ${
                 isActive
