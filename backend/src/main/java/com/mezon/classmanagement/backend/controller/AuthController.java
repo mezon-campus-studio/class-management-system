@@ -1,8 +1,10 @@
 package com.mezon.classmanagement.backend.controller;
 
 import com.mezon.classmanagement.backend.dto.request.SignInRequestDto;
+import com.mezon.classmanagement.backend.dto.request.SignUpRequestDto;
 import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
 import com.mezon.classmanagement.backend.dto.response.SignInResponseDto;
+import com.mezon.classmanagement.backend.dto.response.SignUpResponseDto;
 import com.mezon.classmanagement.backend.service.AuthService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -32,10 +34,13 @@ public class AuthController {
 	}
 
 	@PostMapping("/signup")
-	public ResponseDTO<String> signUp() {
-		return ResponseDTO.<String>builder()
+	public ResponseDTO<SignUpResponseDto> signUp(@RequestBody SignUpRequestDto request) {
+		SignUpResponseDto signUpResponseDto = authService.signUp(request);
+
+		return ResponseDTO.<SignUpResponseDto>builder()
 				.success(true)
 				.message("Sign up successful")
+				.data(signUpResponseDto)
 				.build();
 	}
 
