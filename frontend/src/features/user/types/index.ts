@@ -10,3 +10,17 @@ export interface User {
     phone?: string;
     joinedAt: string;
 }
+
+export type ClassRole = 'ADMIN' | 'MEMBER';
+
+// lớp user cho từng người trong lớp hiện tại
+export interface ClassMember {
+    id: string;
+    classId: string;
+    userId: number;
+    user?: User;
+    role: ClassRole;
+    permissions: string[];
+    joinedAt: string;
+}
+
