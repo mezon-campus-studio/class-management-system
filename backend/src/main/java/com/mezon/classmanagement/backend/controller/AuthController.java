@@ -3,7 +3,7 @@ package com.mezon.classmanagement.backend.controller;
 import com.mezon.classmanagement.backend.dto.request.SignInRequestDto;
 import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
 import com.mezon.classmanagement.backend.dto.response.SignInResponseDto;
-import com.mezon.classmanagement.backend.service.AuthenticationService;
+import com.mezon.classmanagement.backend.service.AuthService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -18,11 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-	AuthenticationService authenticationService;
+	AuthService authService;
 
 	@PostMapping("/signin")
 	public ResponseDTO<SignInResponseDto> signIn(@RequestBody SignInRequestDto request){
-		SignInResponseDto signInResponseDto = authenticationService.signIn(request);
+		SignInResponseDto signInResponseDto = authService.signIn(request);
 
 		return ResponseDTO.<SignInResponseDto>builder()
 				.success(true)

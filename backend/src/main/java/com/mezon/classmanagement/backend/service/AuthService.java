@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Service
-public class AuthenticationService {
+public class AuthService {
 
 	AuthenticationManager authenticationManager;
 	UserRepository userRepository;
