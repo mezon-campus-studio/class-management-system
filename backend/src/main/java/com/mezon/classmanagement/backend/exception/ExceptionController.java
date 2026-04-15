@@ -32,4 +32,16 @@ public class ExceptionController {
 				);
 	}
 
+	@ExceptionHandler(value = ExistsException.class)
+	public ResponseEntity<ResponseDTO<Object>> handleExistsException(ExistsException exception) {
+		return ResponseEntity
+				.status(HttpStatus.CONFLICT)
+				.body(
+						ResponseDTO.<Object>builder()
+								.success(false)
+								.message(exception.getMessage())
+								.build()
+				);
+	}
+
 }
