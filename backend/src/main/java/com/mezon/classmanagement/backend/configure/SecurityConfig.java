@@ -1,5 +1,6 @@
 package com.mezon.classmanagement.backend.configure;
 
+import com.mezon.classmanagement.backend.component.CustomAuthenticationEntryPoint;
 import com.mezon.classmanagement.backend.constant.JwtConstant;
 import com.mezon.classmanagement.backend.service.UserDetailsServiceImpl;
 import lombok.AccessLevel;
@@ -20,8 +21,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.util.List;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -30,11 +35,16 @@ import javax.crypto.spec.SecretKeySpec;
 public class SecurityConfig {
 
 	UserDetailsServiceImpl userDetailsService;
+	CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
 		httpSecurity
+				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.csrf(AbstractHttpConfigurer::disable)
+				.exceptionHandling(exception -> exception
+						.authenticationEntryPoint(customAuthenticationEntryPoint)
+				)
 				.authorizeHttpRequests(authorize ->
 						authorize
 								.requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
@@ -65,6 +75,21 @@ public class SecurityConfig {
 				.withSecretKey(secretKey)
 				/*.macAlgorithm(MacAlgorithm.HS512)*/
 				.build();
+	}
+
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration config = new CorsConfiguration();
+
+		config.setAllowedOrigins(List.of("http://localhost:5173"));
+		config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+		config.setAllowedHeaders(List.of("*"));
+		config.setAllowCredentials(true);
+
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", config);
+
+		return source;
 	}
 
 }

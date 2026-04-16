@@ -34,7 +34,6 @@ import java.time.Instant;
 		name = "classes",
 		indexes = {
 				@Index(name = "index_classes_code", columnList = "code")
-
 		}
 )
 public class Class {

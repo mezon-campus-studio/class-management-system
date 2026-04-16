@@ -16,8 +16,11 @@ export const ClassDiagram = () => {
   );
 
   // Kiểm tra quyền chỉnh sửa (Ví dụ: role là 'teacher' hoặc 'admin')
-  const { user } = useAuth();
-  const canEdit = user?.type === "TEACHER" || user?.type === "ADMIN";
+  // const { user } = useAuth();
+  // TODO: Fetch ClassMember data for current user in this classId
+  // const currentMember: ClassMember = await fetchCurrentClassMember(classId, user.id);
+  // const canEdit = currentMember?.role === "ADMIN" || currentMember?.permissions.includes("DIAGRAM_EDIT");
+  const canEdit = true;
 
   useEffect(() => {
     let isMounted = true;

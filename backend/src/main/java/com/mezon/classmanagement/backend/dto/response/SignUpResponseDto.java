@@ -11,10 +11,7 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public final class SignInResponseDto {
-    @JsonProperty(value = "access_token")
-    String accessToken;
-
-    @JsonProperty(value = "refresh_token")
-    String refreshToken;
+public final class SignUpResponseDto {
+	@JsonProperty(value = "username")
+	String username;
 }

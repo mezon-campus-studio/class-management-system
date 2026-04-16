@@ -19,6 +19,10 @@ public final class ResponseDTO<Data> {
 	@JsonProperty(value = "success")
 	boolean success;
 
+	@Builder.Default
+	@JsonProperty(value = "code")
+	int code = 200;
+
 	@JsonProperty(value = "message")
 	String message;
 

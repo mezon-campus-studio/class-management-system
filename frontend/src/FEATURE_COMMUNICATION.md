@@ -2,280 +2,89 @@
 
 ## 1. Nguyên tắc cốt lõi
 
-> **Feature không được truy cập trực tiếp implementation của feature khác**
+> **Feature không được truy cập trực tiếp implementation nội bộ của feature khác.**
 
-* Không import file nội bộ
-* Không dùng logic private
-* Chỉ dùng **public API**
-
----
-
-## 2. Public API của Feature
-
-Mỗi feature phải expose một **entry point duy nhất**:
-
-```ts
-// src/features/auth/index.ts
-export { useAuth } from './hooks/useAuth';
-```
-
-### Cách sử dụng:
-
-```ts
-import { useAuth } from '@features/auth';
-```
+*   Không import từ các folder con (`api/`, `hooks/`, `components/`, `types/`).
+*   Chỉ được phép import từ **Entry Point duy nhất** của feature: `@features/<feature-name>`.
 
 ---
 
-### Không được phép:
+## 2. Cấu trúc chuẩn của một Feature
 
-```ts
-// Sai
-import { useAuthInternal } from '@features/auth/hooks/internal/useAuthInternal';
-import { loginApi } from '@features/auth/api/login';
+Mỗi feature phải tuân thủ cấu trúc thư mục tinh gọn sau:
+
+```txt
+src/features/<feature-name>/
+├── index.ts              # Entry Point: Export Public API (Hook, Types)
+├── api/                  # Logic gọi API
+├── types/                # Type & Interface
+├── hooks/                # Các hooks của feature (bao gồm cả logic internal)
+├── components/           # UI Components dành riêng cho feature
+└── pages/                # Các trang (Route components)
 ```
 
 ---
 
-## 3. Hook là Interface chính của Feature
+## 3. Entry Point (`index.ts`)
 
-### Quy ước:
+`index.ts` là bộ mặt của feature. Chỉ những gì được export ở đây mới được coi là **Public API**.
 
-* Mỗi feature expose **1–2 hook public**
-* Hook đóng vai trò **facade (interface layer)**
+### 3.1 Quy tắc export Hook
+
+*   **Public Facade Hook**: Được định nghĩa tại `index.ts`. Nó gọi các hook logic trong folder `hooks/` nhưng chỉ trả ra những thông tin/hành động mà "người ngoài" cần.
+*   **Internal Logic Hook**: Nằm trong folder `hooks/`. Chứa logic phức tạp, state loading/error... dùng cho các Page nội bộ của feature. **Không export** tại `index.ts`.
+
+**Ví dụ chuẩn (`src/features/auth/index.ts`):**
 
 ```ts
-// src/features/auth/hooks/useAuth.ts
+import { useAuthStore } from './hooks/useAuthStore';
+import { useAuthInternal } from './hooks/useAuthInternal';
+
+// Public Facade Hook: Feature khác chỉ thấy thông tin cần thiết
 export const useAuth = () => {
+  const { user, isAuthenticated } = useAuthStore();
+  const { logout } = useAuthInternal(); 
+
   return {
     user,
     isAuthenticated,
-    login,
     logout,
   };
 };
+
+export * from './types';
 ```
 
 ---
 
-## 4. Phân loại Hook
+## 4. Cách sử dụng (Import)
 
-### 4.1 Public Hook
-
-* Được phép dùng ngoài feature
-* Đại diện cho business logic
+### ✅ Đúng:
 
 ```ts
-useAuth
-useCart
-useChat
-```
-
----
-
-### 4.2 Internal Hook
-
-* Chỉ dùng nội bộ
-* Không export ra ngoài
-
-```ts
-useAuthInternal
-useAuthStorage
-useAuthApi
-```
-
-### Cấu trúc:
-
-```ts
-hooks/
-  useAuth.ts
-  internal/
-    useAuthStorage.ts
-    useAuthApi.ts
-```
-
----
-
-## 5. Dependency Flow (bắt buộc)
-
-```txt
-app → features → entities → shared
-```
-
----
-
-### Không hợp lệ:
-
-```txt
-features → app
-features → features (deep import)
-```
-
----
-
-## 6. Cách chia sẻ dữ liệu giữa các Feature
-
-### 6.1 Qua Public Hook (recommended)
-
-hook cần public thì bỏ vào trong `@features/<feat_name>/hook/index.ts` và export theo tên `use<Feat_name>`
-
-```ts
-// @features/auth/hook
-import { useAuth } from '@features/auth/hook'
-const { user } = useAuth();
-```
-
----
-
-### 6.2 Qua Global State (`app/providers` hoặc `store`)
-
-Áp dụng khi:
-
-* nhiều feature cần
-* state mang tính toàn cục
-
----
-
-### 6.3 Qua Domain Layer (`entities`)
-
-```ts
-src/entities/user.ts
-```
-
----
-
-### Quy tắc:
-
-* Không đặt domain model trong feature nếu dùng nhiều nơi
-* `User`, `Role`, `Permission` -> phải nằm ở layer chung
-
----
-
-## 7. Naming Convention
-
-| Thành phần     | Quy ước                                     |
-| -------------- | ------------------------------------------- |
-| Public Hook    | `use<Auth>`                                 |
-| Internal Hook  | `use<Auth>Internal` hoặc `use<Auth><Logic>` |
-| Context        | `AuthContext`                               |
-| Type           | `AuthContextType`, `User`                   |
-| Feature Folder | lowercase (`auth`, `chat`)                  |
-
----
-
-## 8. Enforcement (đang cân nhắc)
-
-### ESLint Rule
-
-```js
-"no-restricted-imports": [
-  "error",
-  {
-    "patterns": [
-      "@features/*/hooks/internal/*",
-      "@features/*/api/*"
-    ]
-  }
-]
-```
-
----
-
-## 9. Trường hợp Feature được dùng Feature khác
-
-Chỉ hợp lệ trong các trường hợp:
-
-### ✔ Thông qua public hook
-
-```ts
-useAuth()
-```
-
----
-
-### Thông qua shared domain
-
-```ts
-User
-```
-
----
-
-### Thông qua app layer (composition)
-
-```ts
-const auth = useAuth();
-const chat = useChat();
-```
-
----
-
-## 10. Anti-pattern (cấm)
-
-### 10.1 Import sâu vào internal
-
-```ts
-@features/auth/hooks/internal/*
-```
-
----
-
-### 10.2 Reuse logic business sai layer
-
-```ts
-// Sai
-import { validatePassword } from '@features/auth/utils';
-```
-
-→ phải chuyển sang:
-
-```ts
-@shared/utils
-```
-
----
-
-## 11. Nguyên tắc thiết kế
-
-* Feature = module độc lập
-* Hook public = API của module
-* Internal = implementation chi tiết
-* Không expose internals
-
----
-
-## 12. Ví dụ đúng
-
-```ts
-// feature chat
 import { useAuth } from '@features/auth';
+```
 
-export const useChat = () => {
-  const { user } = useAuth();
+### ❌ Sai (Vi phạm đóng gói):
 
-  return {
-    currentUserId: user?.id,
-  };
-};
+```ts
+import { useAuthInternal } from '@features/auth/hooks/useAuthInternal';
+import { authApi } from '@features/auth/api';
 ```
 
 ---
 
-## 13. Kết luận
+## 5. Dependency Flow (Bắt buộc)
 
-* Feature chỉ giao tiếp qua **public API**
-* Hook public là **entry point duy nhất**
-* Không import sâu
-* Tách rõ interface và implementation
+Dòng phụ thuộc chỉ được phép đi theo một chiều:
+`app → features → shared`
 
 ---
 
-## 14. Nguyên tắc bắt buộc (TL;DR)
+## 6. TL;DR - Quy tắc vàng
 
-* Không import từ `features/*/*/*`
-* Chỉ import từ `features/<feature>`
-* Mỗi feature expose tối đa 1–2 hook
-* Internal phải nằm trong `internal/`
-* Domain dùng chung → đưa ra `entities/`
+1.  Mọi thứ bên ngoài cần phải lấy từ `@features/<feature>`.
+2.  Hook ở `index.ts` là một **Facade** (giao diện sạch sẽ).
+3.  Không tạo thêm folder `internal/` bên trong `hooks/` để giữ cấu trúc phẳng, nhưng vẫn quản lý export nghiêm ngặt tại `index.ts`.
 
 ---
