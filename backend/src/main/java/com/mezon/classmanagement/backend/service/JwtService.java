@@ -1,6 +1,7 @@
 package com.mezon.classmanagement.backend.service;
 
 import com.mezon.classmanagement.backend.constant.JwtConstant;
+import com.mezon.classmanagement.backend.entity.Permission;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -13,12 +14,20 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
 
-	public String generateAccessToken(String username) {
+	public String generateAccessToken(String username, Long classId, String role, List<Permission> permissions) {
+
+		List<String> permissionsCode = permissions.stream()
+				.map(Permission::getCode)
+				.toList();
+
 		JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
 		JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
@@ -30,6 +39,9 @@ public class JwtService {
 				))
 				.jwtID(UUID.randomUUID().toString())
 				.claim("type", "access")
+				.claim("class_id",classId)
+				.claim("role",role)
+				.claim("permissions",permissionsCode)
 				.build();
 
 		return signToken(jwsHeader, jwtClaimsSet);
