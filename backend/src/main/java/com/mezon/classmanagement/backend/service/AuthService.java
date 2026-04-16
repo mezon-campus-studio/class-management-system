@@ -2,11 +2,17 @@ package com.mezon.classmanagement.backend.service;
 
 import com.mezon.classmanagement.backend.dto.request.SignOutRequestDto;
 import com.mezon.classmanagement.backend.dto.request.SignInRequestDto;
+import com.mezon.classmanagement.backend.dto.request.SignUpRequestDto;
 import com.mezon.classmanagement.backend.dto.response.SignInResponseDto;
 import com.mezon.classmanagement.backend.dto.response.SignOutResponseDto;
 import com.mezon.classmanagement.backend.entity.InvalidatedToken;
 import com.mezon.classmanagement.backend.exception.NotFoundException;
 import com.mezon.classmanagement.backend.repository.InvalidatedTokenRepository;
+import com.mezon.classmanagement.backend.dto.response.SignUpResponseDto;
+import com.mezon.classmanagement.backend.entity.User;
+import com.mezon.classmanagement.backend.exception.ExistsException;
+import com.mezon.classmanagement.backend.exception.NotFoundException;
+import com.mezon.classmanagement.backend.mapper.UserMapper;
 import com.mezon.classmanagement.backend.repository.UserRepository;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSVerifier;
@@ -17,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
@@ -24,6 +31,7 @@ import java.util.Collections;
 import java.util.Date;
 
 import static com.mezon.classmanagement.backend.constant.JwtConstant.SIGNER_KEY;
+import java.util.Optional;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -34,6 +42,7 @@ public class AuthService {
 	UserRepository userRepository;
 	JwtService jwtService;
 	InvalidatedTokenRepository invalidatedTokenRepository;
+	UserMapper userMapper;
 
 	public SignInResponseDto signIn(SignInRequestDto request) {
 		long ACCESS_TOKEN_EXPIRY_MINUTES = 15;
@@ -42,7 +51,7 @@ public class AuthService {
 		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
 		authenticationManager.authenticate(authenticationToken);
 
-		var user = userRepository
+		User user = userRepository
 				.findByUsername(request.getUsername())
 				.orElseThrow(() -> new NotFoundException("User not found"));
 
@@ -96,6 +105,23 @@ public class AuthService {
 			return null;
 		}
 		return signedJWT;
+	public SignUpResponseDto signUp(SignUpRequestDto request) {
+		Optional<User> userOptional = userRepository.findByUsername(request.getUsername());
+		if (userOptional.isPresent()) {
+			throw new ExistsException("User exists");
+		}
+
+		User user = User.builder()
+				.username(request.getUsername())
+				.hashedPassword(new BCryptPasswordEncoder(10).encode(request.getPassword()))
+				.displayName(request.getDisplayName())
+				//.type(User.Type.INTERNAL)
+				.build();
+		User insertedUser = userRepository.save(user);
+
+		return SignUpResponseDto.builder()
+				.username(insertedUser.getUsername())
+				.build();
 	}
 
 }

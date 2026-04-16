@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -50,6 +51,13 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
     Type type;
+
+	@PrePersist
+	public void prePersist() {
+		if (type == null) {
+			type = Type.INTERNAL;
+		}
+	}
 
     @Column(name = "username", nullable = false, unique = true)
     String username;

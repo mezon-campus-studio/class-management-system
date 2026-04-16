@@ -5,6 +5,10 @@ import com.mezon.classmanagement.backend.dto.request.SignOutRequestDto;
 import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
 import com.mezon.classmanagement.backend.dto.response.SignInResponseDto;
 import com.mezon.classmanagement.backend.dto.response.SignOutResponseDto;
+import com.mezon.classmanagement.backend.dto.request.SignUpRequestDto;
+import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
+import com.mezon.classmanagement.backend.dto.response.SignInResponseDto;
+import com.mezon.classmanagement.backend.dto.response.SignUpResponseDto;
 import com.mezon.classmanagement.backend.service.AuthService;
 import com.nimbusds.jose.JOSEException;
 import lombok.AccessLevel;
@@ -37,10 +41,13 @@ public class AuthController {
 	}
 
 	@PostMapping("/signup")
-	public ResponseDTO<String> signUp() {
-		return ResponseDTO.<String>builder()
+	public ResponseDTO<SignUpResponseDto> signUp(@RequestBody SignUpRequestDto request) {
+		SignUpResponseDto signUpResponseDto = authService.signUp(request);
+
+		return ResponseDTO.<SignUpResponseDto>builder()
 				.success(true)
 				.message("Sign up successful")
+				.data(signUpResponseDto)
 				.build();
 	}
 
