@@ -1,13 +1,11 @@
 package com.mezon.classmanagement.backend.dto.request;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SignOutRequestDto {
-    String token;
+public final class SignOutRequestDto {
+    String accessToken;
 }

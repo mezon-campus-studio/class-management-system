@@ -11,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SignUpResponseDto {
+public final class SignUpResponseDto {
 	@JsonProperty(value = "username")
 	String username;
 }

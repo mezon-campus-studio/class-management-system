@@ -1,5 +1,6 @@
 package com.mezon.classmanagement.backend.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,5 +12,6 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public final class SignOutResponseDto {
+    @JsonProperty(value = "success")
     boolean success;
 }

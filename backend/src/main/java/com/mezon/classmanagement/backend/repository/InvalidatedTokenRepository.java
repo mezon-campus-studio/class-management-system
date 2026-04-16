@@ -1,6 +1,5 @@
 package com.mezon.classmanagement.backend.repository;
 
-
 import com.mezon.classmanagement.backend.entity.InvalidatedToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

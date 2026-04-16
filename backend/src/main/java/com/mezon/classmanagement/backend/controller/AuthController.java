@@ -2,12 +2,10 @@ package com.mezon.classmanagement.backend.controller;
 
 import com.mezon.classmanagement.backend.dto.request.SignInRequestDto;
 import com.mezon.classmanagement.backend.dto.request.SignOutRequestDto;
-import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
-import com.mezon.classmanagement.backend.dto.response.SignInResponseDto;
-import com.mezon.classmanagement.backend.dto.response.SignOutResponseDto;
 import com.mezon.classmanagement.backend.dto.request.SignUpRequestDto;
 import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
 import com.mezon.classmanagement.backend.dto.response.SignInResponseDto;
+import com.mezon.classmanagement.backend.dto.response.SignOutResponseDto;
 import com.mezon.classmanagement.backend.dto.response.SignUpResponseDto;
 import com.mezon.classmanagement.backend.service.AuthService;
 import com.nimbusds.jose.JOSEException;
