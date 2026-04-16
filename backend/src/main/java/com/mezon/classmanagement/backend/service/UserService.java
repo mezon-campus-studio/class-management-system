@@ -2,6 +2,7 @@ package com.mezon.classmanagement.backend.service;
 
 import com.mezon.classmanagement.backend.dto.response.child.UserResponseDto;
 import com.mezon.classmanagement.backend.entity.User;
+import com.mezon.classmanagement.backend.exception.GlobalException;
 import com.mezon.classmanagement.backend.exception.NotFoundException;
 import com.mezon.classmanagement.backend.mapper.UserMapper;
 import com.mezon.classmanagement.backend.repository.UserRepository;
@@ -24,7 +25,7 @@ public class UserService {
 		Optional<User> userOptional = userRepository.findByUsername(username);
 		return userOptional
 				.map(userMapper::toUserResponseDto)
-				.orElseThrow(() -> new NotFoundException("User not found"));
+				.orElseThrow(() -> new GlobalException(GlobalException.Type.NOT_FOUND, "User not found"));
 	}
 
 }

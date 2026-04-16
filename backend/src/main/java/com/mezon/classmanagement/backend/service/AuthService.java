@@ -10,6 +10,7 @@ import com.mezon.classmanagement.backend.dto.response.SignUpResponseDto;
 import com.mezon.classmanagement.backend.entity.InvalidatedToken;
 import com.mezon.classmanagement.backend.entity.User;
 import com.mezon.classmanagement.backend.exception.ExistsException;
+import com.mezon.classmanagement.backend.exception.GlobalException;
 import com.mezon.classmanagement.backend.exception.NotFoundException;
 import com.mezon.classmanagement.backend.repository.InvalidatedTokenRepository;
 import com.mezon.classmanagement.backend.repository.UserRepository;
@@ -49,7 +50,7 @@ public class AuthService {
 
 		User user = userRepository
 				.findByUsername(request.getUsername())
-				.orElseThrow(() -> new NotFoundException("User not found"));
+				.orElseThrow(() -> new GlobalException(GlobalException.Type.NOT_FOUND, "User not found"));
 
 		String accessToken = jwtService.generateAccessToken(user.getUsername(), null, null, Collections.emptyList());
 		String refreshToken = jwtService.generateRefreshToken(user.getUsername());
@@ -63,7 +64,7 @@ public class AuthService {
 	public SignUpResponseDto signUp(SignUpRequestDto request) {
 		Optional<User> userOptional = userRepository.findByUsername(request.getUsername());
 		if (userOptional.isPresent()) {
-			throw new ExistsException("User exists");
+			throw new GlobalException(GlobalException.Type.ALREADY_EXISTS, "User exists");
 		}
 
 		User user = User.builder()
