@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { authApi } from '@features/auth/api';
 import type { LoginRequest, RegisterRequest } from '@features/auth/types';
-import type { User } from '@features/user/types';
+import type { User } from '@shared/domain/user';
 import { useAuthStore } from './useAuthStore';
 
 /**

@@ -2,7 +2,7 @@
 // group.ts — domain entity cho Group và GroupMember
 // ============================================================
 
-import type { User } from "@features/user";
+import type { User } from "./user";
 import type { GroupRole } from "@shared/domain/enums";
 import type { ID, Timestamp } from "@shared/utils/common";
 

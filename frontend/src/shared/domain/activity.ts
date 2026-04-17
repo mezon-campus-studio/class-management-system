@@ -1,7 +1,7 @@
 // ============================================================
 // activity.ts — domain entity cho Activity và ActivityRegistration
 // ============================================================
-import type { User } from "@features/user";
+import type { User } from "./user";
 import { ActivityRegistrationStatus } from "@shared/domain/enums";
 import type { ID, Timestamp } from "@shared/utils/common";
 

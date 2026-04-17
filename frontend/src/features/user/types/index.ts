@@ -1,26 +1,15 @@
-export type SystemUserType = 'GOOGLE' | 'MEZON' | 'INTERNAL';
+import type { User as DomainUser } from "@shared/domain/user";
+import type { ClassMember as DomainClassMember } from "@shared/domain/class";
+import type { UserType } from "@shared/domain/enums";
+import type { ClassRole } from "@shared/domain/enums";
 
-export interface User {
-    id: number;
-    type: SystemUserType;
-    username: string;
-    displayName: string;
-    avatarUrl: string;
-    email?: string;
-    phone?: string;
-    joinedAt: string;
-}
+export type SystemUserType = UserType;
 
-export type ClassRole = 'ADMIN' | 'MEMBER';
+export interface User extends DomainUser {}
+
+export type { ClassRole };
 
 // lớp user cho từng người trong lớp hiện tại
-export interface ClassMember {
-    id: string;
-    classId: string;
-    userId: number;
-    user?: User;
-    role: ClassRole;
-    permissions: string[];
-    joinedAt: string;
+export interface ClassMember extends DomainClassMember {
+    // Nếu feature user cần thêm các field UI-only, thêm ở đây
 }
-
