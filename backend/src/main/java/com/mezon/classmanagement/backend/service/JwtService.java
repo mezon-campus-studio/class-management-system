@@ -1,7 +1,6 @@
 package com.mezon.classmanagement.backend.service;
 
 import com.mezon.classmanagement.backend.constant.JwtConstant;
-import com.mezon.classmanagement.backend.entity.Permission;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -9,25 +8,20 @@ import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
 
-	public String generateAccessToken(String username, Long classId, String role, List<Permission> permissions) {
-
-		List<String> permissionsCode = permissions.stream()
-				.map(Permission::getCode)
-				.toList();
-
+	public String generateAccessToken(Long userId, String username) {
 		JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
 		JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
@@ -39,9 +33,7 @@ public class JwtService {
 				))
 				.jwtID(UUID.randomUUID().toString())
 				.claim("type", "access")
-				.claim("class_id",classId)
-				.claim("role",role)
-				.claim("permissions",permissionsCode)
+				.claim("user_id", userId)
 				.build();
 
 		return signToken(jwsHeader, jwtClaimsSet);
@@ -74,6 +66,20 @@ public class JwtService {
 		} catch (JOSEException e) {
 			throw new RuntimeException("Cannot create token", e);
 		}
+	}
+
+	private Jwt getJwt(Authentication authentication) {
+		return ((JwtAuthenticationToken) authentication).getToken();
+	}
+
+	public Long extractUserId(Authentication authentication) {
+		Jwt jwt = getJwt(authentication);
+		return Long.valueOf(jwt.getClaim("user_id").toString());
+	}
+
+	public String extractUsername(Authentication authentication) {
+		Jwt jwt = getJwt(authentication);
+		return jwt.getSubject();
 	}
 
 }

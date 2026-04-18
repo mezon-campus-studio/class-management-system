@@ -1,21 +1,24 @@
 package com.mezon.classmanagement.backend.exception;
 
+import com.mezon.classmanagement.backend.constant.WarningConstant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
-@Getter
+@SuppressWarnings({WarningConstant.UNUSED})
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Getter
 public class GlobalException extends RuntimeException {
 
+	@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 	@Getter
 	@AllArgsConstructor
-	@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 	public enum Type {
 
 		NOT_FOUND(404),
-		ALREADY_EXISTS(409);
+		ALREADY_EXISTS(409),
+		INVALID_AUTHENTICATION(401);
 
 		int code;
 
@@ -23,12 +26,8 @@ public class GlobalException extends RuntimeException {
 
 	int code = 200;
 
-	public GlobalException() {
+	public GlobalException(Type type) {
 		super();
-	}
-
-	public GlobalException(String message) {
-		super(message);
 	}
 
 	public GlobalException(Type type, String message) {
@@ -36,12 +35,14 @@ public class GlobalException extends RuntimeException {
 		this.code = type.getCode();
 	}
 
-	public GlobalException(String message, Throwable cause) {
+	public GlobalException(Type type, String message, Throwable cause) {
 		super(message, cause);
+		this.code = type.getCode();
 	}
 
-	public GlobalException(Throwable cause) {
+	public GlobalException(Type type, Throwable cause) {
 		super(cause);
+		this.code = type.getCode();
 	}
 
 }

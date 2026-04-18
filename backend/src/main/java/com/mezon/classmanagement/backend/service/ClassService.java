@@ -4,7 +4,6 @@ import com.mezon.classmanagement.backend.dto.response.CreateClassRequestDto;
 import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
 import com.mezon.classmanagement.backend.dto.response.UpdateClassRequestDto;
 import com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto;
-import com.mezon.classmanagement.backend.exception.NotFoundException;
 import com.mezon.classmanagement.backend.repository.ClassRepository;
 import com.mezon.classmanagement.backend.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,13 +76,13 @@ public class ClassService {
     @Transactional(readOnly = true)
     public List<ClassMemberResponseDto> getClassMembers(Long classId) {
         if (!classRepository.existsById(classId)) {
-            throw new NotFoundException("Class not found");
+            throw new RuntimeException("Class not found");
         }
         return classRepository.getClassMembers(classId);
     }
 
     private com.mezon.classmanagement.backend.entity.Class findClassById(Long classId) {
         return classRepository.findById(classId)
-                .orElseThrow(() -> new NotFoundException("Class not found"));
+                .orElseThrow(() -> new RuntimeException("Class not found"));
     }
 }

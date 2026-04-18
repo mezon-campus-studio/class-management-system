@@ -25,7 +25,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 
@@ -40,17 +39,15 @@ public class AuthService {
 	InvalidatedTokenRepository invalidatedTokenRepository;
 
 	public SignInResponseDto signIn(SignInRequestDto request) {
-		long ACCESS_TOKEN_EXPIRY_MINUTES = 15;
-		long REFRESH_TOKEN_EXPIRY_DAYS = 7;
-
-		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
-		authenticationManager.authenticate(authenticationToken);
+		UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken
+				= new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
+		authenticationManager.authenticate(usernamePasswordAuthenticationToken);
 
 		User user = userRepository
 				.findByUsername(request.getUsername())
 				.orElseThrow(() -> new GlobalException(GlobalException.Type.NOT_FOUND, "User not found"));
 
-		String accessToken = jwtService.generateAccessToken(user.getUsername(), null, null, Collections.emptyList());
+		String accessToken = jwtService.generateAccessToken(user.getId(), user.getUsername());
 		String refreshToken = jwtService.generateRefreshToken(user.getUsername());
 
 		return SignInResponseDto.builder()
