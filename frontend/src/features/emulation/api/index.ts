@@ -54,5 +54,11 @@ export const emulationAPI = {
   addMemberToTeam: async (classId: string, teamId: number, studentId: string) => {
     console.log(`API: Thêm SV ${studentId} vào Tổ ${teamId}`);
     return new Promise((resolve) => setTimeout(resolve, 300));
+  },
+
+  removeMemberFromTeam: async (classId: string, teamId: number, studentId: string) => {
+    console.log(`API: Xóa SV ${studentId} khỏi Tổ ${teamId} của lớp ${classId}`);
+    // Sau này sẽ thay đoạn này bằng axios.delete hoặc fetch tới endpoint thật
+    return new Promise((resolve) => setTimeout(resolve, 300));
   }
 };

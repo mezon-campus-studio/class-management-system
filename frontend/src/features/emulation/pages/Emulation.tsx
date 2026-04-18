@@ -17,7 +17,7 @@ export const Emulation = () => {
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [members, setMembers] = useState<{ id: string; name: string }[]>([]);
 
- // Kiểm tra quyền chỉnh sửa (Ví dụ: role là 'teacher' hoặc 'admin')
+  // Kiểm tra quyền chỉnh sửa (Ví dụ: role là 'teacher' hoặc 'admin')
   // const { user } = useAuth();
   // TODO: Fetch ClassMember data for current user in this classId
   // const currentMember: ClassMember = await fetchCurrentClassMember(classId, user.id);
@@ -45,6 +45,30 @@ export const Emulation = () => {
     } catch (error) {
       console.error("Lỗi khi thêm thành viên:", error);
       alert("Lỗi khi thêm thành viên");
+    }
+  };
+
+  // Hàm xử lý xóa học sinh khỏi tổ
+  const handleRemoveMember = async (studentId: string, studentName: string) => {
+    if (
+      !window.confirm(
+        `Bạn có chắc chắn muốn xóa ${studentName} khỏi Tổ ${selectedTeam}?`,
+      )
+    )
+      return;
+
+    try {
+      // Giả sử API của bạn là removeMemberFromTeam
+      await emulationAPI.removeMemberFromTeam(
+        classId!,
+        selectedTeam,
+        studentId,
+      );
+      alert(`Đã xóa ${studentName} khỏi Tổ ${selectedTeam}`);
+      refresh(); // Load lại dữ liệu để cập nhật danh sách
+    } catch (error) {
+      console.error("Lỗi khi xóa thành viên:", error);
+      alert("Lỗi khi xóa thành viên");
     }
   };
 
@@ -133,7 +157,12 @@ export const Emulation = () => {
                     </span>
                     {/* Nút xóa thành viên khỏi tổ */}
                     {canEdit && (
-                      <button className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all">
+                      <button
+                        onClick={() =>
+                          handleRemoveMember(member.id, member.name)
+                        }
+                        className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all"
+                      >
                         <X size={12} />
                       </button>
                     )}
