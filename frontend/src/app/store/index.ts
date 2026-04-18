@@ -1,1 +1,1 @@
-export const store = {}; // Placeholder
+export * from '@app/store/useUIStore';

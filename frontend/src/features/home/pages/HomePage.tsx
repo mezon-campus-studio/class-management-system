@@ -1,8 +1,8 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useHome } from "@features/home/hooks/useHome";
 import { Lock, MoreVertical, ArrowRight } from "lucide-react";
 import { Plus } from "lucide-react";
+import { ClassPrivacy } from "@shared/domain/enums";
 
 export const HomePage = () => {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ export const HomePage = () => {
               {/* Banner lớp học - Cao 100px */}
               <div
                 className={`relative h-[100px] p-4 ${
-                  item.status === "public"
+                  item.status === ClassPrivacy.PUBLIC
                     ? "bg-gradient-to-br from-indigo-600 to-blue-500"
                     : "bg-gradient-to-br from-slate-700 to-slate-900"
                 }`}
@@ -65,18 +65,18 @@ export const HomePage = () => {
                   <div className="flex items-center gap-2">
                     <span
                       className={`text-[10px] px-2.5 py-0.5 rounded-md font-extrabold uppercase tracking-wider ${
-                        item.status === "public"
+                        item.status === "PUBLIC"
                           ? "bg-green-100 text-green-700 border border-green-200"
                           : "bg-amber-100 text-amber-700 border border-amber-200"
                       }`}
                     >
-                      {item.status === "public" ? "Cộng đồng" : "Nhóm kín"}
+                      {item.status === "PUBLIC" ? "Cộng đồng" : "Nhóm kín"}
                     </span>
                   </div>
 
                   {/* Meta data */}
                   <div className="flex flex-col gap-2">
-                    {item.status === "private" && (
+                    {item.status === "PRIVATE" && (
                       <div className="flex items-center gap-2 text-xs text-amber-600 font-medium">
                         <Lock size={14} />
                         <span>Chờ duyệt</span>
