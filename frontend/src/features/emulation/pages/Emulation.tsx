@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { useEmulation } from "@features/emulation/hooks/useEmulation";
 import { FilterSelect } from "@features/emulation/pages/FilterSelect";
 import { RankingTable } from "@features/emulation/pages/RankingTable";
-import { useAuth } from "@features/auth";
+// import { useAuth } from "@features/auth";
 import { classDiagramAPI } from "@features/classDiagram/api";
 import { emulationAPI } from "@features/emulation/api"; // Giả sử bạn có API này
 
@@ -17,8 +17,12 @@ export const Emulation = () => {
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [members, setMembers] = useState<{ id: string; name: string }[]>([]);
 
-  const { user } = useAuth();
-  const isAdmin = user?.type === "ADMIN" || user?.type === "TEACHER";
+ // Kiểm tra quyền chỉnh sửa (Ví dụ: role là 'teacher' hoặc 'admin')
+  // const { user } = useAuth();
+  // TODO: Fetch ClassMember data for current user in this classId
+  // const currentMember: ClassMember = await fetchCurrentClassMember(classId, user.id);
+  // const canEdit = currentMember?.role === "ADMIN" || currentMember?.permissions.includes("DIAGRAM_EDIT");
+  const canEdit = true;
 
   if (isLoading || !data)
     return <div className="p-10 text-center">Đang tải...</div>;
@@ -63,7 +67,7 @@ export const Emulation = () => {
           />
         </div>
         <button className="bg-[#4CAF50] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm hover:opacity-90">
-          Link file nội quy
+          nội quy
         </button>
       </div>
 
@@ -75,7 +79,7 @@ export const Emulation = () => {
               Danh sách tổ
             </p>
 
-            {!isAdmin && (
+            {canEdit && (
               <div className="flex gap-1">
                 <button
                   onClick={() => changeTeamCount(data.teamCount - 1)}
@@ -128,7 +132,7 @@ export const Emulation = () => {
                       {idx + 1}. {member.name}
                     </span>
                     {/* Nút xóa thành viên khỏi tổ */}
-                    {isAdmin && (
+                    {canEdit && (
                       <button className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all">
                         <X size={12} />
                       </button>
@@ -143,7 +147,7 @@ export const Emulation = () => {
             </div>
           </div>
 
-          {!isAdmin && (
+          {canEdit && (
             <button
               onClick={handleOpenAddMember}
               className="w-full mt-4 flex items-center justify-center gap-2 py-2 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition-all text-xs font-bold"
@@ -160,7 +164,7 @@ export const Emulation = () => {
             <h3 className="text-sm font-bold italic">
               Lịch sử thay đổi - Tổ {selectedTeam}
             </h3>
-            {isAdmin && (
+            {canEdit && (
               <button className="text-[11px] font-bold text-indigo-600 hover:underline">
                 + Ghi nhận điểm
               </button>

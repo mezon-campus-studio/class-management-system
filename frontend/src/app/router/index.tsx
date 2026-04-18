@@ -24,7 +24,7 @@ export const router = createBrowserRouter([
     element: <App />,
     children: [
       {
-        index: true,
+        index: true,  
         element: <HomePage />,
       },
       {

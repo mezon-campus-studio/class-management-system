@@ -18,28 +18,31 @@ export const ClassLayout = () => {
           - overflow-x-auto: cho phép kéo ngang trên mobile
           - no-scrollbar: (optional) ẩn thanh cuộn để trông chuyên nghiệp hơn
       */}
-      <div className="flex items-center border-b px-4 bg-white sticky top-0 z-20 flex-nowrap overflow-x-auto no-scrollbar shadow-sm">
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={
-              item.path === ""
-                ? `/class/${classId}`
-                : `/class/${classId}/${item.path}`
-            }
-            end={item.path === ""} // Nên dùng end cho path trống để tránh highlight nhầm
-            className={({ isActive }) =>
-              `px-5 py-4 text-[13px] md:text-sm font-bold transition-all border-b-2 whitespace-nowrap shrink-0 ${
-                isActive
-                  ? "border-indigo-600 text-indigo-600 bg-indigo-50/30"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-              }`
-            }
-          >
-            {item.label}
-          </NavLink>
-        ))}
-      </div>
+      <div className="flex items-stretch border-b px-4 bg-white sticky top-0 z-20 flex-nowrap overflow-x-auto no-scrollbar shadow-sm min-h-[56px]">
+  {menuItems.map((item) => (
+    <NavLink
+      key={item.path}
+      to={item.path === "" ? `/class/${classId}` : `/class/${classId}/${item.path}`}
+      end={item.path === ""}
+      className={({ isActive }) =>
+        `px-5 flex items-center justify-center text-[13px] md:text-sm font-bold transition-all whitespace-nowrap shrink-0 relative ${
+          isActive
+            ? "text-indigo-600 bg-indigo-50/30"
+            : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <span className="relative z-10">{item.label}</span>
+          {isActive && (
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-indigo-600 z-20" />
+          )}
+        </>
+      )}
+    </NavLink>
+  ))}
+</div>
 
       {/* Nội dung trang con */}
       <div className="p-4 md:p-6 overflow-y-auto">
