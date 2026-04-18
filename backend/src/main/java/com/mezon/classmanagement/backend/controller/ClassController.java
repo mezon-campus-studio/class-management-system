@@ -14,12 +14,12 @@ import java.util.List;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-@RestController
 @RequestMapping("/api/classes")
+@RestController
 public class ClassController {
 
 	ClassService classService;
-	//tạo lớp học mới
+
 	@PostMapping
 	public ResponseDTO<String> createClass(@RequestBody CreateClassRequestDto request) {
 		classService.createClass(request);
@@ -30,7 +30,7 @@ public class ClassController {
 				.data(null)
 				.build();
 	}
-	//sửa thông tin lớp
+
 	@PatchMapping("/{classId}")
 	public ResponseDTO<String> updateClass(
 			@PathVariable Long classId,
@@ -44,7 +44,7 @@ public class ClassController {
 				.data(null)
 				.build();
 	}
-	//xóa lớp
+
 	@DeleteMapping("/{classId}")
 	public ResponseDTO<String> deleteClass(@PathVariable Long classId) {
 		classService.deleteClass(classId);
