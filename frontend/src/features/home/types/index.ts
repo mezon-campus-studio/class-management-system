@@ -8,3 +8,12 @@ export interface ClassItems {
   classCode: string;
   userJoinStatus: "joined" | "pending"
 }
+
+export interface ClassResponse {
+  id: string;
+  className: string;
+  description?: string;
+  classCode: string;
+  status: ClassPrivacy;
+  createdAt?: string;
+}

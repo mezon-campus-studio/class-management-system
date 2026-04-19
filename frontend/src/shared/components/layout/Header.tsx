@@ -5,6 +5,7 @@ import { useHome } from "@features/home/hooks/useHome";
 import { useAuth } from "@features/auth";
 import { ChevronRight } from "lucide-react";
 import { useUIStore } from "@app/store";
+import { CreateClassModal } from "@features/class/pages/CreateClass";
 
 export const Header = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export const Header = () => {
   // 1. Lấy danh sách lớp từ useHome
   const { classes } = useHome();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // 2. Tìm lớp hiện tại dựa trên classId từ URL
   const currentClass = classes.find((item) => item.id === classId);
@@ -105,7 +107,10 @@ export const Header = () => {
               Tham gia
             </button>
 
-            <button className="btn btn-warm btn-sm">
+            <button 
+              className="btn btn-warm btn-sm"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
               <Plus size={18} />
               <span className="hidden lg:inline">Tạo lớp</span>
             </button>
@@ -151,6 +156,11 @@ export const Header = () => {
           )}
         </div>
       </div>
+
+      <CreateClassModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
+      />
     </header>
   );
 };
