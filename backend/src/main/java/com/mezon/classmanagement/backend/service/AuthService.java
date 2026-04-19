@@ -21,7 +21,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
@@ -95,6 +98,16 @@ public class AuthService {
 					.success(false)
 					.build();
 		}
+	}
+
+	public Authentication getAuthentication() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+		if (!(authentication instanceof JwtAuthenticationToken)) {
+			throw new GlobalException(GlobalException.Type.INVALID_AUTHENTICATION, "Invalid authentication");
+		}
+
+		return authentication;
 	}
 
 	private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
