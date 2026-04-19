@@ -26,48 +26,42 @@ export const Sidebar = () => { // Không dùng Props isOpen nữa
         isSidebarOpen ? "translate-x-0" : "-translate-x-full md:-ml-64"
       }`}
     >
-      <nav className="flex-1 py-2 overflow-y-auto">
-        {/* --- TRANG CHỦ --- */}
+      <nav className="flex-1 py-2 overflow-y-auto p-2.5">
         <NavLink to="/" end>
           {({ isActive }: { isActive: boolean }) => (
             <div
-              className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
-                isActive
-                  ? "bg-slate-400 text-white"
-                  : "text-gray-700 hover:bg-gray-200"
-              }`}
+              className={`sidebar-item ${isActive ? "active" : ""}`}
             >
               <Home size={20} className="shrink-0" />
               <span className="font-medium">Trang chủ</span>
+              {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-accent"></span>}
             </div>
           )}
         </NavLink>
 
-        {/* --- MỤC ĐÃ ĐĂNG KÝ (DROPDOWN) --- */}
-        <div className="mt-1">
+        <div className="mt-2">
           <div
-            className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-200 border-b border-gray-300 transition-colors"
+            className="flex items-center justify-between px-3 py-2 cursor-pointer text-sidebar-text hover:text-sidebar-text-active transition-colors"
             onClick={() => setIsRegisteredOpen(!isRegisteredOpen)}
           >
-            <div className="flex items-center gap-3 text-gray-800">
+            <div className="flex items-center gap-3">
               <MonitorPlay size={20} className="shrink-0" />
-              <span className="font-medium text-sm uppercase tracking-wider opacity-70">
+              <span className="text-2xs font-semibold tracking-label uppercase">
                 Đã đăng ký
               </span>
             </div>
             {isRegisteredOpen ? (
-              <ChevronUp size={16} />
+              <ChevronUp size={14} />
             ) : (
-              <ChevronDown size={16} />
+              <ChevronDown size={14} />
             )}
           </div>
 
-          {/* --- DANH SÁCH LỚP HỌC --- */}
           {isRegisteredOpen && (
-            <ul className="py-1">
+            <ul className="mt-1 flex flex-col gap-0.5">
               {isLoading ? (
-                <li className="px-8 py-3 text-sm text-gray-400 animate-pulse">
-                  Đang tải dữ liệu...
+                <li className="px-10 py-3">
+                  <div className="skeleton h-4 w-full opacity-20"></div>
                 </li>
               ) : myClasses.length > 0 ? (
                 myClasses.map((item) => (
@@ -75,11 +69,7 @@ export const Sidebar = () => { // Không dùng Props isOpen nữa
                     <NavLink to={`/class/${item.id}`}>
                       {({ isActive }: { isActive: boolean }) => (
                         <div
-                          className={`flex items-center justify-between px-8 py-3 cursor-pointer transition-all group border-r-4 ${
-                            isActive
-                              ? "bg-indigo-50 text-indigo-700 border-indigo-600 font-bold"
-                              : "text-gray-600 hover:bg-gray-200 border-transparent"
-                          }`}
+                          className={`sidebar-item ${isActive ? "active" : ""}`}
                         >
                           <div className="flex items-center gap-3 truncate">
                             <Users
@@ -120,8 +110,8 @@ export const Sidebar = () => { // Không dùng Props isOpen nữa
                   </li>
                 ))
               ) : (
-                <li className="px-10 py-4 text-xs text-gray-400 italic bg-gray-50/50">
-                  Bạn chưa tham gia lớp nào
+                <li className="px-10 py-4 text-2xs text-sidebar-text opacity-50 italic">
+                  Chưa tham gia lớp nào
                 </li>
               )}
             </ul>
