@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { useEmulation } from "@features/emulation/hooks/useEmulation";
 import { FilterSelect } from "@features/emulation/pages/FilterSelect";
 import { RankingTable } from "@features/emulation/pages/RankingTable";
+import { HistoryTable } from "@features/emulation/pages/HistoryTable";
 // import { useAuth } from "@features/auth";
 import { classDiagramAPI } from "@features/classDiagram/api";
 import { emulationAPI } from "@features/emulation/api"; // Giả sử bạn có API này
@@ -16,6 +17,15 @@ export const Emulation = () => {
 
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [members, setMembers] = useState<{ id: string; name: string }[]>([]);
+
+  const [showPointModal, setShowPointModal] = useState(false);
+  const [pointForm, setPointForm] = useState<{
+    content: string;
+    points: number | string;
+  }>({
+    content: "",
+    points: 0,
+  });
 
   // Kiểm tra quyền chỉnh sửa (Ví dụ: role là 'teacher' hoặc 'admin')
   // const { user } = useAuth();
@@ -58,7 +68,6 @@ export const Emulation = () => {
       return;
 
     try {
-      // Giả sử API của bạn là removeMemberFromTeam
       await emulationAPI.removeMemberFromTeam(
         classId!,
         selectedTeam,
@@ -69,6 +78,32 @@ export const Emulation = () => {
     } catch (error) {
       console.error("Lỗi khi xóa thành viên:", error);
       alert("Lỗi khi xóa thành viên");
+    }
+  };
+
+  // 2. Hàm xử lý điểm
+  const handleSubmitPoint = async () => {
+    const pointsToSubmit = Number(pointForm.points);
+    if (!pointForm.content) return alert("Vui lòng nhập nội dung!");
+
+    if (isNaN(pointsToSubmit) || pointsToSubmit === 0) {
+      return alert("Số điểm không hợp lệ!");
+    }
+
+    try {
+      await emulationAPI.addPoints(
+        classId!,
+        selectedTeam,
+        pointForm.content,
+        pointsToSubmit,
+      );
+      alert(`Đã cập nhật điểm cho Tổ ${selectedTeam}`);
+      setShowPointModal(false);
+      setPointForm({ content: "", points: 0 }); // Reset form
+      refresh(); // Load lại lịch sử và bảng xếp hạng
+    } catch (error) {
+      console.error("Lỗi nhập điểm", error);
+      alert("Lỗi nhập điểm");
     }
   };
 
@@ -158,12 +193,13 @@ export const Emulation = () => {
                     {/* Nút xóa thành viên khỏi tổ */}
                     {canEdit && (
                       <button
-                        onClick={() =>
-                          handleRemoveMember(member.id, member.name)
-                        }
-                        className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveMember(member.id, member.name);
+                        }}
+                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-slate-400 hover:text-red-500 p-2 transition-all"
                       >
-                        <X size={12} />
+                        <X size={14} />{" "}
                       </button>
                     )}
                   </div>
@@ -188,19 +224,12 @@ export const Emulation = () => {
         </div>
 
         {/* LỊCH SỬ THAY ĐỔI */}
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[300px]">
-          <div className="p-4 border-b bg-slate-50/50 flex justify-between items-center">
-            <h3 className="text-sm font-bold italic">
-              Lịch sử thay đổi - Tổ {selectedTeam}
-            </h3>
-            {canEdit && (
-              <button className="text-[11px] font-bold text-indigo-600 hover:underline">
-                + Ghi nhận điểm
-              </button>
-            )}
-          </div>
-          {/* Render table history ở đây */}
-        </div>
+        <HistoryTable
+          selectedTeam={selectedTeam}
+          history={data.history}
+          canEdit={canEdit}
+          onOpenPointModal={() => setShowPointModal(true)}
+        />
       </div>
 
       <RankingTable title="Xếp hạng tuần" rows={data.weeklyRanking} />
@@ -248,6 +277,81 @@ export const Emulation = () => {
                   Không có học sinh khả dụng
                 </p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL GHI ĐIỂM */}
+      {showPointModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <span className="w-2 h-5 bg-indigo-600 rounded-full"></span>
+              Ghi điểm Tổ {selectedTeam}
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[11px] font-black text-slate-400 uppercase mb-1 block">
+                  Nội dung
+                </label>
+                <input
+                  type="text"
+                  className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  placeholder="Ví dụ: Phát biểu xây dựng bài..."
+                  value={pointForm.content}
+                  onChange={(e) =>
+                    setPointForm({ ...pointForm, content: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-black text-slate-400 uppercase mb-1 block">
+                  Số điểm (+ cộng, - trừ)
+                </label>
+                <input
+                  type="text" // Dùng text để kiểm soát chuỗi "-" tốt hơn trên mobile
+                  inputMode="text"
+                  className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  placeholder="Ví dụ: 10 hoặc -5"
+                  // Hiển thị: Nếu là 0 thì trống, nếu không thì hiện giá trị đang có (số hoặc chuỗi "-")
+                  value={pointForm.points === 0 ? "" : pointForm.points}
+                  onChange={(e) => {
+                    const val = e.target.value;
+
+                    // Logic chặn người dùng nhập chữ, chỉ cho phép số và một dấu "-" duy nhất
+                    if (val === "" || val === "-" || !isNaN(Number(val))) {
+                      setPointForm({
+                        ...pointForm,
+                        points: val, // Lưu trực tiếp string vào state, không cần Number() ở đây
+                      });
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSubmitPoint();
+                  }}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowPointModal(false);
+                    setPointForm({ content: "", points: 0 });
+                  }}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleSubmitPoint}
+                  className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all"
+                >
+                  Xác nhận
+                </button>
+              </div>
             </div>
           </div>
         </div>
