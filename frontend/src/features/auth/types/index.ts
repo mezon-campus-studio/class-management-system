@@ -13,3 +13,15 @@ export interface AuthResponse {
     accessToken: string;
     refreshToken: string;
 }
+
+export interface RegisterResponse {
+    username: string;
+}
+
+export interface SignOutRequest {
+    accessToken: string;
+}
+
+export interface SignOutResponse {
+    success: boolean;
+}
