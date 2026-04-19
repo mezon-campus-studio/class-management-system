@@ -12,7 +12,8 @@ import {
 import { useHome } from "@features/home/hooks/useHome";
 import { useUIStore } from "@app/store"; // Import store mới
 
-export const Sidebar = () => { // Không dùng Props isOpen nữa
+export const Sidebar = () => {
+  // Không dùng Props isOpen nữa
   const [isRegisteredOpen, setIsRegisteredOpen] = useState(true);
   const { classes, isLoading } = useHome();
   const { isSidebarOpen } = useUIStore(); // Lấy trạng thái từ Store
@@ -29,12 +30,12 @@ export const Sidebar = () => { // Không dùng Props isOpen nữa
       <nav className="flex-1 py-2 overflow-y-auto p-2.5">
         <NavLink to="/" end>
           {({ isActive }: { isActive: boolean }) => (
-            <div
-              className={`sidebar-item ${isActive ? "active" : ""}`}
-            >
+            <div className={`sidebar-item ${isActive ? "active" : ""}`}>
               <Home size={20} className="shrink-0" />
               <span className="font-medium">Trang chủ</span>
-              {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-accent"></span>}
+              {isActive && (
+                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-accent"></span>
+              )}
             </div>
           )}
         </NavLink>
