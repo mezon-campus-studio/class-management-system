@@ -123,7 +123,7 @@ export const Header = () => {
           >
             {isAuthenticated ? (
               <span className="text-warm-text font-bold text-sm">
-                {user?.displayName.charAt(0).toUpperCase()}
+                {user?.displayName?.charAt(0).toUpperCase()}
               </span>
             ) : (
               <User size={20} className="text-ink-3" />

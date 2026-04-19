@@ -12,9 +12,9 @@ import org.hibernate.annotations.Immutable;
 
 @Entity
 @Immutable
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
 @NoArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "permissions")
 public class Permission {
 	@Id

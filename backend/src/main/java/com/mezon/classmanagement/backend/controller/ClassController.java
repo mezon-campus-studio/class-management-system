@@ -14,8 +14,8 @@ import java.util.List;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-@RestController
 @RequestMapping("/api/classes")
+@RestController
 public class ClassController {
 
 	ClassService classService;
@@ -45,6 +45,42 @@ public class ClassController {
 				.build();
 	}
 	//xóa lớp
+	@DeleteMapping("/{classId}")
+	public ResponseDTO<String> deleteClass(@PathVariable Long classId) {
+		classService.deleteClass(classId);
+
+		return ResponseDTO.<String>builder()
+				.success(true)
+				.message("Class deleted successfully")
+				.data(null)
+				.build();
+	}
+
+	@PostMapping
+	public ResponseDTO<String> createClass(@RequestBody CreateClassRequestDto request) {
+		classService.createClass(request);
+
+		return ResponseDTO.<String>builder()
+				.success(true)
+				.message("Class created successfully")
+				.data(null)
+				.build();
+	}
+
+	@PatchMapping("/{classId}")
+	public ResponseDTO<String> updateClass(
+			@PathVariable Long classId,
+			@RequestBody UpdateClassRequestDto request
+	) {
+		classService.updateClass(classId, request);
+
+		return ResponseDTO.<String>builder()
+				.success(true)
+				.message("Class updated successfully")
+				.data(null)
+				.build();
+	}
+
 	@DeleteMapping("/{classId}")
 	public ResponseDTO<String> deleteClass(@PathVariable Long classId) {
 		classService.deleteClass(classId);

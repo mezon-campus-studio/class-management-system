@@ -7,10 +7,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Setter
 @Getter
 @Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public final class SignOutResponseDto {
     @JsonProperty(value = "success")
     boolean success;

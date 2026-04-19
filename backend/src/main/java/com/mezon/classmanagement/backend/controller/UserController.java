@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-@RestController
 @RequestMapping("/api/users")
+@RestController
 public class UserController {
 
 	UserService userService;

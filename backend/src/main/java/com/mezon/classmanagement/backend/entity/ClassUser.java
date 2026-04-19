@@ -27,12 +27,12 @@ import java.time.Instant;
 import java.util.List;
 
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Setter
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "class_users", uniqueConstraints = @UniqueConstraint(columnNames = {"class_id", "user_id"}))
 public class ClassUser {
 	@Id
@@ -61,7 +61,7 @@ public class ClassUser {
 
 	@JdbcTypeCode(SqlTypes.JSON)
 	@Column(columnDefinition = "json", nullable = false)
-	List<String> permission_codes;
+	List<String> permissionCodes;
 
 	@Column(name = "joined_at", nullable = false, insertable = false, updatable = false)
 	Instant joinedAt;
