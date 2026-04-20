@@ -1,7 +1,7 @@
+import { useAuthInternal } from '@features/auth/hooks/useAuthInternal';
+import { useAuthStore } from '@features/auth/hooks/useAuthStore';
 import { useCallback } from 'react';
-import { useAuthStore } from './useAuthStore';
-import type { LoginRequest, RegisterRequest } from '@features/auth/types';
-import { useAuthInternal } from './useAuthInternal';
+
 
 /**
  * useAuth: Public hook để sử dụng ở các component bên ngoài feature auth.
@@ -11,12 +11,12 @@ export const useAuth = () => {
     const { user, isAuthenticated } = useAuthStore();
     const { login, signup, logout, isLoading, error } = useAuthInternal();
 
-    const handleLogin = useCallback(async (data: LoginRequest) => {
-        return await login(data);
+    const handleLogin = useCallback(async (username: string, password: string) => {
+        return await login({ username, password });
     }, [login]);
 
-    const handleSignup = useCallback(async (data: RegisterRequest) => {
-        return await signup(data);
+    const handleSignup = useCallback(async (username: string, password: string, displayname: string) => {
+        return await signup(username, password, displayname);
     }, [signup]);
 
     return {
