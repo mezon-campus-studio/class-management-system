@@ -60,7 +60,7 @@ public class ClassUser {
 	}
 
 	@JdbcTypeCode(SqlTypes.JSON)
-	@Column(columnDefinition = "json", nullable = false)
+	@Column(columnDefinition = "json", nullable = true)
 	List<String> permissionCodes;
 
 	@Column(name = "joined_at", nullable = false, insertable = false, updatable = false)
