@@ -1,4 +1,4 @@
-package com.mezon.classmanagement.backend.dto.request;
+package com.mezon.classmanagement.backend.dto.signup;
 
 import lombok.AccessLevel;
 import lombok.Getter;

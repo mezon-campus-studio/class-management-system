@@ -1,6 +1,8 @@
 package com.mezon.classmanagement.backend.controller;
 
-import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
+import com.mezon.classmanagement.backend.dto.ResponseDTO;
+import com.mezon.classmanagement.backend.entity.Permission;
+import com.mezon.classmanagement.backend.service.PermissionService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -16,9 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/test")
 public class TestController {
 
+	PermissionService permissionService;
+
 	@GetMapping("/submit")
-	@PreAuthorize("@classSecurity.hasAccess(#classId, 'SUBMIT_ASSIGNMENT')")
+	@PreAuthorize("@ClassPermission.manageActivity(#classId)")
 	public ResponseDTO<String> submit(@RequestHeader Long classId) {
+		for (Permission p : permissionService.getPermissions()) {
+			System.out.println(p.getLabel());
+		}
 		return ResponseDTO.<String>builder()
 				.success(true)
 				.message("submit")

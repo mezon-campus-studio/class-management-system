@@ -1,8 +1,7 @@
 package com.mezon.classmanagement.backend.service;
 
-import com.mezon.classmanagement.backend.dto.response.CreateClassRequestDto;
-import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
-import com.mezon.classmanagement.backend.dto.response.UpdateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.clazz.create.CreateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.clazz.update.UpdateClassRequestDto;
 import com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto;
 import com.mezon.classmanagement.backend.repository.ClassRepository;
 import com.mezon.classmanagement.backend.repository.UserRepository;
