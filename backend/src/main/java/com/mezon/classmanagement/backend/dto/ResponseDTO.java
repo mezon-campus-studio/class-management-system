@@ -1,4 +1,4 @@
-package com.mezon.classmanagement.backend.dto.response;
+package com.mezon.classmanagement.backend.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;

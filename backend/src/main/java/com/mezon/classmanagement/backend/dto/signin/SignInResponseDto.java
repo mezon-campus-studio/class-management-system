@@ -1,4 +1,4 @@
-package com.mezon.classmanagement.backend.dto.response;
+package com.mezon.classmanagement.backend.dto.signin;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;

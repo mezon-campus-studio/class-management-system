@@ -3,7 +3,7 @@ package com.mezon.classmanagement.backend.component.exceptionhandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
+import com.mezon.classmanagement.backend.dto.ResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.NonNull;

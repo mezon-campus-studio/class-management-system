@@ -1,7 +1,7 @@
 package com.mezon.classmanagement.backend.controller;
 
 import com.mezon.classmanagement.backend.dto.response.child.UserResponseDto;
-import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
+import com.mezon.classmanagement.backend.dto.ResponseDTO;
 import com.mezon.classmanagement.backend.service.UserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
