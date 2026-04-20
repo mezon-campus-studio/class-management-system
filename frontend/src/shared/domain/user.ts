@@ -13,6 +13,7 @@ export interface User {
     phone: string | null;
     email: string | null;
     joinedAt: Timestamp;
+    token?: string;
 }
 
 // Dùng cho profile của chính người dùng đang đăng nhập

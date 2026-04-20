@@ -11,9 +11,11 @@ export interface ClassItems {
 
 export interface ClassResponse {
   id: string;
-  className: string;
+  name: string;       
   description?: string;
-  classCode: string;
-  status: ClassPrivacy;
+  code: string;         
+  privacy: ClassPrivacy; 
+  owner_username: string;
+  avatar_url: string;
   createdAt?: string;
 }

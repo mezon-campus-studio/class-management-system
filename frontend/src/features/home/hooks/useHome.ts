@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { homeAPI } from "@features/home/api";
-import type { ClassItems } from "@features/home/types";
+import type { ClassItems, ClassResponse } from "@features/home/types";
 import { useAuth } from "@features/auth";
+import { ClassPrivacy } from "@shared/domain/enums";
 
 export const useHome = () => {
   const { user } = useAuth();
@@ -33,34 +34,30 @@ export const useHome = () => {
   }) => {
     try {
       setIsCreating(true);
-      const payload = {
-        name: formData.className,    
+      const payload : Omit<ClassResponse, "id"> = {
+        name: formData.className,
         description: formData.description,
-        privacy: formData.status,     
+        privacy: formData.status as ClassPrivacy,
         code: `CL${Math.floor(1000 + Math.random() * 9000)}`,
-        ownerUsername: user?.username || "hao_dang", 
-        avatar_url: ""                 
+        owner_username: user?.username || "alice",
+        avatar_url: "",
       };
 
       const res = await homeAPI.createClass(payload);
 
       if (res.success) {
         console.log("Tạo lớp thành công!");
-        await loadData(); // Tải lại danh sách để Sidebar cập nhật ngay
+        await loadData();
       } else {
         throw new Error(res.message || "Tạo lớp thất bại");
       }
     } catch (err) {
       console.error("Lỗi khi tạo lớp:", err);
-      throw err; // Ném lỗi để Modal hiển thị thông báo nếu cần
+      throw err; 
     } finally {
       setIsCreating(false);
     }
   };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   return {
     classes,

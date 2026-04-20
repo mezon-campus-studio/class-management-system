@@ -34,25 +34,72 @@ export const homeAPI = {
     */
   },
 
-  createClass: async (data: {
-    name: string;
-    description: string;
-    privacy: string;
-    ownerUsername: string;
-    code: string;
-    avatar_url: string;
-  }): Promise<ResponseDTO<ClassResponse>> => {
-    
-    // 1. Lấy token ra (Hào kiểm tra xem team lưu tên là 'token' hay 'access_token')
-    const token = localStorage.getItem("auth-storage"); 
+  createClass: async (
+    data: Omit<ClassResponse, "id">,
+  ): Promise<ResponseDTO<ClassResponse>> => {
+    const authStorage = localStorage.getItem("auth-storage");
+    let token = null;
 
-    console.log("Token hiện tại:", token);
+    if (authStorage) {
+      try {
+        const parsed = JSON.parse(authStorage);
+        token = parsed.state.user?.token || parsed.state.user?.accessToken;
+      } catch (e) {
+        console.error("Lỗi parse JSON auth-storage", e);
+      }
+    }
 
-    // 2. Gửi POST kèm theo cấu hình Header
+    console.log("Token thực sự gửi đi:", token); // Nếu cái này hiện null là do bước Login chưa lưu token vào User
+
     return apiClient.post<ResponseDTO<ClassResponse>>("/classes", data, {
       headers: {
-        Authorization: `Bearer ${token}`, // Gửi "chìa khóa" cho Backend
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
     });
+  },
+
+  getClassByCode: async (code: string): Promise<ResponseDTO<ClassItems>> => {
+    const authStorage = localStorage.getItem("auth-storage");
+    let token = null;
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      token = parsed.state.user?.token || parsed.state.user?.accessToken;
+    }
+
+    // Gọi API tìm thông tin lớp bằng mã code
+    return apiClient.get<ResponseDTO<ClassItems>>(`/classes/code/${code}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  joinClass: async (
+    classId: string,
+    code?: string,
+  ): Promise<ResponseDTO<string>> => {
+    const authStorage = localStorage.getItem("auth-storage");
+    let token = null;
+
+    if (authStorage) {
+      try {
+        const parsed = JSON.parse(authStorage);
+        token = parsed.state.user?.token || parsed.state.user?.accessToken;
+      } catch (e) {
+        console.error("Lỗi parse JSON auth-storage", e);
+      }
+    }
+
+    return apiClient.post<ResponseDTO<string>>(
+      `/classes/${classId}/join`,
+      { code: code },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
   },
 };
