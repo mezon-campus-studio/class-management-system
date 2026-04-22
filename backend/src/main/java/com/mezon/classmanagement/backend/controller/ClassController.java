@@ -5,12 +5,10 @@ import com.mezon.classmanagement.backend.dto.clazz.update.UpdateClassRequestDto;
 import com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto;
 import com.mezon.classmanagement.backend.dto.ResponseDTO;
 import com.mezon.classmanagement.backend.service.ClassService;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor

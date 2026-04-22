@@ -5,13 +5,10 @@ import com.mezon.classmanagement.backend.dto.clazz.update.UpdateClassRequestDto;
 import com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto;
 import com.mezon.classmanagement.backend.repository.ClassRepository;
 import com.mezon.classmanagement.backend.repository.UserRepository;
-import org.springframework.transaction.annotation.Transactional;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -84,4 +81,5 @@ public class ClassService {
         return classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class not found"));
     }
+    
 }

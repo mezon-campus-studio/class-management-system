@@ -5,6 +5,8 @@ import { useHome } from "@features/home/hooks/useHome";
 import { useAuth } from "@features/auth";
 import { ChevronRight } from "lucide-react";
 import { useUIStore } from "@app/store";
+import { CreateClassModal } from "@features/home/pages/CreateClass";
+import { JoinClassModal } from "@features/home/pages/JoinClass";
 
 export const Header = () => {
   const navigate = useNavigate();
@@ -17,6 +19,8 @@ export const Header = () => {
   // 1. Lấy danh sách lớp từ useHome
   const { classes } = useHome();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
   // 2. Tìm lớp hiện tại dựa trên classId từ URL
   const currentClass = classes.find((item) => item.id === classId);
@@ -100,12 +104,18 @@ export const Header = () => {
       <div className="flex items-center justify-end gap-2 sm:gap-3 flex-1">
         {isAuthenticated && (
           <>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg font-bold transition-colors text-sm border border-transparent hover:border-indigo-100">
+            <button
+              onClick={() => setIsJoinModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg font-bold transition-colors text-sm border border-transparent hover:border-indigo-100"
+            >
               <LogIn size={18} />
               Tham gia
             </button>
 
-            <button className="btn btn-warm btn-sm">
+            <button
+              className="btn btn-warm btn-sm"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
               <Plus size={18} />
               <span className="hidden lg:inline">Tạo lớp</span>
             </button>
@@ -151,6 +161,19 @@ export const Header = () => {
           )}
         </div>
       </div>
+
+      <CreateClassModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      <JoinClassModal
+        isOpen={isJoinModalOpen}
+        onClose={() => setIsJoinModalOpen(false)}
+        onSuccess={() => {
+          console.log("Tham gia lớp thành công, đang cập nhật dữ liệu...");
+        }}
+      />
     </header>
   );
 };

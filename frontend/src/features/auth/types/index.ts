@@ -5,13 +5,13 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
     username: string;
-    displayName: string;
+    display_name: string;
     password?: string;
 }
 
 export interface AuthResponse {
-    accessToken: string;
-    refreshToken: string;
+    access_token: string;
+    refresh_token: string;
 }
 
 export interface RegisterResponse {
