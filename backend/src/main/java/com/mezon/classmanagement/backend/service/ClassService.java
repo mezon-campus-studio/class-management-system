@@ -14,10 +14,10 @@ import com.mezon.classmanagement.backend.mapper.ClassMapper;
 import com.mezon.classmanagement.backend.repository.ClassRepository;
 import com.mezon.classmanagement.backend.repository.ClassUserRepository;
 import com.mezon.classmanagement.backend.repository.UserRepository;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -131,4 +131,9 @@ public class ClassService {
         return classRepository.getClassMembers(classId);
     }
 
+    private com.mezon.classmanagement.backend.entity.Class findClassById(Long classId) {
+        return classRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Class not found"));
+    }
+    
 }

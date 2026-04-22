@@ -1,9 +1,9 @@
 package com.mezon.classmanagement.backend.controller;
 
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.mezon.classmanagement.backend.dto.ResponseDTO;
 import com.mezon.classmanagement.backend.dto.clazz.ClassDto;
 import com.mezon.classmanagement.backend.dto.clazz.create.CreateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.clazz.update.UpdateClassRequestDto;
 import com.mezon.classmanagement.backend.dto.joinclass.JoinClassDto;
 import com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto;
 import com.mezon.classmanagement.backend.service.AuthService;
@@ -49,8 +49,8 @@ public class ClassController {
 	}
 
 	@PatchMapping
-	public ResponseDTO<ClassDto> updateClass(@RequestBody ClassDto request) {
-		ClassDto response = classService.updateClass(request);
+	public ResponseDTO<ClassDto> updateClass(@RequestBody UpdateClassRequestDto request) {
+		ClassDto response = classService.updateClass(1L, request);
 
 		return ResponseDTO.<ClassDto>builder()
 				.success(true)

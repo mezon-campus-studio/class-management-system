@@ -5,14 +5,15 @@ import type { UserType } from "@shared/domain/enums";
 import type { ID, Timestamp } from "@shared/utils/common";
 
 export interface User {
-    id: ID;
-    type: UserType;
-    username: string;
-    displayName: string | null;
-    avatarUrl: string | null;
-    phone: string | null;
-    email: string | null;
-    joinedAt: Timestamp;
+    id?: ID;
+    type?: UserType;
+    username?: string;
+    displayName?: string | null;
+    avatarUrl?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    joinedAt?: Timestamp;
+    token?: string;
 }
 
 // Dùng cho profile của chính người dùng đang đăng nhập

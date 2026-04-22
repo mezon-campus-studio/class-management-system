@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthInternal } from '@features/auth/hooks/useAuthInternal';
-import { User, AtSign, Briefcase } from 'lucide-react';
+import { User, AtSign } from 'lucide-react';
 
 export const RegisterPage = () => {
     const [formData, setFormData] = useState({
@@ -16,7 +16,7 @@ export const RegisterPage = () => {
         e.preventDefault();
         if (!formData.username.trim() || !formData.displayName.trim()) return;
         
-        const success = await signup(formData);
+        const success = await signup(formData.username, formData.password, formData.displayName);
         if (success) {
             navigate('/');
         }
