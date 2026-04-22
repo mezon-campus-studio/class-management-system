@@ -7,12 +7,14 @@ import com.mezon.classmanagement.backend.constant.DateTimeConstant;
 import com.mezon.classmanagement.backend.entity.Class;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Setter
 @Getter
 public final class ClassDto {
 	@JsonProperty(value = "id")

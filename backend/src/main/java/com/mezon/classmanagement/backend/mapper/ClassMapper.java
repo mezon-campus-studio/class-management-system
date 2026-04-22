@@ -28,7 +28,6 @@ public interface ClassMapper {
 	 * Map Entity to Response
 	 */
 
-	@Mapping(source = "owner.id", target = "ownerUserId")
 	@Mappings({
 			@Mapping(source = "owner.id", target = "ownerUserId"),
 			@Mapping(target = "id", ignore = true)
