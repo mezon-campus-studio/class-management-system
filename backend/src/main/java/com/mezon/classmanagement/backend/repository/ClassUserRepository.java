@@ -8,5 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface ClassUserRepository extends JpaRepository<ClassUser, Long> {
-	Optional<ClassUser> findByClazzIdAndUserId(Long classId, Long userId);
+	Optional<ClassUser> findByClazz_IdAndUser_Id(Long classId, Long userId);
+	boolean existsByClazz_IdAndUser_Id(Long classId, Long userId);
 }

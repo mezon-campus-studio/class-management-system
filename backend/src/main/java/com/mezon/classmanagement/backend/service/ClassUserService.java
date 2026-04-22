@@ -17,7 +17,7 @@ public class ClassUserService {
 
 	public ClassUser findByClassIdAndUserId(Long classId, Long userId) {
 		return classUserRepository
-				.findByClazzIdAndUserId(classId, userId)
+				.findByClazz_IdAndUser_Id(classId, userId)
 				.orElseThrow(() -> new GlobalException(GlobalException.Type.NOT_FOUND, "Class user not found"));
 	}
 
