@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ClassRepository extends JpaRepository<Class, Long> {
@@ -44,5 +45,7 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 		WHERE owner.id = :userId
 	""")
 	List<JoinedClassResponseDto> getJoinedClasses(Long userId);
+
+	Optional<Class> findByIdAndOwner_Id(Long classId, Long ownerUserId);
 
 }

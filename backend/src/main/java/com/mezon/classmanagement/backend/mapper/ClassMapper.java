@@ -2,10 +2,14 @@ package com.mezon.classmanagement.backend.mapper;
 
 import com.mezon.classmanagement.backend.dto.clazz.ClassDto;
 import com.mezon.classmanagement.backend.dto.clazz.create.CreateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.clazz.update.UpdateClassRequestDto;
 import com.mezon.classmanagement.backend.entity.Class;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.Mappings;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(componentModel = "spring")
 public interface ClassMapper {
@@ -15,12 +19,10 @@ public interface ClassMapper {
 	 */
 
 	Class toClass(CreateClassRequestDto request);
+	Class toClass(UpdateClassRequestDto request);
 
-	@Mappings({
-			@Mapping(target = "owner.id", ignore = true),
-			@Mapping(target = "createdAt", ignore = true)
-	})
-	Class toClassFromUpdateClassRequestDto(ClassDto request);
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+	void updateClassFromRequestDto(UpdateClassRequestDto request, @MappingTarget Class entity);
 
 	/**
 	 * Map Entity to Response

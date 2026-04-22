@@ -29,6 +29,10 @@ public class ClassUserService {
 		return ClassUser.Role.CLASS_MEMBER.name().equals(classUser.getRole().name());
 	}
 
+	public boolean isClassUser(Long classId, Long userId) {
+		return classUserRepository.existsByClazz_IdAndUser_Id(classId, userId);
+	}
+
 	public boolean hasPermission(ClassUser classUser, String permission) {
 		return classUser.getPermissionCodes() != null && classUser.getPermissionCodes().contains(permission);
 	}

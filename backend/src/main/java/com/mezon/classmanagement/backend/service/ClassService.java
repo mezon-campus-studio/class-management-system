@@ -2,6 +2,7 @@ package com.mezon.classmanagement.backend.service;
 
 import com.mezon.classmanagement.backend.dto.clazz.ClassDto;
 import com.mezon.classmanagement.backend.dto.clazz.create.CreateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.clazz.update.UpdateClassRequestDto;
 import com.mezon.classmanagement.backend.dto.joinclass.JoinClassDto;
 import com.mezon.classmanagement.backend.dto.joinedclass.JoinedClassResponseDto;
 import com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto;
@@ -33,6 +34,7 @@ public class ClassService {
     ClassUserRepository classUserRepository;
     AuthService authService;
     JwtService jwtService;
+    ClassUserService classUserService;
 
     @Transactional
     public ClassDto createClass(Long ownerUserId, CreateClassRequestDto request) {
@@ -53,23 +55,21 @@ public class ClassService {
     }
 
     @Transactional
-    public ClassDto updateClass(ClassDto request) {
+    public ClassDto updateClass(Long currentUserId, UpdateClassRequestDto request) {
         Class currentClass = classRepository
                 .findById(request.getId())
                 .orElseThrow(() -> new GlobalException(GlobalException.Type.NOT_FOUND, "Class not found"));
 
-        if (!userRepository.existsById(currentClass.getOwner().getId())) {
+        if (!userRepository.existsById(currentUserId)) {
             throw new GlobalException(GlobalException.Type.NOT_FOUND, "User not found");
         }
+        if (!classUserService.isClassUser(request.getId(), currentUserId)) {
+            throw new GlobalException(GlobalException.Type.NOT_FOUND, "Class user not found");
+        }
 
-        Class updatedClass = classMapper.toClassFromUpdateClassRequestDto(request);
-        updatedClass.setOwner(
-                User.builder()
-                        .id(currentClass.getOwner().getId())
-                        .build()
-        );
+        classMapper.updateClassFromRequestDto(request, currentClass);
 
-        Class responseClass = classRepository.save(updatedClass);
+        Class responseClass = classRepository.save(currentClass);
 
         return classMapper.toUpdateClassResponseDto(responseClass);
     }
