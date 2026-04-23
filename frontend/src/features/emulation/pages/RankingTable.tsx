@@ -25,13 +25,13 @@ export const RankingTable = ({ title, rows, isMonthly }: RankingTableProps) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="p-4 border-b border-slate-50 bg-white">
-        <h3 className="text-sm font-bold text-slate-800 italic">{title}</h3>
+    <div className="bg-surface rounded-2xl border border-rule shadow-sm overflow-hidden">
+      <div className="p-4 border-b border-rule bg-surface">
+        <h3 className="text-sm font-bold text-ink-1 italic">{title}</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] tracking-wider">
+          <thead className="bg-surface-2 text-ink-3 font-bold uppercase text-[11px] tracking-wider">
             <tr>
               <th className="px-6 py-3 text-center w-20">Hạng</th>
               {isMonthly &&
@@ -45,11 +45,11 @@ export const RankingTable = ({ title, rows, isMonthly }: RankingTableProps) => {
               <th className="px-6 py-3 text-right">Điểm tổng</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-rule">
             {rows.map((row) => (
               <tr
                 key={row.teamId}
-                className="hover:bg-slate-50/50 transition-colors"
+                className="hover:bg-surface-2 transition-colors"
               >
                 <td className="px-6 py-4">
                   <div className="flex justify-center items-center">
@@ -60,7 +60,7 @@ export const RankingTable = ({ title, rows, isMonthly }: RankingTableProps) => {
                         className="w-8 h-8 md:w-9 md:h-9 object-contain"
                       />
                     ) : (
-                      <span className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-black text-slate-400 bg-slate-50 border border-slate-100">
+                      <span className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-black text-ink-3 bg-surface-2 border border-rule">
                         {row.rank}
                       </span>
                     )}
@@ -68,26 +68,26 @@ export const RankingTable = ({ title, rows, isMonthly }: RankingTableProps) => {
                 </td>
                 {isMonthly && row.weeks && (
                   <>
-                    <td className="px-4 py-4 text-center text-slate-500 font-medium">
+                    <td className="px-4 py-4 text-center text-ink-3 font-medium">
                       {row.weeks.t1}
                     </td>
-                    <td className="px-4 py-4 text-center text-slate-500 font-medium">
+                    <td className="px-4 py-4 text-center text-ink-3 font-medium">
                       {row.weeks.t2}
                     </td>
-                    <td className="px-4 py-4 text-center text-slate-500 font-medium">
+                    <td className="px-4 py-4 text-center text-ink-3 font-medium">
                       {row.weeks.t3}
                     </td>
-                    <td className="px-4 py-4 text-center text-slate-500 font-medium">
+                    <td className="px-4 py-4 text-center text-ink-3 font-medium">
                       {row.weeks.t4}
                     </td>
                   </>
                 )}
                 {/* CHỈNH Ở ĐÂY: Thêm text-center để nội dung Tổ nằm giữa */}
-                <td className="px-6 py-4 text-center font-bold text-slate-700">
+                <td className="px-6 py-4 text-center font-bold text-ink-1">
                   Tổ {row.teamId}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <span className="font-black text-indigo-600 text-base">
+                  <span className="font-black text-ink-blue-text text-base">
                     {row.points}
                   </span>
                 </td>

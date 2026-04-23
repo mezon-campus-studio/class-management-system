@@ -79,7 +79,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
                     {step === 'QR' && (
                         <div className="text-center space-y-4">
-                            <div className="bg-white p-4 border border-rule rounded-lg inline-block">
+                            <div className="bg-surface p-4 border border-rule rounded-lg inline-block">
                                 <img src={qrUrl} alt="QR Code" className="w-64 h-64 object-contain" />
                             </div>
                             <div className="text-xs text-ink-2">

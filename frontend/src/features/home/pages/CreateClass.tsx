@@ -44,12 +44,12 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ isOpen, onCl
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 animate-scale-in">
-        <h2 className="text-xl font-bold mb-4 font-serif text-gray-800">Tạo lớp học mới</h2>
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-md p-6 animate-scale-in">
+        <h2 className="text-xl font-bold mb-4 font-serif text-ink-1">Tạo lớp học mới</h2>
         
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-gray-700">Tên lớp</label>
+            <label className="text-sm font-bold text-ink-2">Tên lớp</label>
             <input 
               type="text" 
               className="input-field" 
@@ -61,7 +61,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ isOpen, onCl
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-gray-700">Mô tả</label>
+            <label className="text-sm font-bold text-ink-2">Mô tả</label>
             <textarea 
               className="input-field min-h-[80px]" 
               placeholder="Nhập mô tả ngắn gọn..."
@@ -71,7 +71,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ isOpen, onCl
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-gray-700">Trạng thái</label>
+            <label className="text-sm font-bold text-ink-2">Trạng thái</label>
             <select 
               className="input-field"
               value={status}
@@ -85,7 +85,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ isOpen, onCl
           <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-rule">
             <button 
               type="button" 
-              className="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" 
+              className="px-4 py-2 text-ink-2 hover:bg-surface-2 rounded-lg transition-colors" 
               onClick={onClose} 
               disabled={isCreating}
             >
