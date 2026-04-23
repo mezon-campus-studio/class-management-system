@@ -8,6 +8,7 @@ import { LeavePage } from "@features/leave/pages/LeavePage";
 import { NotFoundPage } from "@features/error";
 import { ClassLayout } from "@shared/components/layout/ClassLayout";
 import { Emulation } from "@features/emulation/pages/Emulation"
+import { FundPage } from "@features/fund"
 
 /**
  * Global application router configuration using React Router
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
           { index: true, element: <ClassDiagram /> },
           { path: "nghiphep", element: <LeavePage /> },
           { path: "thidua", element: <Emulation /> },
+          { path: "quy", element: <FundPage /> },
         ],
       },
     ],
