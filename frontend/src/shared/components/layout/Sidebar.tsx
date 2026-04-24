@@ -23,7 +23,7 @@ export const Sidebar = () => {
 
   return (
     <aside
-      className={`bg-gray-100 border-r border-gray-300 flex flex-col fixed md:sticky top-[64px] z-20 h-[calc(100vh-64px)] w-64 transition-all duration-300 ease-in-out ${
+      className={`bg-sidebar-bg border-r border-sidebar-border flex flex-col fixed md:sticky top-[64px] z-20 h-[calc(100vh-64px)] w-64 transition-all duration-300 ease-in-out ${
         isSidebarOpen ? "translate-x-0" : "-translate-x-full md:-ml-64"
       }`}
     >
@@ -77,8 +77,8 @@ export const Sidebar = () => {
                               size={18}
                               className={`shrink-0 transition-colors ${
                                 isActive
-                                  ? "text-indigo-600"
-                                  : "text-gray-400 group-hover:text-indigo-600"
+                                  ? "text-sidebar-text-active"
+                                  : "text-sidebar-text group-hover:text-sidebar-text-active"
                               }`}
                             />
                             <span className="text-sm truncate leading-tight">
@@ -96,12 +96,12 @@ export const Sidebar = () => {
                             {item.status === "PUBLIC" ? (
                               <Globe
                                 size={12}
-                                className="text-green-500 opacity-60"
+                                className="text-ink-green-text opacity-60"
                               />
                             ) : (
                               <Lock
                                 size={12}
-                                className="text-amber-text opacity-80"
+                                className="text-ink-amber-text opacity-80"
                               />
                             )}
                           </div>

@@ -110,7 +110,7 @@ export const Emulation = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* THANH BỘ LỌC */}
-      <div className="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+      <div className="flex justify-between items-center bg-surface p-3 rounded-xl shadow-sm border border-rule">
         <div className="flex gap-4">
           <FilterSelect
             label="Tuần"
@@ -125,16 +125,16 @@ export const Emulation = () => {
             options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
           />
         </div>
-        <button className="bg-[#4CAF50] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm hover:opacity-90">
+        <button className="bg-ink-green-text text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm hover:opacity-90">
           nội quy
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* DANH SÁCH TỔ */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm h-fit">
+        <div className="bg-surface p-4 rounded-2xl border border-rule shadow-sm h-fit">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <p className="text-[10px] font-black text-ink-3 uppercase tracking-widest">
               Danh sách tổ
             </p>
 
@@ -142,14 +142,14 @@ export const Emulation = () => {
               <div className="flex gap-1">
                 <button
                   onClick={() => changeTeamCount(data.teamCount - 1)}
-                  className="p-1 hover:bg-red-50 text-red-500 rounded border border-red-100 transition-colors"
+                  className="p-1 hover:bg-ink-red-fill text-ink-red-text rounded border border-ink-red-border transition-colors"
                   title="Bớt 1 tổ"
                 >
                   <Minus size={12} />
                 </button>
                 <button
                   onClick={() => changeTeamCount(data.teamCount + 1)}
-                  className="p-1 hover:bg-green-50 text-green-500 rounded border border-green-100 transition-colors"
+                  className="p-1 hover:bg-ink-green-fill text-ink-green-text rounded border border-ink-green-border transition-colors"
                   title="Thêm 1 tổ"
                 >
                   <Plus size={12} />
@@ -166,8 +166,8 @@ export const Emulation = () => {
                 onClick={() => setSelectedTeam(i + 1)}
                 className={`py-2 rounded-xl text-sm font-bold border transition-all ${
                   selectedTeam === i + 1
-                    ? "bg-slate-100 border-slate-300 text-slate-900 shadow-inner"
-                    : "bg-white border-transparent text-slate-500 hover:bg-slate-50"
+                    ? "bg-surface-2 border-rule-md text-ink-1 shadow-inner"
+                    : "bg-surface border-transparent text-ink-2 hover:bg-surface-2"
                 }`}
               >
                 Tổ {i + 1}
@@ -176,8 +176,8 @@ export const Emulation = () => {
           </div>
 
           {/* PHẦN HIỂN THỊ THÀNH VIÊN TRONG TỔ (MỚI) */}
-          <div className="pt-4 border-t border-slate-50">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+          <div className="pt-4 border-t border-rule">
+            <p className="text-[10px] font-black text-ink-3 uppercase tracking-widest mb-3">
               Thành viên Tổ {selectedTeam}
             </p>
             <div className="space-y-2 min-h-[50px]">
@@ -187,7 +187,7 @@ export const Emulation = () => {
                     key={member.id}
                     className="flex items-center justify-between group"
                   >
-                    <span className="text-sm font-medium text-slate-700">
+                    <span className="text-sm font-medium text-ink-1">
                       {idx + 1}. {member.name}
                     </span>
                     {/* Nút xóa thành viên khỏi tổ */}
@@ -197,7 +197,7 @@ export const Emulation = () => {
                           e.stopPropagation();
                           handleRemoveMember(member.id, member.name);
                         }}
-                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-slate-400 hover:text-red-500 p-2 transition-all"
+                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-ink-3 hover:text-ink-red-text p-2 transition-all"
                       >
                         <X size={14} />{" "}
                       </button>
@@ -205,7 +205,7 @@ export const Emulation = () => {
                   </div>
                 ))
               ) : (
-                <p className="text-[11px] text-slate-400 italic">
+                <p className="text-[11px] text-ink-3 italic">
                   Chưa có thành viên
                 </p>
               )}
@@ -215,7 +215,7 @@ export const Emulation = () => {
           {canEdit && (
             <button
               onClick={handleOpenAddMember}
-              className="w-full mt-4 flex items-center justify-center gap-2 py-2 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition-all text-xs font-bold"
+              className="w-full mt-4 flex items-center justify-center gap-2 py-2 border-2 border-dashed border-rule rounded-xl text-ink-3 hover:border-ink-blue-border hover:text-ink-blue-text transition-all text-xs font-bold"
             >
               <UserPlus size={14} />
               Thêm TV vào Tổ {selectedTeam}
@@ -241,15 +241,15 @@ export const Emulation = () => {
 
       {/* MODAL */}
       {showMemberModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
-            <div className="p-4 border-b flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-slate-800 text-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-ink-1/40 backdrop-blur-sm p-4">
+          <div className="bg-surface rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+            <div className="p-4 border-b flex justify-between items-center bg-surface-2">
+              <h3 className="font-bold text-ink-1 text-sm">
                 Thêm học sinh vào Tổ {selectedTeam}
               </h3>
               <button
                 onClick={() => setShowMemberModal(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-ink-3 hover:text-ink-1"
               >
                 <X size={18} />
               </button>
@@ -261,19 +261,19 @@ export const Emulation = () => {
                   <div
                     key={m.id}
                     onClick={() => handleSelectMember(m.id, m.name)} // Click để thêm
-                    className="p-3 hover:bg-indigo-50 rounded-xl cursor-pointer flex justify-between items-center group transition-colors"
+                    className="p-3 hover:bg-ink-blue-fill rounded-xl cursor-pointer flex justify-between items-center group transition-colors"
                   >
-                    <span className="text-sm font-medium text-slate-700">
+                    <span className="text-sm font-medium text-ink-1">
                       {m.name}
                     </span>
                     <Plus
                       size={14}
-                      className="text-indigo-500 opacity-0 group-hover:opacity-100"
+                      className="text-ink-blue-text opacity-0 group-hover:opacity-100"
                     />
                   </div>
                 ))
               ) : (
-                <p className="text-center p-4 text-xs text-slate-400 italic">
+                <p className="text-center p-4 text-xs text-ink-3 italic">
                   Không có học sinh khả dụng
                 </p>
               )}
@@ -284,21 +284,21 @@ export const Emulation = () => {
 
       {/* MODAL GHI ĐIỂM */}
       {showPointModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <span className="w-2 h-5 bg-indigo-600 rounded-full"></span>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-ink-1/40 backdrop-blur-sm p-4">
+          <div className="bg-surface rounded-2xl w-full max-w-sm shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="font-bold text-ink-1 mb-4 flex items-center gap-2">
+              <span className="w-2 h-5 bg-ink-blue-text rounded-full"></span>
               Ghi điểm Tổ {selectedTeam}
             </h3>
 
             <div className="space-y-4">
               <div>
-                <label className="text-[11px] font-black text-slate-400 uppercase mb-1 block">
+                <label className="text-[11px] font-black text-ink-3 uppercase mb-1 block">
                   Nội dung
                 </label>
                 <input
                   type="text"
-                  className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full border border-rule rounded-xl p-3 text-sm focus:ring-2 focus:ring-ink-blue-text outline-none transition-all"
                   placeholder="Ví dụ: Phát biểu xây dựng bài..."
                   value={pointForm.content}
                   onChange={(e) =>
@@ -308,13 +308,13 @@ export const Emulation = () => {
               </div>
 
               <div>
-                <label className="text-[11px] font-black text-slate-400 uppercase mb-1 block">
+                <label className="text-[11px] font-black text-ink-3 uppercase mb-1 block">
                   Số điểm (+ cộng, - trừ)
                 </label>
                 <input
                   type="text" // Dùng text để kiểm soát chuỗi "-" tốt hơn trên mobile
                   inputMode="text"
-                  className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full border border-rule rounded-xl p-3 text-sm focus:ring-2 focus:ring-ink-blue-text outline-none transition-all"
                   placeholder="Ví dụ: 10 hoặc -5"
                   // Hiển thị: Nếu là 0 thì trống, nếu không thì hiện giá trị đang có (số hoặc chuỗi "-")
                   value={pointForm.points === 0 ? "" : pointForm.points}
@@ -341,13 +341,13 @@ export const Emulation = () => {
                     setShowPointModal(false);
                     setPointForm({ content: "", points: 0 });
                   }}
-                  className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-colors"
+                  className="flex-1 py-3 bg-surface-2 text-ink-2 rounded-xl font-bold text-sm hover:bg-surface-3 transition-colors"
                 >
                   Hủy
                 </button>
                 <button
                   onClick={handleSubmitPoint}
-                  className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all"
+                  className="flex-1 py-3 bg-ink-blue-text text-white rounded-xl font-bold text-sm shadow-lg shadow-ink-blue-fill hover:opacity-90 transition-all"
                 >
                   Xác nhận
                 </button>

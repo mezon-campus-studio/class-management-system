@@ -55,25 +55,25 @@ export const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalPro
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-[380px] shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="bg-surface rounded-2xl p-6 w-full max-w-[380px] shadow-2xl animate-in fade-in zoom-in duration-200">
                 
                 {step === 'INPUT' && (
                     <>
-                        <h2 className="text-xl font-black text-gray-800 mb-2">Tham gia lớp học</h2>
-                        <p className="text-sm text-gray-500 mb-6">Nhập mã lớp học để tham gia ngay.</p>
+                        <h2 className="text-xl font-black text-ink-1 mb-2">Tham gia lớp học</h2>
+                        <p className="text-sm text-ink-2 mb-6">Nhập mã lớp học để tham gia ngay.</p>
                         <form onSubmit={handleJoin} className="space-y-4">
                             <input 
                                 type="text"
                                 value={code}
                                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                                 placeholder="MÃ LỚP (VÍ DỤ: DOTNET123)"
-                                className="w-full border-2 border-gray-100 rounded-xl p-4 focus:border-indigo-500 outline-none font-bold text-lg text-center tracking-widest"
+                                className="w-full border-2 border-rule rounded-xl p-4 focus:border-ink-blue-text outline-none font-bold text-lg text-center tracking-widest"
                                 autoFocus
                             />
-                            {error && <p className="text-red-500 text-xs font-bold italic">⚠️ {error}</p>}
+                            {error && <p className="text-ink-red-text text-xs font-bold italic">⚠️ {error}</p>}
                             <div className="flex gap-3 mt-6">
-                                <button type="button" onClick={onClose} className="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-100 rounded-xl">Hủy</button>
-                                <button type="submit" disabled={loading} className="flex-[2] py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg disabled:opacity-50">
+                                <button type="button" onClick={onClose} className="flex-1 py-3 text-ink-2 font-bold hover:bg-surface-2 rounded-xl">Hủy</button>
+                                <button type="submit" disabled={loading} className="flex-[2] py-3 bg-ink-blue-text text-white font-bold rounded-xl shadow-lg disabled:opacity-50">
                                     {loading ? "ĐANG KIỂM TRA..." : "THAM GIA"}
                                 </button>
                             </div>
@@ -83,18 +83,18 @@ export const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalPro
 
                 {step === 'PENDING' && (
                     <div className="text-center py-4">
-                        <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⏳</div>
-                        <h2 className="text-xl font-bold text-gray-800 mb-2">Đã gửi yêu cầu</h2>
-                        <p className="text-sm text-gray-500 mb-6">Bạn đã yêu cầu tham gia lớp <b>{foundClass?.className}</b>. Vui lòng chờ duyệt.</p>
-                        <button onClick={onClose} className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl">Đóng</button>
+                        <div className="w-16 h-16 bg-ink-amber-fill text-ink-amber-text rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⏳</div>
+                        <h2 className="text-xl font-bold text-ink-1 mb-2">Đã gửi yêu cầu</h2>
+                        <p className="text-sm text-ink-2 mb-6">Bạn đã yêu cầu tham gia lớp <b>{foundClass?.className}</b>. Vui lòng chờ duyệt.</p>
+                        <button onClick={onClose} className="w-full py-3 bg-ink-1 text-white font-bold rounded-xl">Đóng</button>
                     </div>
                 )}
 
                 {step === 'SUCCESS' && (
                     <div className="text-center py-4">
-                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">✅</div>
-                        <h2 className="text-xl font-bold text-gray-800 mb-2">Thành công!</h2>
-                        <p className="text-sm text-gray-500">Bạn đã tham gia lớp <b>{foundClass?.className}</b>.</p>
+                        <div className="w-16 h-16 bg-ink-green-fill text-ink-green-text rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">✅</div>
+                        <h2 className="text-xl font-bold text-ink-1 mb-2">Thành công!</h2>
+                        <p className="text-sm text-ink-2">Bạn đã tham gia lớp <b>{foundClass?.className}</b>.</p>
                     </div>
                 )}
             </div>

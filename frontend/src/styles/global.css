@@ -70,12 +70,12 @@
   --sage-text:   #3A5C36;
   --sage-border: #C5DCC0;
 
-  /* Warm Accent (đất nung / terracotta) */
-  --warm-400:    #C2714F;
-  --warm-600:    #A85A38;
-  --warm-fill:   #FBF0EC;
-  --warm-text:   #A85A38;
-  --warm-border: #F4C8B4;
+  /* Professional Blue Accent (Primary for EduAdmin) */
+  --warm-400:    #2563EB; /* Primary Blue (Blue 600) */
+  --warm-600:    #1D4ED8; /* Hover Blue (Blue 700) */
+  --warm-fill:   #EFF6FF; /* Light Blue Fill (Blue 50) */
+  --warm-text:   #1E40AF; /* Darker Blue Text (Blue 800) */
+  --warm-border: #BFDBFE; /* Light Blue Border (Blue 200) */
 
   /* Sidebar shell */
   --sidebar-bg:          #1C1917;
@@ -146,11 +146,11 @@
   --sage-text:   #A7D9A2;
   --sage-border: #1E3A18;
 
-  --warm-400:    #D4845A;
-  --warm-600:    #C2714F;
-  --warm-fill:   #2E1A10;
-  --warm-text:   #D4845A;
-  --warm-border: #4E2A18;
+  --warm-400:    #60A5FA; /* Light Blue for Dark Mode (Blue 400) */
+  --warm-600:    #2563EB; /* Primary Blue for Dark Mode (Blue 600) */
+  --warm-fill:   #1E293B; /* Deep Blue Fill (Slate 800) */
+  --warm-text:   #60A5FA; /* Light Blue Text */
+  --warm-border: #334155; /* Blue-Gray Border (Slate 700) */
 
   --sidebar-bg:          #0E0C0A;
   --sidebar-text:        #57534E;

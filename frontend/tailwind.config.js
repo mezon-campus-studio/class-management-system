@@ -4,7 +4,7 @@
  *
  * PHONG CÁCH: Tạp chí hiện đại pha chất Humanist — ấm áp, rõ chữ, có hồn.
  * Không dùng màu xanh/tím sặc sỡ làm tone chủ đạo.
- * Ink-on-paper: nền kem nhẹ, chữ warm-black, accent đất nung.
+ * Ink-on-paper: nền kem nhẹ, chữ warm-black, accent xanh chuyên nghiệp.
  *
  * DARK MODE: class strategy — thêm class "dark" lên <html>
  *
@@ -93,22 +93,22 @@ module.exports = {
           "dark-md": "rgba(255,255,255,0.12)",
         },
 
-        // ── Warm accent — MÀUaccent chính của EduAdmin ───────
+        // ── Blue accent — MÀU accent chính của EduAdmin (đã đổi từ warm cũ) ───────
         warm: {
-          50: "#FBF0EC",
-          100: "#F4C8B4",
-          200: "#E8A07C",
-          400: "#C2714F", // DEFAULT accent (đất nung)
-          600: "#A85A38", // hover state
-          800: "#6B3520",
-          900: "#3D1E10",
-          fill: "#FBF0EC", // pill / badge background
-          text: "#A85A38", // pill / badge text
-          border: "#F4C8B4", // pill / badge border
+          50: "#EFF6FF",
+          100: "#DBEAFE",
+          200: "#BFDBFE",
+          400: "#2563EB", // DEFAULT accent (Blue 600)
+          600: "#1D4ED8", // hover state (Blue 700)
+          800: "#1E40AF",
+          900: "#1E3A8A",
+          fill: "#EFF6FF", // pill / badge background
+          text: "#1E40AF", // pill / badge text
+          border: "#BFDBFE", // pill / badge border
           // dark
-          "dark-fill": "#2E1A10",
-          "dark-text": "#D4845A",
-          "dark-border": "#4E2A18",
+          "dark-fill": "#1E293B",
+          "dark-text": "#60A5FA",
+          "dark-border": "#334155",
         },
 
         // ── Ink-blue — info / primary action ─────────────────
@@ -166,13 +166,13 @@ module.exports = {
 sidebar: {
   bg: "#F3F4F6",            // Giữ nền xám gray-100 của Hào
   text: "#4B5563",          // Chữ xám đậm khi chưa chọn
-  "text-active": "#4F46E5", // KHÔNG dùng màu trắng nữa, dùng Indigo-600 ở đây
+  "text-active": "#2563EB", // Đã đổi sang Blue-600
   active: "#E5E7EB",        // Nền xám đậm hơn một chút khi chọn (gray-200)
   border: "#D1D5DB",        // Màu đường kẻ
-  accent: "#4F46E5",        // Màu nhấn Indigo
-  "dark-bg": "#111827",
-  "dark-text": "#9CA3AF",
-  "dark-accent": "#6366F1",
+  accent: "#2563EB",        // Màu nhấn Blue-600
+  "dark-bg": "#0E0C0A",
+  "dark-text": "#57534E",
+  "dark-accent": "#60A5FA",
 },
       },
 
@@ -305,8 +305,8 @@ sidebar: {
         lg: "0 8px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06)",
         xl: "0 16px 40px rgba(0,0,0,0.14), 0 4px 10px rgba(0,0,0,0.07)",
         // focus ring — dùng cho input focus, không phải glow
-        "focus-blue": "0 0 0 3px rgba(30,79,168,0.18)",
-        "focus-warm": "0 0 0 3px rgba(194,113,79,0.18)",
+        "focus-blue": "0 0 0 3px rgba(37,99,235,0.18)",
+        "focus-warm": "0 0 0 3px rgba(37,99,235,0.18)",
         "focus-red": "0 0 0 3px rgba(153,27,27,0.15)",
         // dark equivalents
         "dark-xs":
@@ -411,11 +411,11 @@ sidebar: {
         "*, *::before, *::after": { boxSizing: "border-box" },
         html: { scrollBehavior: "smooth" },
         "::selection": {
-          background: theme("colors.ink-blue.fill"),
-          color: theme("colors.ink-blue.text"),
+          background: theme("colors.warm.fill"),
+          color: theme("colors.warm.text"),
         },
         ":focus-visible": {
-          outline: `2px solid ${theme("colors.ink-blue.text")}`,
+          outline: `2px solid ${theme("colors.warm.400")}`,
           outlineOffset: "2px",
           borderRadius: theme("borderRadius.xs"),
         },
@@ -450,16 +450,16 @@ sidebar: {
         },
 
         ".btn-primary": {
-          background: theme("colors.ink-blue.text"),
+          background: theme("colors.warm.400"),
           color: "#fff",
-          borderColor: theme("colors.ink-blue.text"),
-          "&:hover": { opacity: "0.88" },
+          borderColor: theme("colors.warm.400"),
+          "&:hover": { background: theme("colors.warm.600") },
           "&:active": { transform: "scale(0.98)" },
         },
         ".btn-secondary": {
           background: theme("colors.surface.DEFAULT"),
           color: theme("colors.ink.1"),
-          borderColor: "rgba(0,0,0,0.08)",
+          borderColor: theme("colors.rule.DEFAULT"),
           "&:hover": { background: theme("colors.surface.2") },
           "&:active": { transform: "scale(0.98)" },
         },
@@ -519,9 +519,9 @@ sidebar: {
           flexShrink: "0",
         },
         ".pill-blue": {
-          background: theme("colors.ink-blue.fill"),
-          color: theme("colors.ink-blue.text"),
-          borderColor: theme("colors.ink-blue.border"),
+          background: theme("colors.warm.fill"),
+          color: theme("colors.warm.text"),
+          borderColor: theme("colors.warm.border"),
         },
         ".pill-green": {
           background: theme("colors.ink-green.fill"),
@@ -555,13 +555,13 @@ sidebar: {
           alignItems: "center",
           gap: "8px",
           background: theme("colors.surface.DEFAULT"),
-          border: `1px solid rgba(0,0,0,0.13)`,
+          border: `1px solid ${theme("colors.rule.md")}`,
           borderRadius: theme("borderRadius.DEFAULT"),
           padding: "0 12px",
           transition: "border 120ms ease, box-shadow 120ms ease",
           "&:focus-within": {
-            borderColor: theme("colors.ink-blue.text"),
-            boxShadow: theme("boxShadow.focus-blue"),
+            borderColor: theme("colors.warm.400"),
+            boxShadow: theme("boxShadow.focus-warm"),
           },
         },
         ".input-field input, .input-field textarea, .input-field select": {
@@ -596,10 +596,9 @@ sidebar: {
         },
 
         // STAT CARD — Editorial Humanist
-        // KHÔNG dùng border-left màu — dùng số serif lớn + whitespace thay thế
         ".stat-card": {
           background: theme("colors.surface.DEFAULT"),
-          border: "1px solid rgba(0,0,0,0.08)",
+          border: `1px solid ${theme("colors.rule.DEFAULT")}`,
           borderRadius: theme("borderRadius.lg"),
           padding: "16px 16px 14px",
         },
@@ -630,7 +629,7 @@ sidebar: {
         // CARD / PANEL
         ".card": {
           background: theme("colors.surface.DEFAULT"),
-          border: "1px solid rgba(0,0,0,0.08)",
+          border: `1px solid ${theme("colors.rule.DEFAULT")}`,
           borderRadius: theme("borderRadius.lg"),
           overflow: "hidden",
         },
@@ -639,7 +638,7 @@ sidebar: {
           alignItems: "flex-start",
           justifyContent: "space-between",
           padding: "14px 16px 12px",
-          borderBottom: "1px solid rgba(0,0,0,0.08)",
+          borderBottom: `1px solid ${theme("colors.rule.DEFAULT")}`,
         },
         ".card-title": {
           fontFamily: `var(--font-serif)`,
@@ -660,7 +659,7 @@ sidebar: {
           justifyContent: "flex-end",
           gap: "8px",
           padding: "12px 16px",
-          borderTop: "1px solid rgba(0,0,0,0.08)",
+          borderTop: `1px solid ${theme("colors.rule.DEFAULT")}`,
           background: theme("colors.surface.2"),
         },
 
@@ -675,10 +674,10 @@ sidebar: {
           padding: "9px 16px",
           textAlign: "left",
           background: theme("colors.surface.2"),
-          borderBottom: "1px solid rgba(0,0,0,0.08)",
+          borderBottom: `1px solid ${theme("colors.rule.DEFAULT")}`,
         },
         ".data-table tbody tr": {
-          borderBottom: "1px solid rgba(0,0,0,0.08)",
+          borderBottom: `1px solid ${theme("colors.rule.DEFAULT")}`,
           transition: "background 100ms ease",
         },
         ".data-table tbody tr:last-child": { borderBottom: "none" },
@@ -703,7 +702,7 @@ sidebar: {
           display: "flex",
           flexDirection: "column",
           flexShrink: "0",
-          borderRight: `1px solid rgba(255,255,255,0.06)`,
+          borderRight: `1px solid ${theme("colors.sidebar.border")}`,
         },
         ".sidebar-item": {
           display: "flex",
@@ -718,15 +717,14 @@ sidebar: {
           marginBottom: "1px",
           transition: "all 150ms ease",
           "&:hover": { 
-        background: theme("colors.sidebar.active"), // Nền gray-200 khi rê chuột
-        color: theme("colors.sidebar.text-active")  // Chữ hiện màu Indigo (hết bị ẩn!)
-    },
+            background: theme("colors.sidebar.active"), 
+            color: theme("colors.sidebar.text-active") 
+          },
         },
         ".sidebar-item.active": {
-          background: theme("colors.sidebar.active"), // Đổi thành nền gray-200
-          color: theme("colors.sidebar.text-active"), // Đổi thành chữ xanh Indigo
+          background: theme("colors.sidebar.active"), 
+          color: theme("colors.sidebar.text-active"), 
           fontWeight: theme("fontWeight.medium"),
-          // Thêm vạch xanh bên trái để biết đang ở lớp này
           borderLeft: `3px solid ${theme("colors.sidebar.accent")}`,
           borderTopLeftRadius: "0",
           borderBottomLeftRadius: "0",
@@ -742,7 +740,7 @@ sidebar: {
           cursor: "pointer",
           flexShrink: "0",
           transition: "background 200ms ease",
-          "&.on": { background: theme("colors.ink-blue.text") },
+          "&.on": { background: theme("colors.warm.400") },
         },
         ".toggle-thumb": {
           position: "absolute",
