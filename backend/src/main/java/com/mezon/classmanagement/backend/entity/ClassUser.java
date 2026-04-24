@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -19,16 +20,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.List;
 
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Setter
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "class_users", uniqueConstraints = @UniqueConstraint(columnNames = {"class_id", "user_id"}))
 public class ClassUser {
 	@Id
@@ -47,6 +51,17 @@ public class ClassUser {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "role", nullable = false)
 	Role role;
+
+	@PrePersist
+	public void prePersist() {
+		if (role == null) {
+			role = Role.CLASS_MEMBER;
+		}
+	}
+
+	@JdbcTypeCode(SqlTypes.JSON)
+	@Column(columnDefinition = "json", nullable = true)
+	List<String> permissionCodes;
 
 	@Column(name = "joined_at", nullable = false, insertable = false, updatable = false)
 	Instant joinedAt;

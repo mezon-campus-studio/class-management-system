@@ -1,7 +1,7 @@
 package com.mezon.classmanagement.backend.controller;
 
 import com.mezon.classmanagement.backend.dto.response.child.UserResponseDto;
-import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
+import com.mezon.classmanagement.backend.dto.ResponseDTO;
 import com.mezon.classmanagement.backend.service.UserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-@RestController
 @RequestMapping("/api/users")
+@RestController
 public class UserController {
 
 	UserService userService;
@@ -23,11 +23,11 @@ public class UserController {
 	@GetMapping("/{username}")
 	public ResponseDTO<UserResponseDto> getUser(@PathVariable String username) {
 		UserResponseDto userResponseDto = userService.findByUsername(username);
-		return new ResponseDTO<>(
-				true,
-				"User found",
-				userResponseDto
-		);
+		return ResponseDTO.<UserResponseDto>builder()
+				.success(true)
+				.message("User found")
+				.data(userResponseDto)
+				.build();
 	}
 
 	// test
