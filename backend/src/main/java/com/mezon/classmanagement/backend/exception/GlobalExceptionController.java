@@ -1,6 +1,6 @@
 package com.mezon.classmanagement.backend.exception;
 
-import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
+import com.mezon.classmanagement.backend.dto.ResponseDTO;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 

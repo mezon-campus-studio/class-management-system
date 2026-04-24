@@ -1,17 +1,19 @@
-package com.mezon.classmanagement.backend.dto.request;
+package com.mezon.classmanagement.backend.dto.activity.create;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Setter
 @Getter
-public final class UpdateActivityRequestDto {
-	@JsonProperty(value = "id")
-	Long id;
+public final class CreateActivityResponseDto {
+	//@JsonProperty(value = "id")
+	//Long id;
 
 	@JsonProperty(value = "class_id")
 	Long classId;
@@ -39,4 +41,7 @@ public final class UpdateActivityRequestDto {
 
 	@JsonProperty(value = "is_mandatory")
 	Boolean isMandatory;
+
+	//@JsonProperty(value = "created_at")
+	//Instant createdAt;
 }

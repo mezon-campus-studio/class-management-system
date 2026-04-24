@@ -17,7 +17,7 @@ public class ClassUserService {
 
 	public ClassUser findByClassIdAndUserId(Long classId, Long userId) {
 		return classUserRepository
-				.findByClazzIdAndUserId(classId, userId)
+				.findByClazz_IdAndUser_Id(classId, userId)
 				.orElseThrow(() -> new GlobalException(GlobalException.Type.NOT_FOUND, "Class user not found"));
 	}
 
@@ -27,6 +27,10 @@ public class ClassUserService {
 
 	public boolean isMember(ClassUser classUser) {
 		return ClassUser.Role.CLASS_MEMBER.name().equals(classUser.getRole().name());
+	}
+
+	public boolean isClassUser(Long classId, Long userId) {
+		return classUserRepository.existsByClazz_IdAndUser_Id(classId, userId);
 	}
 
 	public boolean hasPermission(ClassUser classUser, String permission) {

@@ -1,6 +1,6 @@
 package com.mezon.classmanagement.backend.controller;
 
-import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
+import com.mezon.classmanagement.backend.dto.ResponseDTO;
 import com.mezon.classmanagement.backend.entity.Permission;
 import com.mezon.classmanagement.backend.service.PermissionService;
 import lombok.AccessLevel;

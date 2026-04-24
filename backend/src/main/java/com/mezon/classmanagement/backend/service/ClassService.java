@@ -1,19 +1,27 @@
 package com.mezon.classmanagement.backend.service;
 
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.mezon.classmanagement.backend.dto.response.CreateClassRequestDto;
-import com.mezon.classmanagement.backend.dto.response.UpdateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.clazz.ClassDto;
+import com.mezon.classmanagement.backend.dto.clazz.create.CreateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.clazz.update.UpdateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.joinclass.JoinClassDto;
+import com.mezon.classmanagement.backend.dto.joinedclass.JoinedClassResponseDto;
 import com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto;
+import com.mezon.classmanagement.backend.entity.Class;
+import com.mezon.classmanagement.backend.entity.ClassUser;
+import com.mezon.classmanagement.backend.entity.User;
+import com.mezon.classmanagement.backend.exception.GlobalException;
+import com.mezon.classmanagement.backend.mapper.ClassMapper;
 import com.mezon.classmanagement.backend.repository.ClassRepository;
+import com.mezon.classmanagement.backend.repository.ClassUserRepository;
 import com.mezon.classmanagement.backend.repository.UserRepository;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -21,57 +29,98 @@ import lombok.experimental.FieldDefaults;
 public class ClassService {
 
     ClassRepository classRepository;
+    ClassMapper classMapper;
     UserRepository userRepository;
+    ClassUserRepository classUserRepository;
+    AuthService authService;
+    JwtService jwtService;
+    ClassUserService classUserService;
 
     @Transactional
-    public void createClass(CreateClassRequestDto request) {
-        var owner = userRepository.findByUsername(request.getOwnerUsername());
-//                .orElseThrow(() -> new NotFoundException("User not found"));
+    public ClassDto createClass(Long ownerUserId, CreateClassRequestDto request) {
+        if (!userRepository.existsById(ownerUserId)) {
+            throw new GlobalException(GlobalException.Type.NOT_FOUND, "User not found");
+        }
 
-        com.mezon.classmanagement.backend.entity.Class classEntity =
-                new com.mezon.classmanagement.backend.entity.Class();
-
-        classEntity.setOwner(owner.get());
-        classEntity.setName(request.getName());
-        classEntity.setDescription(request.getDescription());
-        classEntity.setCode(request.getCode());
-        classEntity.setAvatarUrl(request.getAvatarUrl());
-        classEntity.setPrivacy(
-                request.getPrivacy() == null
-                        ? com.mezon.classmanagement.backend.entity.Class.Privacy.PRIVATE
-                        : request.getPrivacy()
+        Class insertedClass = classMapper.toClass(request);
+        insertedClass.setOwner(
+                User.builder()
+                        .id(ownerUserId)
+                        .build()
         );
 
-        classRepository.save(classEntity);
+        Class responseClass = classRepository.save(insertedClass);
+
+        return classMapper.toCreateClassResponseDto(responseClass);
     }
 
     @Transactional
-    public void updateClass(Long classId, UpdateClassRequestDto request) {
-        com.mezon.classmanagement.backend.entity.Class classEntity = findClassById(classId);
+    public ClassDto updateClass(Long currentUserId, UpdateClassRequestDto request) {
+        Class currentClass = classRepository
+                .findById(request.getId())
+                .orElseThrow(() -> new GlobalException(GlobalException.Type.NOT_FOUND, "Class not found"));
 
-        if (request.getName() != null) {
-            classEntity.setName(request.getName());
+        if (!userRepository.existsById(currentUserId)) {
+            throw new GlobalException(GlobalException.Type.NOT_FOUND, "User not found");
         }
-        if (request.getDescription() != null) {
-            classEntity.setDescription(request.getDescription());
-        }
-        if (request.getCode() != null) {
-            classEntity.setCode(request.getCode());
-        }
-        if (request.getAvatarUrl() != null) {
-            classEntity.setAvatarUrl(request.getAvatarUrl());
-        }
-        if (request.getPrivacy() != null) {
-            classEntity.setPrivacy(request.getPrivacy());
+        if (!classUserService.isClassUser(request.getId(), currentUserId)) {
+            throw new GlobalException(GlobalException.Type.NOT_FOUND, "Class user not found");
         }
 
-        classRepository.save(classEntity);
+        classMapper.updateClassFromRequestDto(request, currentClass);
+
+        Class responseClass = classRepository.save(currentClass);
+
+        return classMapper.toUpdateClassResponseDto(responseClass);
     }
 
     @Transactional
     public void deleteClass(Long classId) {
-        com.mezon.classmanagement.backend.entity.Class classEntity = findClassById(classId);
-        classRepository.delete(classEntity);
+        Class clazz = classRepository
+                .findById(classId)
+                .orElseThrow(() -> new GlobalException(GlobalException.Type.NOT_FOUND, "Class not found"));
+
+        classRepository.delete(clazz);
+    }
+
+    @Transactional
+    public JoinClassDto joinClass(Long classId, Long userId) {
+        if (!classRepository.existsById(classId)) {
+            throw new GlobalException(GlobalException.Type.NOT_FOUND, "Class not found");
+        }
+        if (!userRepository.existsById(userId)) {
+            throw new GlobalException(GlobalException.Type.NOT_FOUND, "User not found");
+        }
+        if (classUserRepository.existsByClazz_IdAndUser_Id(classId, userId)) {
+            throw new GlobalException(GlobalException.Type.ALREADY_EXISTS, "Class user exists");
+        }
+
+        ClassUser classUser = ClassUser.builder()
+                .clazz(
+                        Class.builder()
+                                .id(classId)
+                                .build()
+                )
+                .user(
+                        User.builder()
+                                .id(userId)
+                                .build()
+                )
+                .build();
+
+        classUserRepository.save(classUser);
+
+        return JoinClassDto.builder()
+                .classId(classId)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<JoinedClassResponseDto> getJoinedClasses(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new GlobalException(GlobalException.Type.NOT_FOUND, "User not found");
+        }
+        return classRepository.getJoinedClasses(userId);
     }
 
     @Transactional(readOnly = true)

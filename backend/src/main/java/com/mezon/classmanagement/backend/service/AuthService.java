@@ -1,12 +1,12 @@
 package com.mezon.classmanagement.backend.service;
 
 import com.mezon.classmanagement.backend.constant.JwtConstant;
-import com.mezon.classmanagement.backend.dto.request.SignInRequestDto;
-import com.mezon.classmanagement.backend.dto.request.SignOutRequestDto;
-import com.mezon.classmanagement.backend.dto.request.SignUpRequestDto;
-import com.mezon.classmanagement.backend.dto.response.SignInResponseDto;
-import com.mezon.classmanagement.backend.dto.response.SignOutResponseDto;
-import com.mezon.classmanagement.backend.dto.response.SignUpResponseDto;
+import com.mezon.classmanagement.backend.dto.signin.SignInRequestDto;
+import com.mezon.classmanagement.backend.dto.signout.SignOutRequestDto;
+import com.mezon.classmanagement.backend.dto.signup.SignUpRequestDto;
+import com.mezon.classmanagement.backend.dto.signin.SignInResponseDto;
+import com.mezon.classmanagement.backend.dto.signout.SignOutResponseDto;
+import com.mezon.classmanagement.backend.dto.signup.SignUpResponseDto;
 import com.mezon.classmanagement.backend.entity.InvalidatedToken;
 import com.mezon.classmanagement.backend.entity.User;
 import com.mezon.classmanagement.backend.exception.GlobalException;

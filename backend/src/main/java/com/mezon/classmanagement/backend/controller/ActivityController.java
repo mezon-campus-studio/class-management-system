@@ -1,8 +1,10 @@
 package com.mezon.classmanagement.backend.controller;
 
-import com.mezon.classmanagement.backend.dto.request.CreateActivityRequestDto;
-import com.mezon.classmanagement.backend.dto.request.UpdateActivityRequestDto;
-import com.mezon.classmanagement.backend.dto.response.ResponseDTO;
+import com.mezon.classmanagement.backend.dto.activity.create.CreateActivityRequestDto;
+import com.mezon.classmanagement.backend.dto.activity.create.CreateActivityResponseDto;
+import com.mezon.classmanagement.backend.dto.activity.update.UpdateActivityRequestDto;
+import com.mezon.classmanagement.backend.dto.ResponseDTO;
+import com.mezon.classmanagement.backend.dto.activity.update.UpdateActivityResponseDto;
 import com.mezon.classmanagement.backend.service.ActivityService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -24,27 +26,29 @@ public class ActivityController {
 	ActivityService activityService;
 
 	@PostMapping
-	public ResponseDTO<String> createActivity(@RequestBody CreateActivityRequestDto request) {
-		activityService.createActivity(request);
+	public ResponseDTO<CreateActivityResponseDto> createActivity(@RequestBody CreateActivityRequestDto request) {
+		CreateActivityResponseDto response = activityService.createActivity(request);
 
-		return ResponseDTO.<String>builder()
+		return ResponseDTO.<CreateActivityResponseDto>builder()
 				.success(true)
 				.message("Create activity successful")
+				.data(response)
 				.build();
 	}
 
 	@PatchMapping
-	public ResponseDTO<String> updateActivity(@RequestBody UpdateActivityRequestDto request) {
-		activityService.updateActivity(request);
+	public ResponseDTO<UpdateActivityResponseDto> updateActivity(@RequestBody UpdateActivityRequestDto request) {
+		UpdateActivityResponseDto response = activityService.updateActivity(request);
 
-		return ResponseDTO.<String>builder()
+		return ResponseDTO.<UpdateActivityResponseDto>builder()
 				.success(true)
 				.message("Update activity successful")
+				.data(response)
 				.build();
 	}
 
 	@DeleteMapping("{activityId}")
-	public ResponseDTO<String> createActivity(@PathVariable Long activityId) {
+	public ResponseDTO<String> deleteActivity(@PathVariable Long activityId) {
 		activityService.deleteActivity(activityId);
 
 		return ResponseDTO.<String>builder()
