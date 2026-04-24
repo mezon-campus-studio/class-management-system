@@ -73,7 +73,7 @@ export const Header = () => {
                 <span
                   className="text-sm md:text-base font-black text-ink-1 tracking-tight truncate 
                   /* Mobile: tối đa 80px | Tablet: 150px | Desktop: 300px */
-                  max-w-[80px] xs:max-w-[120px] sm:max-w-[200px] md:max-w-[300px] lg:max-w-[400px]"
+                  max-w-[50px] xs:max-w-[120px] sm:max-w-[200px] md:max-w-[300px] lg:max-w-[400px]"
                 >
                   {currentClass ? currentClass.className : "Đang tải..."}
                 </span>
