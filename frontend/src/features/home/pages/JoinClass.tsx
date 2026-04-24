@@ -46,7 +46,7 @@ export const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalPro
             } else {
                 setError("Mã lớp không chính xác hoặc lớp không tồn tại");
             }
-        } catch (err: any) {
+        } catch {
             setError("Lỗi: Mã lớp không hợp lệ hoặc bạn đã tham gia lớp này");
         } finally {
             setLoading(false);
@@ -66,8 +66,8 @@ export const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalPro
                                 type="text"
                                 value={code}
                                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                                placeholder="MÃ LỚP (VÍ DỤ: DOTNET123)"
-                                className="w-full border-2 border-rule rounded-xl p-4 focus:border-ink-blue-text outline-none font-bold text-lg text-center tracking-widest"
+                                placeholder="mã lớp học"
+                                className="w-full border-2 border-gray-100 rounded-xl p-4 focus:border-indigo-500 outline-none font-bold text-lg text-center tracking-widest"
                                 autoFocus
                             />
                             {error && <p className="text-ink-red-text text-xs font-bold italic">⚠️ {error}</p>}
