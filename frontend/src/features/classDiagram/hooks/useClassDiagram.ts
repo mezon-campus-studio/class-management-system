@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { classDiagramAPI } from '../api'; // Import từ file index.ts trên
-import type { ClassDiagramData } from '../types';
+import { classDiagramAPI } from '@features/classDiagram/api';
+import type { ClassDiagramData } from '@features/classDiagram/types';
 
 export const useClassDiagram = (classId: string) => {
   const [data, setData] = useState<ClassDiagramData | null>(null);

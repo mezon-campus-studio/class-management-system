@@ -1,12 +1,12 @@
 package com.mezon.classmanagement.backend.service;
 
 import com.mezon.classmanagement.backend.constant.JwtConstant;
-import com.mezon.classmanagement.backend.dto.request.SignInRequestDto;
-import com.mezon.classmanagement.backend.dto.request.SignOutRequestDto;
-import com.mezon.classmanagement.backend.dto.request.SignUpRequestDto;
-import com.mezon.classmanagement.backend.dto.response.SignInResponseDto;
-import com.mezon.classmanagement.backend.dto.response.SignOutResponseDto;
-import com.mezon.classmanagement.backend.dto.response.SignUpResponseDto;
+import com.mezon.classmanagement.backend.dto.signin.SignInRequestDto;
+import com.mezon.classmanagement.backend.dto.signout.SignOutRequestDto;
+import com.mezon.classmanagement.backend.dto.signup.SignUpRequestDto;
+import com.mezon.classmanagement.backend.dto.signin.SignInResponseDto;
+import com.mezon.classmanagement.backend.dto.signout.SignOutResponseDto;
+import com.mezon.classmanagement.backend.dto.signup.SignUpResponseDto;
 import com.mezon.classmanagement.backend.entity.InvalidatedToken;
 import com.mezon.classmanagement.backend.entity.User;
 import com.mezon.classmanagement.backend.exception.GlobalException;
@@ -21,11 +21,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 
@@ -40,17 +42,15 @@ public class AuthService {
 	InvalidatedTokenRepository invalidatedTokenRepository;
 
 	public SignInResponseDto signIn(SignInRequestDto request) {
-		long ACCESS_TOKEN_EXPIRY_MINUTES = 15;
-		long REFRESH_TOKEN_EXPIRY_DAYS = 7;
-
-		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
-		authenticationManager.authenticate(authenticationToken);
+		UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken
+				= new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
+		authenticationManager.authenticate(usernamePasswordAuthenticationToken);
 
 		User user = userRepository
 				.findByUsername(request.getUsername())
 				.orElseThrow(() -> new GlobalException(GlobalException.Type.NOT_FOUND, "User not found"));
 
-		String accessToken = jwtService.generateAccessToken(user.getUsername(), null, null, Collections.emptyList());
+		String accessToken = jwtService.generateAccessToken(user.getId(), user.getUsername());
 		String refreshToken = jwtService.generateRefreshToken(user.getUsername());
 
 		return SignInResponseDto.builder()
@@ -98,6 +98,16 @@ public class AuthService {
 					.success(false)
 					.build();
 		}
+	}
+
+	public Authentication getAuthentication() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+		if (!(authentication instanceof JwtAuthenticationToken)) {
+			throw new GlobalException(GlobalException.Type.INVALID_AUTHENTICATION, "Invalid authentication");
+		}
+
+		return authentication;
 	}
 
 	private SignedJWT verifyToken(String token) throws JOSEException, ParseException {

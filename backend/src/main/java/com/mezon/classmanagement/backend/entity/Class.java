@@ -24,12 +24,12 @@ import lombok.experimental.FieldDefaults;
 import java.time.Instant;
 
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Setter
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(
 		name = "classes",
 		indexes = {

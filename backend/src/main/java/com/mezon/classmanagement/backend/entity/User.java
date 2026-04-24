@@ -1,5 +1,6 @@
 package com.mezon.classmanagement.backend.entity;
 
+import com.mezon.classmanagement.backend.constant.WarningConstant;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -26,20 +27,20 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
+@SuppressWarnings({WarningConstant.SPELL_CHECKING_INSPECTION})
 @Entity
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Setter
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(
 		name = "users",
 		indexes = {
 				@Index(name = "index_users_username", columnList = "username"),
 				@Index(name = "index_users_phone", columnList = "phone"),
 				@Index(name = "index_users_email", columnList = "email")
-
 		}
 )
 public class User implements UserDetails {

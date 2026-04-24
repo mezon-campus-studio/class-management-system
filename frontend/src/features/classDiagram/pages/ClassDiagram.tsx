@@ -4,7 +4,7 @@ import { useClassDiagram } from "@features/classDiagram/hooks/useClassDiagram";
 import { Seat } from "@features/classDiagram/pages/Seat";
 import type { AttendanceStatus } from "@features/classDiagram/types";
 import { classDiagramAPI } from "@features/classDiagram/api";
-import { useAuth } from "@features/auth";
+// import { useAuth } from "@features/auth";
 
 export const ClassDiagram = () => {
   const { classId } = useParams();
@@ -85,53 +85,58 @@ export const ClassDiagram = () => {
 
   return (
     <div className="space-y-6 select-none max-w-7xl mx-auto p-2 md:p-4 bg-white min-h-screen">
-      {/* 1. THANH CÔNG CỤ (1 HÀNG, ĐẦY ĐỦ NHÃN CHỮ) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
-        {canEdit && (
-          <div className="flex bg-slate-200/50 p-1 rounded-lg shrink-0">
-            {(["view", "attendance", "setup"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`px-3 py-1.5 rounded-md text-[10px] md:text-xs font-bold transition-all ${
-                  mode === m
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                {m === "view"
-                  ? "Xem"
-                  : m === "attendance"
-                    ? "Điểm danh"
-                    : "Xếp chỗ"}
-              </button>
-            ))}
-          </div>
-        )}
+{/* 1. THANH CÔNG CỤ (Tối ưu Mobile: Nhỏ gọn, cuộn ngang) */}
+<div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
+  {canEdit && (
+    <div className="flex bg-slate-200/50 p-1 rounded-lg shrink-0 justify-between sm:justify-start">
+      {(["view", "attendance", "setup"] as const).map((m) => (
+        <button
+          key={m}
+          onClick={() => setMode(m)}
+          className={`flex-1 sm:flex-none px-2 md:px-3 py-1.5 rounded-md text-[10px] md:text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+            mode === m
+              ? "bg-white text-indigo-600 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          {/* Thêm icon cho mobile nhìn chuyên nghiệp hơn */}
+          {m === "view" && <span className="hidden xs:inline">Xem</span>}
+          {m === "attendance" && <span className="hidden xs:inline">Điểm danh</span>}
+          {m === "setup" && <span className="hidden xs:inline">Xếp chỗ</span>}
+          
+          {/* Hiện chữ đầy đủ trên tablet/desktop, mobile chỉ hiện nhãn ngắn */}
+          <span className="xs:hidden">
+            {m === "view" ? "Xem" : m === "attendance" ? "Điểm danh" : "Xếp"}
+          </span>
+        </button>
+      ))}
+    </div>
+  )}
 
-        <div className="flex flex-1 justify-end gap-2 overflow-x-auto no-scrollbar py-1 ">
-          <Badge
-            color="bg-slate-100 text-slate-600 border-slate-200"
-            label="Sĩ số"
-            val={data.totalStudents}
-          />
-          <Badge
-            color="bg-green-50 text-green-700 border-green-200"
-            label="Có mặt"
-            val={data.presentCount}
-          />
-          <Badge
-            color="bg-yellow-50 text-yellow-700 border-yellow-200"
-            label="Vắng phép"
-            val={data.excusedCount}
-          />
-          <Badge
-            color="bg-red-50 text-red-600 border-red-200"
-            label="Không phép"
-            val={data.unexcusedCount}
-          />
-        </div>
-      </div>
+  {/* Badge Group: Tự động cuộn ngang trên mobile */}
+  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0 -mx-1 px-1 justify-start sm:justify-end flex-nowrap">
+    <Badge
+      color="bg-slate-100 text-slate-600 border-slate-200"
+      label="Sĩ số"
+      val={data.totalStudents}
+    />
+    <Badge
+      color="bg-green-50 text-green-700 border-green-200"
+      label="Có mặt"
+      val={data.presentCount}
+    />
+    <Badge
+      color="bg-yellow-50 text-yellow-700 border-yellow-200"
+      label="Vắng phép"
+      val={data.excusedCount}
+    />
+    <Badge
+      color="bg-red-50 text-red-600 border-red-200"
+      label="Không phép"
+      val={data.unexcusedCount}
+    />
+  </div>
+</div>
 
       {/* 2. KHU VỰC GIẢNG ĐƯỜNG (Bàn sát trái, Bảng cân giữa lối đi) */}
       <div className="flex items-end justify-between w-full pt-8 pb-4 px-4 md:px-10">
