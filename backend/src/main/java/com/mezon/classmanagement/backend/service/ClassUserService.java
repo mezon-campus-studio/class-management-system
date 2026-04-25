@@ -14,8 +14,6 @@ import org.springframework.stereotype.Service;
 public class ClassUserService {
 
 	ClassUserRepository classUserRepository;
-	ClassService classService;
-	UserService userService;
 
 	public ClassUser save(ClassUser classUser) {
 		return classUserRepository.save(classUser);
