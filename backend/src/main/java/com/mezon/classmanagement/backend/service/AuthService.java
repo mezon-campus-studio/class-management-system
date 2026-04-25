@@ -24,6 +24,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +38,8 @@ import java.util.Optional;
 public class AuthService {
 
 	AuthenticationManager authenticationManager;
-	UserRepository userRepository;
+	//UserRepository userRepository;
+	UserService userService;
 	JwtService jwtService;
 	InvalidatedTokenRepository invalidatedTokenRepository;
 
@@ -46,9 +48,7 @@ public class AuthService {
 				= new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
 		authenticationManager.authenticate(usernamePasswordAuthenticationToken);
 
-		User user = userRepository
-				.findByUsername(request.getUsername())
-				.orElseThrow(() -> new GlobalException(GlobalException.Type.NOT_FOUND, "User not found"));
+		User user = userService.findByUsernameOrThrow(request.getUsername());
 
 		String accessToken = jwtService.generateAccessToken(user.getId(), user.getUsername());
 		String refreshToken = jwtService.generateRefreshToken(user.getUsername());
@@ -60,23 +60,16 @@ public class AuthService {
 	}
 
 	public SignUpResponseDto signUp(SignUpRequestDto request) {
-		Optional<User> userOptional = userRepository.findByUsername(request.getUsername());
-		if (userOptional.isPresent()) {
-			throw new GlobalException(GlobalException.Type.ALREADY_EXISTS, "User exists");
-		}
+		userService.throwIfExistsByUsername(request.getUsername());
 
-		User user = User.builder()
-				.username(request.getUsername())
-				.hashedPassword(new BCryptPasswordEncoder(10).encode(request.getPassword()))
-				.displayName(request.getDisplayName())
-				.build();
-		User insertedUser = userRepository.save(user);
+		User newUser = userService.createUser(request);
 
 		return SignUpResponseDto.builder()
-				.username(insertedUser.getUsername())
+				.username(newUser.getUsername())
 				.build();
 	}
 
+	@Deprecated
 	public SignOutResponseDto signOut(SignOutRequestDto request) {
 		try {
 			SignedJWT signedJWT = verifyToken(request.getAccessToken());
@@ -87,6 +80,26 @@ public class AuthService {
 			InvalidatedToken invalidatedToken = InvalidatedToken.builder()
 					.jti(jti)
 					.expiryDate(expiryDate.toInstant())
+					.build();
+			invalidatedTokenRepository.save(invalidatedToken);
+
+			return SignOutResponseDto.builder()
+					.success(true)
+					.build();
+		} catch (Exception e) {
+			return SignOutResponseDto.builder()
+					.success(false)
+					.build();
+		}
+	}
+
+	public SignOutResponseDto signOut(Authentication authentication) {
+		try {
+			Jwt jwt = ((JwtAuthenticationToken) authentication).getToken();
+
+			InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+					.jti(jwt.getId())
+					.expiryDate(jwt.getExpiresAt())
 					.build();
 			invalidatedTokenRepository.save(invalidatedToken);
 

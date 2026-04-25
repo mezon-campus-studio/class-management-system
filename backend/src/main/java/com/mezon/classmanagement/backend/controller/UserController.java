@@ -19,16 +19,16 @@ public class UserController {
 
 	UserService userService;
 
-	// test
-	@GetMapping("/{username}")
-	public ResponseDTO<UserResponseDto> getUser(@PathVariable String username) {
-		UserResponseDto userResponseDto = userService.findByUsername(username);
-		return ResponseDTO.<UserResponseDto>builder()
-				.success(true)
-				.message("User found")
-				.data(userResponseDto)
-				.build();
-	}
+//	// test
+//	@GetMapping("/{username}")
+//	public ResponseDTO<UserResponseDto> getUser(@PathVariable String username) {
+//		UserResponseDto userResponseDto = userService.findByUsername(username);
+//		return ResponseDTO.<UserResponseDto>builder()
+//				.success(true)
+//				.message("User found")
+//				.data(userResponseDto)
+//				.build();
+//	}
 
 	// test
 	@GetMapping("/ex/ar")

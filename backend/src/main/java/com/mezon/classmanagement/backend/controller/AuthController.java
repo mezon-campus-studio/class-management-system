@@ -11,6 +11,8 @@ import com.mezon.classmanagement.backend.service.AuthService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,7 +50,8 @@ public class AuthController {
 
 	@PostMapping("/signout")
 	public ResponseDTO<SignOutResponseDto> signOut(@RequestBody SignOutRequestDto request) {
-		SignOutResponseDto signOutResponseDto = authService.signOut(request);
+		Authentication authentication = authService.getAuthentication();
+		SignOutResponseDto signOutResponseDto = authService.signOut(authentication);
 
 		return ResponseDTO.<SignOutResponseDto>builder()
 				.success(signOutResponseDto.isSuccess())

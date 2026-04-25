@@ -1,6 +1,7 @@
 package com.mezon.classmanagement.backend.service;
 
 import com.mezon.classmanagement.backend.dto.response.child.UserResponseDto;
+import com.mezon.classmanagement.backend.dto.signup.SignUpRequestDto;
 import com.mezon.classmanagement.backend.entity.User;
 import com.mezon.classmanagement.backend.exception.GlobalException;
 import com.mezon.classmanagement.backend.mapper.UserMapper;
@@ -8,7 +9,10 @@ import com.mezon.classmanagement.backend.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -17,18 +21,75 @@ import java.util.Optional;
 @Service
 public class UserService {
 
+	/**
+	 * Repository
+	 */
+
 	UserRepository userRepository;
+
+	/**
+	 * Mapper
+	 */
+
 	UserMapper userMapper;
 
-	public UserResponseDto findByUsername(String username) {
-		Optional<User> userOptional = userRepository.findByUsername(username);
-		return userOptional
-				.map(userMapper::toUserResponseDto)
-				.orElseThrow(() -> new GlobalException(GlobalException.Type.NOT_FOUND, "User not found"));
+	/**
+	 * Bean
+	 */
+
+	PasswordEncoder passwordEncoder;
+
+	@Transactional
+	public User createUser(SignUpRequestDto request) {
+		User user = User.builder()
+				.username(request.getUsername())
+				.hashedPassword(passwordEncoder.encode(request.getPassword()))
+				.displayName(request.getDisplayName())
+				.build();
+
+		return save(user);
+	}
+
+	@Transactional
+	public User save(User user) {
+		return userRepository.save(user);
+	}
+
+	@Transactional
+	public void delete(User user) {
+		userRepository.delete(user);
+	}
+
+	@Transactional
+	public User findByUsernameOrThrow(String username) {
+		return userRepository
+				.findByUsername(username)
+				.orElseThrow(() ->
+						new GlobalException(GlobalException.Type.NOT_FOUND, "User not found")
+				);
 	}
 
 	public boolean existsById(Long id) {
 		return userRepository.existsById(id);
+	}
+
+	@Transactional
+	public boolean existsByUsername(String username) {
+		return userRepository.existsByUsername(username);
+	}
+
+	@Transactional
+	public void throwIfExistsByUsername(String username) {
+		if (existsByUsername(username)) {
+			throw new GlobalException(GlobalException.Type.ALREADY_EXISTS, "User exists");
+		}
+	}
+
+	@Transactional
+	public void throwIfNotExistsByUsername(String username) {
+		if (!existsByUsername(username)) {
+			throw new GlobalException(GlobalException.Type.NOT_FOUND, "User not found");
+		}
 	}
 
 	public void throwIfExistsById(Long id) {
