@@ -1,12 +1,15 @@
 package com.mezon.classmanagement.backend.service;
 
+import com.mezon.classmanagement.backend.entity.Class;
 import com.mezon.classmanagement.backend.entity.ClassUser;
+import com.mezon.classmanagement.backend.entity.User;
 import com.mezon.classmanagement.backend.exception.GlobalException;
 import com.mezon.classmanagement.backend.repository.ClassUserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -14,6 +17,23 @@ import org.springframework.stereotype.Service;
 public class ClassUserService {
 
 	ClassUserRepository classUserRepository;
+
+	@Transactional
+	public ClassUser createClassUser(Long classId, Long userId, ClassUser.Role role) {
+		Class clazz = Class.builder()
+				.id(classId)
+				.build();
+		User user = User.builder()
+				.id(userId)
+				.build();
+		ClassUser classUser = ClassUser.builder()
+				.clazz(clazz)
+				.user(user)
+				.role(role)
+				.build();
+
+		return save(classUser);
+	}
 
 	public ClassUser save(ClassUser classUser) {
 		return classUserRepository.save(classUser);

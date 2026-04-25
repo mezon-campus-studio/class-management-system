@@ -54,6 +54,7 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 		SELECT new com.mezon.classmanagement.backend.dto.clazz.ClassDto(
 			clazz.id,
 			clazz.owner.id,
+			clazz.owner.displayName,
 			clazz.name,
 			clazz.description,
 			clazz.code,

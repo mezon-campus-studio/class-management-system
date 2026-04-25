@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 
-@JsonPropertyOrder({"id", "owner_user_id", "name", "description", "code", "avatar_url", "privacy", "created_at"})
+@JsonPropertyOrder({"id", "owner_user_id", "owner_display_name", "name", "description", "code", "avatar_url", "privacy", "created_at"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Setter
@@ -26,6 +26,9 @@ public final class ClassDto {
 
 	@JsonProperty(value = "owner_user_id")
 	Long ownerUserId;
+
+	@JsonProperty(value = "owner_display_name")
+	String ownerDisplayName;
 
 	@JsonProperty(value = "name")
 	String name;

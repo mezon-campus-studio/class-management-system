@@ -64,6 +64,8 @@ public class ClassService {
 
         Class responseClass = save(newClass);
 
+        classUserService.createClassUser(responseClass.getId(), clientUserId, ClassUser.Role.CLASS_ADMIN);
+
         return classMapper.toCreateClassResponseDto(responseClass);
     }
 
@@ -95,13 +97,6 @@ public class ClassService {
 
         classUserService.throwIfExistsByClassIdAndUserId(currentClass.getId(), clientUserId);
 
-        Class clazz = Class.builder()
-                .id(currentClass.getId())
-                .build();
-        User user = User.builder()
-                .id(clientUserId)
-                .build();
-
         ClassUser.Role role = null;
         if (isPublic(currentClass)) {
             role = ClassUser.Role.CLASS_MEMBER;
@@ -110,13 +105,7 @@ public class ClassService {
             role = ClassUser.Role.PENDING_CLASS_MEMBER;
         }
 
-        ClassUser classUser = ClassUser.builder()
-                .clazz(clazz)
-                .user(user)
-                .role(role)
-                .build();
-
-        classUserService.save(classUser);
+        classUserService.createClassUser(currentClass.getId(), clientUserId, role);
 
         return JoinClassResponseDto.builder()
                 .classId(currentClass.getId())
