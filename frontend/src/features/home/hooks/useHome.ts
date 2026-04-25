@@ -10,6 +10,7 @@ export const useHome = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isJoining, setIsJoining] = useState(false);
 
   const loadData = async () => {
     try {
@@ -39,10 +40,11 @@ export const useHome = () => {
         description: formData.description,
         privacy: formData.status as ClassPrivacy,
         code: `CL${Math.floor(1000 + Math.random() * 9000)}`,
+        classCode: `CL${Math.floor(1000 + Math.random() * 9000)}`,
         owner_username: user?.username || "alice",
         avatar_url: "",
       };
-
+      console.log("Dữ liệu thực tế bọc lên Frontend:", payload);
       const res = await homeAPI.createClass(payload);
 
       if (res.success) {
@@ -59,12 +61,38 @@ export const useHome = () => {
     }
   };
 
+  //goi API join class
+  const joinClassMutation = async (classId: string, code?: string) => {
+    try {
+      setIsJoining(true);
+      setError(null);
+      
+      const res = await homeAPI.joinClass(classId, code);
+
+      if (res.success) {
+        console.log("Tham gia lớp thành công!");
+        await loadData(); // Tự động load lại danh sách lớp mới
+        return res.data;  // Trả về data (JoinClassDto) để Component dùng nếu cần
+      } else {
+        throw new Error(res.message || "Không thể tham gia lớp học");
+      }
+    } catch (err: unknown) {
+      console.error("Lỗi khi tham gia lớp:", err);
+      // Ném lỗi ra để Modal/Component hứng và hiển thị cho người dùng
+      throw err; 
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
   return {
     classes,
     isLoading,
     isCreating,
+    isJoining,
     error,
     refresh: loadData,
     createClassMutation,
+    joinClassMutation,
   };
 };

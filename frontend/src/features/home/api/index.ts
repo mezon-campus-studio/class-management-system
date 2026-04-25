@@ -43,7 +43,7 @@ export const homeAPI = {
     if (authStorage) {
       try {
         const parsed = JSON.parse(authStorage);
-        token = parsed.state.user?.token || parsed.state.user?.accessToken;
+        token = parsed.state.user?.token || parsed.state.user?.access_token;
       } catch (e) {
         console.error("Lỗi parse JSON auth-storage", e);
       }
@@ -64,7 +64,7 @@ export const homeAPI = {
     let token = null;
     if (authStorage) {
       const parsed = JSON.parse(authStorage);
-      token = parsed.state.user?.token || parsed.state.user?.accessToken;
+      token = parsed.state.user?.token || parsed.state.user?.access_token;
     }
 
     // Gọi API tìm thông tin lớp bằng mã code
@@ -85,14 +85,14 @@ export const homeAPI = {
     if (authStorage) {
       try {
         const parsed = JSON.parse(authStorage);
-        token = parsed.state.user?.token || parsed.state.user?.accessToken;
+        token = parsed.state.user?.token || parsed.state.user?.access_token;
       } catch (e) {
         console.error("Lỗi parse JSON auth-storage", e);
       }
     }
 
     return apiClient.post<ResponseDTO<string>>(
-      `/classes/${classId}/join`,
+      `/classes/${classId}`,
       { code: code },
       {
         headers: {

@@ -13,7 +13,8 @@ export interface ClassResponse {
   id: string;
   name: string;       
   description?: string;
-  code: string;         
+  code: string;
+  classCode: string;       
   privacy: ClassPrivacy; 
   owner_username: string;
   avatar_url: string;
