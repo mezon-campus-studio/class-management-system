@@ -30,7 +30,7 @@ public interface ClassMapper {
 
 	@Mappings({
 			@Mapping(source = "owner.id", target = "ownerUserId"),
-			@Mapping(target = "id", ignore = true)
+			//@Mapping(target = "id", ignore = true)
 	})
 	ClassDto toCreateClassResponseDto(Class clazz);
 

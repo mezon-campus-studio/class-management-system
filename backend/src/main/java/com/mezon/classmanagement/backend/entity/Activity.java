@@ -62,13 +62,13 @@ public class Activity {
 	@Column(name = "is_mandatory", nullable = false)
 	Boolean isMandatory;
 
+	@Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+	Instant createdAt;
+
 	@PrePersist
 	public void prePersist() {
 		if (isMandatory == null) {
 			isMandatory = false;
 		}
 	}
-
-	@Column(name = "created_at", nullable = false, insertable = false, updatable = false)
-	Instant createdAt;
 }

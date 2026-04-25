@@ -1,6 +1,6 @@
 package com.mezon.classmanagement.backend.repository;
 
-import com.mezon.classmanagement.backend.dto.joinedclass.JoinedClassResponseDto;
+import com.mezon.classmanagement.backend.dto.clazz.ClassDto;
 import com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto;
 import com.mezon.classmanagement.backend.entity.Class;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +12,8 @@ import java.util.Optional;
 
 @Repository
 public interface ClassRepository extends JpaRepository<Class, Long> {
+
+	Optional<Class> findByCode(String code);
 
 	@Query(value = """
 		SELECT new com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto(
@@ -29,8 +31,9 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 	""")
 	List<ClassMemberResponseDto> getClassMembers(Long classId);
 
+	/*
 	@Query(value = """
-		SELECT new com.mezon.classmanagement.backend.dto.joinedclass.JoinedClassResponseDto(
+		SELECT new com.mezon.classmanagement.backend.dto.clazz.ClassDto(
 			class.id,
 			owner.id,
 			class.name,
@@ -44,8 +47,24 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 		JOIN class.owner owner
 		WHERE owner.id = :userId
 	""")
-	List<JoinedClassResponseDto> getJoinedClasses(Long userId);
+	List<ClassDto> getJoinedClasses(Long userId);
+	*/
 
-	Optional<Class> findByIdAndOwner_Id(Long classId, Long ownerUserId);
+	@Query(value = """
+		SELECT new com.mezon.classmanagement.backend.dto.clazz.ClassDto(
+			clazz.id,
+			clazz.owner.id,
+			clazz.name,
+			clazz.description,
+			clazz.code,
+			clazz.avatarUrl,
+			clazz.privacy,
+			clazz.createdAt
+		)
+		FROM ClassUser classUser
+		JOIN classUser.clazz clazz
+		WHERE classUser.user.id = :userId
+	""")
+	List<ClassDto> getJoinedClasses(Long userId);
 
 }

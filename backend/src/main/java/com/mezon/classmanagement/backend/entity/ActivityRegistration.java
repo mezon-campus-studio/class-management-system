@@ -51,13 +51,6 @@ public class ActivityRegistration {
 	@Column(name = "status", nullable = false)
 	Status status;
 
-	@PrePersist
-	public void prePersist() {
-		if (status == null) {
-			status = Status.PENDING;
-		}
-	}
-
 	@Column(name = "registered_at", nullable = false, insertable = false, updatable = false)
 	Instant registeredAt;
 
@@ -65,5 +58,12 @@ public class ActivityRegistration {
 		APPROVED,
 		REJECTED,
 		PENDING
+	}
+
+	@PrePersist
+	public void prePersist() {
+		if (status == null) {
+			status = Status.PENDING;
+		}
 	}
 }

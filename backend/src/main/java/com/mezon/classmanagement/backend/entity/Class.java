@@ -1,5 +1,6 @@
 package com.mezon.classmanagement.backend.entity;
 
+import com.mezon.classmanagement.backend.util.CodeGenerator;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -62,18 +63,21 @@ public class Class {
 	@Column(name = "privacy", nullable = false)
 	Privacy privacy;
 
-	@PrePersist
-	public void prePersist() {
-		if (privacy == null) {
-			privacy = Privacy.PRIVATE;
-		}
-	}
-
 	@Column(name = "created_at", nullable = false, insertable = false, updatable = false)
 	Instant createdAt;
 
 	public enum Privacy {
 		PUBLIC,
 		PRIVATE
+	}
+
+	@PrePersist
+	public void prePersist() {
+		if (privacy == null) {
+			privacy = Privacy.PRIVATE;
+		}
+		if (code == null) {
+			code = CodeGenerator.generate(6);
+		}
 	}
 }

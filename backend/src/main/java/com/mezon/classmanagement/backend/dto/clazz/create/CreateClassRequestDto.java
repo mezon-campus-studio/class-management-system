@@ -5,6 +5,14 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
+/**
+ * <code>
+ * <pre>
+ * String name;
+ * String avatarUrl;
+ * </pre>
+ * </code>
+ */
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
 public final class CreateClassRequestDto {
