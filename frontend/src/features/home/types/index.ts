@@ -6,6 +6,7 @@ export interface ClassItems {
   owner_user_id: string;
   description: string;
   code: string;
+  owner_display_name: string;
   privacy: ClassPrivacy;
   userJoinStatus: "joined" | "pending"
 }

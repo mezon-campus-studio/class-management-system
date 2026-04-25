@@ -48,7 +48,7 @@ console.log("🔍 Dữ liệu 1 lớp học từ Backend:", myClasses[0]);
                   </button>
                 </div>
                 <p className="text-white/80 text-xs mt-1 truncate opacity-90">
-                  {typeof item.owner_user_id}
+                  {item.owner_display_name}
                 </p>
 
                 {/* Avatar chủ sở hữu (Profile pic nhỏ) */}
