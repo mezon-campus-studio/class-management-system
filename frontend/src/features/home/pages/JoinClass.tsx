@@ -36,29 +36,12 @@ export const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalPro
         setError("");
 
         try {
-            // 1. Tìm lớp xem có tồn tại không
-            const response = await homeAPI.getClassByCode(code);
-            
-            if (response.success && response.data) {
-                const classData = response.data;
-                setFoundClass(classData);
+            await joinClassMutation(code);
+            setStep('SUCCESS');
+            setTimeout(() => { onSuccess(); handleClose(); }, 1500);
 
-                // 2. Gọi API Join thật
-                await joinClassMutation(classData.id, code);
-                
-                if (classData.status === 'PUBLIC') {
-                    setStep('SUCCESS');
-                    setTimeout(() => { onSuccess(); handleClose(); }, 1500);
-                } else {
-                    setStep('PENDING');
-                    onSuccess(); 
-                }
-            } else {
-                setError("Mã lớp không chính xác hoặc lớp không tồn tại");
-            }
         } catch (err: any) {
-            const errorMsg = err.response?.data?.message || err.message || "Lỗi: Không thể tham gia lớp lúc này";
-            setError(errorMsg);
+            setError(err.message || "Lỗi: Không thể tham gia lớp lúc này");
         } finally {
             setLoading(false);
         }

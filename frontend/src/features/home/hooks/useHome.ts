@@ -39,8 +39,6 @@ export const useHome = () => {
         name: formData.className,
         description: formData.description,
         privacy: formData.status as ClassPrivacy,
-        code: `CL${Math.floor(1000 + Math.random() * 9000)}`,
-        classCode: `CL${Math.floor(1000 + Math.random() * 9000)}`,
         owner_username: user?.username || "alice",
         avatar_url: "",
       };
@@ -62,12 +60,12 @@ export const useHome = () => {
   };
 
   //goi API join class
-  const joinClassMutation = async (classId: string, code?: string) => {
+  const joinClassMutation = async (code: string) => {
     try {
       setIsJoining(true);
       setError(null);
       
-      const res = await homeAPI.joinClass(classId, code);
+      const res = await homeAPI.joinClass(code);
 
       if (res.success) {
         console.log("Tham gia lớp thành công!");

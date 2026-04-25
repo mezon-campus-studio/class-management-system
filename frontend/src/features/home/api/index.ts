@@ -2,38 +2,7 @@ import type { ClassItems, ClassResponse } from "@features/home/types";
 import { apiClient } from "@services/api-client";
 import type { ResponseDTO } from "@shared/types";
 
-const mockData: ClassItems[] = [
-  {
-    id: "1",
-    className: "Lập trình .NET nâng cao",
-    owner: "Nguyễn Văn A",
-    status: "PUBLIC",
-    classCode: "DOTNET123",
-    userJoinStatus: "joined",
-  },
-  {
-    id: "2",
-    className: "Phát triển Web với React",
-    owner: "Trần Thị B",
-    status: "PRIVATE",
-    classCode: "REACT456",
-    userJoinStatus: "pending",
-  },
-];
-
 export const homeAPI = {
-  getClasses: async (): Promise<ClassItems[]> => {
-    // KHI MUỐN DÙNG MOCK:
-    return new Promise((resolve) => setTimeout(() => resolve(mockData), 500));
-
-    // KHI MUỐN DÙNG THẬT (Bỏ cmt phía dưới):
-    /*
-    const response = await fetch('url');
-    if(!response.ok) throw new Error('Lỗi kết nối');
-    return response.json();
-    */
-  },
-
   createClass: async (
     data: Omit<ClassResponse, "id">,
   ): Promise<ResponseDTO<ClassResponse>> => {
@@ -76,8 +45,7 @@ export const homeAPI = {
   },
 
   joinClass: async (
-    classId: string,
-    code?: string,
+    code: string,
   ): Promise<ResponseDTO<string>> => {
     const authStorage = localStorage.getItem("auth-storage");
     let token = null;
@@ -92,8 +60,8 @@ export const homeAPI = {
     }
 
     return apiClient.post<ResponseDTO<string>>(
-      `/classes/${classId}`,
-      { code: code },
+      `/classes/join`,
+      { class_code: code },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -101,5 +69,23 @@ export const homeAPI = {
         },
       },
     );
+  },
+
+  getClasses: async (): Promise<ClassItems[]> => {
+    const authStorage = localStorage.getItem("auth-storage");
+    let token = null;
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      token = parsed.state.user?.token || parsed.state.user?.access_token;
+    }
+
+    // Gọi API thật tới Backend
+    const response = await apiClient.get<ResponseDTO<ClassItems[]>>("/classes", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    
+    return response.data;
   },
 };
