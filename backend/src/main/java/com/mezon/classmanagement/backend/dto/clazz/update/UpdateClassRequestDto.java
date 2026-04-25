@@ -7,16 +7,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
-/**
- * <code>
- * <pre>
- * String name;
- * String description;
- * String avatarUrl;
- * Class.Privacy privacy;
- * </pre>
- * </code>
- */
 @JsonPropertyOrder({"id", "name", "description", "avatar_url", "privacy"})
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter

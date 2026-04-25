@@ -3,6 +3,7 @@ package com.mezon.classmanagement.backend.controller;
 import com.mezon.classmanagement.backend.dto.ResponseDTO;
 import com.mezon.classmanagement.backend.dto.clazz.ClassDto;
 import com.mezon.classmanagement.backend.dto.clazz.create.CreateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.clazz.delete.DeleteClassResponseDto;
 import com.mezon.classmanagement.backend.dto.clazz.join.JoinClassResponseDto;
 import com.mezon.classmanagement.backend.dto.clazz.leave.LeaveClassResponseDto;
 import com.mezon.classmanagement.backend.dto.clazz.update.UpdateClassRequestDto;
@@ -46,7 +47,7 @@ public class ClassController {
 
 		return ResponseDTO.<ClassDto>builder()
 				.success(true)
-				.message("Class created successfully")
+				.message("Create class successful")
 				.data(response)
 				.build();
 	}
@@ -65,12 +66,13 @@ public class ClassController {
 
 	@PreAuthorize("@ClassPermission.adminOnly(#classId)")
 	@DeleteMapping("/{classId}")
-	public ResponseDTO<Void> deleteClass(@PathVariable Long classId) {
+	public ResponseDTO<DeleteClassResponseDto> deleteClass(@PathVariable Long classId) {
 		classService.deleteClass(classId);
 
-		return ResponseDTO.<Void>builder()
+		return ResponseDTO.<DeleteClassResponseDto>builder()
 				.success(true)
 				.message("Delete class successful")
+				.data(DeleteClassResponseDto.builder().classId(classId).build())
 				.build();
 	}
 
@@ -90,7 +92,7 @@ public class ClassController {
 				.build();
 	}
 
-	@PostMapping("/{classId}/leave")
+	@DeleteMapping("/{classId}/leave")
 	public ResponseDTO<LeaveClassResponseDto> leaveClass(
 			@PathVariable Long classId
 	) {
