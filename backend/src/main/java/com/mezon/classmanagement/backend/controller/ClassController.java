@@ -3,8 +3,10 @@ package com.mezon.classmanagement.backend.controller;
 import com.mezon.classmanagement.backend.dto.ResponseDTO;
 import com.mezon.classmanagement.backend.dto.clazz.ClassDto;
 import com.mezon.classmanagement.backend.dto.clazz.create.CreateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.clazz.join.JoinClassResponseDto;
+import com.mezon.classmanagement.backend.dto.clazz.leave.LeaveClassResponseDto;
 import com.mezon.classmanagement.backend.dto.clazz.update.UpdateClassRequestDto;
-import com.mezon.classmanagement.backend.dto.joinclass.JoinClassDto;
+import com.mezon.classmanagement.backend.dto.clazz.join.JoinClassRequestDto;
 import com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto;
 import com.mezon.classmanagement.backend.service.AuthService;
 import com.mezon.classmanagement.backend.service.ClassService;
@@ -12,6 +14,7 @@ import com.mezon.classmanagement.backend.service.JwtService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,9 +51,10 @@ public class ClassController {
 				.build();
 	}
 
-	@PatchMapping
-	public ResponseDTO<ClassDto> updateClass(@RequestBody UpdateClassRequestDto request) {
-		ClassDto response = classService.updateClass(1L, request);
+	@PreAuthorize("@ClassPermission.adminOnly(#classId)")
+	@PatchMapping("/{classId}")
+	public ResponseDTO<ClassDto> updateClass(@PathVariable Long classId, @RequestBody UpdateClassRequestDto request) {
+		ClassDto response = classService.updateClass(classId, request);
 
 		return ResponseDTO.<ClassDto>builder()
 				.success(true)
@@ -59,36 +63,60 @@ public class ClassController {
 				.build();
 	}
 
+	@PreAuthorize("@ClassPermission.adminOnly(#classId)")
 	@DeleteMapping("/{classId}")
-	public ResponseDTO<String> deleteClass(@PathVariable Long classId) {
+	public ResponseDTO<Void> deleteClass(@PathVariable Long classId) {
 		classService.deleteClass(classId);
 
-		return ResponseDTO.<String>builder()
+		return ResponseDTO.<Void>builder()
 				.success(true)
 				.message("Delete class successful")
 				.build();
 	}
 
-	@PostMapping("/{classId}")
-	public ResponseDTO<JoinClassDto> joinClass(@PathVariable Long classId) {
+	@PostMapping("/join")
+	public ResponseDTO<JoinClassResponseDto> joinClass(
+			@RequestBody JoinClassRequestDto request
+	) {
 		Authentication authentication = authService.getAuthentication();
 		Long userId = jwtService.extractUserId(authentication);
-		JoinClassDto response = classService.joinClass(classId, userId);
 
-		return ResponseDTO.<JoinClassDto>builder()
+		JoinClassResponseDto response = classService.joinClass(userId, request);
+
+		return ResponseDTO.<JoinClassResponseDto>builder()
 				.success(true)
 				.message("Join class successful")
 				.data(response)
 				.build();
 	}
 
-	@GetMapping("{userId}")
-	public ResponseDTO<String> getJoinedClasses(@PathVariable Long userId) {
-		//
-		return ResponseDTO.<String>builder()
+	@PostMapping("/{classId}/leave")
+	public ResponseDTO<LeaveClassResponseDto> leaveClass(
+			@PathVariable Long classId
+	) {
+		Authentication authentication = authService.getAuthentication();
+		Long userId = jwtService.extractUserId(authentication);
+
+		LeaveClassResponseDto response = classService.leaveClass(userId, classId);
+
+		return ResponseDTO.<LeaveClassResponseDto>builder()
+				.success(true)
+				.message("Leave class successful")
+				.data(response)
+				.build();
+	}
+
+	@GetMapping
+	public ResponseDTO<List<ClassDto>> getJoinedClasses() {
+		Authentication authentication = authService.getAuthentication();
+		Long currentUserId = jwtService.extractUserId(authentication);
+
+		List<ClassDto> response = classService.getJoinedClasses(currentUserId);
+
+		return ResponseDTO.<List<ClassDto>>builder()
 				.success(true)
 				.message("Get joined classes successful")
-				.data(null)
+				.data(response)
 				.build();
 	}
 

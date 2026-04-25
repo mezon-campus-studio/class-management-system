@@ -52,13 +52,6 @@ public class ClassUser {
 	@Column(name = "role", nullable = false)
 	Role role;
 
-	@PrePersist
-	public void prePersist() {
-		if (role == null) {
-			role = Role.CLASS_MEMBER;
-		}
-	}
-
 	@JdbcTypeCode(SqlTypes.JSON)
 	@Column(columnDefinition = "json", nullable = true)
 	List<String> permissionCodes;
@@ -68,6 +61,14 @@ public class ClassUser {
 
 	public enum Role {
 		CLASS_ADMIN,
-		CLASS_MEMBER
+		CLASS_MEMBER,
+		PENDING_CLASS_MEMBER
+	}
+
+	@PrePersist
+	public void prePersist() {
+		if (role == null) {
+			role = Role.PENDING_CLASS_MEMBER;
+		}
 	}
 }

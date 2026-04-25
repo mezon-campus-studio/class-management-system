@@ -27,4 +27,20 @@ public class UserService {
 				.orElseThrow(() -> new GlobalException(GlobalException.Type.NOT_FOUND, "User not found"));
 	}
 
+	public boolean existsById(Long id) {
+		return userRepository.existsById(id);
+	}
+
+	public void throwIfExistsById(Long id) {
+		if (existsById(id)) {
+			throw new GlobalException(GlobalException.Type.ALREADY_EXISTS, "User exists");
+		}
+	}
+
+	public void throwIfNotExistsById(Long id) {
+		if (!existsById(id)) {
+			throw new GlobalException(GlobalException.Type.NOT_FOUND, "User not found");
+		}
+	}
+
 }

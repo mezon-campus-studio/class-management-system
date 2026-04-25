@@ -53,18 +53,18 @@ public class GroupUser {
 	@Column(name = "role", nullable = false)
 	Role role;
 
-	@PrePersist
-	public void prePersist() {
-		if (role == null) {
-			role = Role.GROUP_MEMBER;
-		}
-	}
-
 	@Column(name = "joined_at", nullable = false, insertable = false, updatable = false)
 	Instant joinedAt;
 
 	public enum Role {
 		GROUP_LEADER,
 		GROUP_MEMBER
+	}
+
+	@PrePersist
+	public void prePersist() {
+		if (role == null) {
+			role = Role.GROUP_MEMBER;
+		}
 	}
 }

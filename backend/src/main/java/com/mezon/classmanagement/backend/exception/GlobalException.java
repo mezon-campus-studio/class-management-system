@@ -20,6 +20,7 @@ public class GlobalException extends RuntimeException {
 		NOT_FOUND(HttpStatus.NOT_FOUND.value()),
 		ALREADY_EXISTS(HttpStatus.CONFLICT.value()),
 		INVALID_AUTHENTICATION(HttpStatus.UNAUTHORIZED.value()),
+		FORBIDDEN(HttpStatus.FORBIDDEN.value()),
 		INVALID_REQUEST(HttpStatus.BAD_REQUEST.value());
 
 		int code;
