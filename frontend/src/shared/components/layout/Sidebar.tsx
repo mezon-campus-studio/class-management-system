@@ -13,13 +13,12 @@ import { useHome } from "@features/home/hooks/useHome";
 import { useUIStore } from "@app/store"; // Import store mới
 
 export const Sidebar = () => {
-  // Không dùng Props isOpen nữa
   const [isRegisteredOpen, setIsRegisteredOpen] = useState(true);
   const { classes, isLoading } = useHome();
   const { isSidebarOpen } = useUIStore(); // Lấy trạng thái từ Store
 
   // Logic lọc lấy các lớp mà user đã join thành công
-  const myClasses = classes.filter((item) => item.userJoinStatus === "joined");
+  const myClasses = classes || [];
 
   return (
     <aside
@@ -82,18 +81,18 @@ export const Sidebar = () => {
                               }`}
                             />
                             <span className="text-sm truncate leading-tight">
-                              {item.className}
+                              {item.name}
                             </span>
                           </div>
 
                           <div
                             title={
-                              item.status === "PUBLIC"
+                              item.privacy === "PUBLIC"
                                 ? "Cộng đồng"
                                 : "Nhóm kín"
                             }
                           >
-                            {item.status === "PUBLIC" ? (
+                            {item.privacy === "PUBLIC" ? (
                               <Globe
                                 size={12}
                                 className="text-ink-green-text opacity-60"

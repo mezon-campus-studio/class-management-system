@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { homeAPI } from '@features/home/api';
 import type { ClassItems } from '@features/home/types';
+import { useHome } from '@features/home/hooks/useHome';
 
 interface JoinClassModalProps {
     isOpen: boolean;
@@ -9,6 +10,7 @@ interface JoinClassModalProps {
 }
 
 export const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalProps) => {
+    const {joinClassMutation} = useHome(); //lay ham join class tuwf useHome
     const [step, setStep] = useState<'INPUT' | 'PENDING' | 'SUCCESS'>('INPUT');
     const [code, setCode] = useState("");
     const [error, setError] = useState("");
@@ -16,6 +18,15 @@ export const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalPro
     const [foundClass, setFoundClass] = useState<ClassItems | null>(null);
 
     if (!isOpen) return null;
+
+    const handleClose = () => {
+        setTimeout(() => {
+            setStep('INPUT');
+            setCode("");
+            setError("");
+        }, 300);
+        onClose();
+    }
 
     const handleJoin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,29 +36,12 @@ export const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalPro
         setError("");
 
         try {
-            // 1. Tìm lớp xem có tồn tại không
-            const response = await homeAPI.getClassByCode(code);
-            
-            if (response.success && response.data) {
-                const classData = response.data;
-                setFoundClass(classData);
+            await joinClassMutation(code);
+            setStep('SUCCESS');
+            setTimeout(() => { onSuccess(); handleClose(); }, 1500);
 
-                // 2. Gọi API Join thật
-                const joinRes = await homeAPI.joinClass(classData.id, code);
-                
-                if (joinRes.success) {
-                    if (classData.status === 'PUBLIC') {
-                        setStep('SUCCESS');
-                        setTimeout(() => { onSuccess(); onClose(); }, 1500);
-                    } else {
-                        setStep('PENDING');
-                    }
-                }
-            } else {
-                setError("Mã lớp không chính xác hoặc lớp không tồn tại");
-            }
         } catch (err: any) {
-            setError("Lỗi: Mã lớp không hợp lệ hoặc bạn đã tham gia lớp này");
+            setError(err.message || "Lỗi: Không thể tham gia lớp lúc này");
         } finally {
             setLoading(false);
         }

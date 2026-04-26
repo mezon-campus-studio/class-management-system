@@ -23,7 +23,7 @@ export const Header = () => {
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
   // 2. Tìm lớp hiện tại dựa trên classId từ URL
-  const currentClass = classes.find((item) => item.id === classId);
+  const currentClass = classes.find((item) => String(item.id) === classId);
   const isClassPage = location.pathname.includes("/class/") && classId; // Kiểm tra xem có phải đang ở trang chi tiết lớp không /class/ABC-123
   const handleLoginClick = () => {
     navigate("/login");
@@ -75,7 +75,7 @@ export const Header = () => {
                   /* Mobile: tối đa 80px | Tablet: 150px | Desktop: 300px */
                   max-w-[50px] xs:max-w-[120px] sm:max-w-[200px] md:max-w-[300px] lg:max-w-[400px]"
                 >
-                  {currentClass ? currentClass.className : "Đang tải..."}
+                  {currentClass ? currentClass.name : "Đang tải..."}
                 </span>
               </div>
             </div>

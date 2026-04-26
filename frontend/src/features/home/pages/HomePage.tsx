@@ -4,11 +4,12 @@ import { Lock, MoreVertical, ArrowRight } from "lucide-react";
 import { Plus } from "lucide-react";
 import { ClassPrivacy } from "@shared/domain/enums";
 
+
 export const HomePage = () => {
   const navigate = useNavigate();
   const { classes, isLoading, error } = useHome();
-  const myClasses = classes.filter((item) => item.userJoinStatus === "joined"); //lọc lấy các lớp mà user đã join
-
+  const myClasses = classes || [];
+console.log("🔍 Dữ liệu 1 lớp học từ Backend:", myClasses[0]);
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-6">
       {/* 1. Trạng thái đang tải (Loading) */}
@@ -33,27 +34,27 @@ export const HomePage = () => {
               {/* Banner lớp học - Cao 100px */}
               <div
                 className={`relative h-[100px] p-4 ${
-                  item.status === ClassPrivacy.PUBLIC
+                  item.privacy === ClassPrivacy.PUBLIC
                     ? "bg-gradient-to-br from-ink-blue-text to-blue-500"
                     : "bg-gradient-to-br from-ink-1 to-slate-900"
                 }`}
               >
                 <div className="flex justify-between items-start">
                   <h3 className="text-white font-bold text-lg leading-tight truncate pr-6 group-hover:underline">
-                    {item.className}
+                    {item.name}
                   </h3>
                   <button className="text-white/70 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10">
                     <MoreVertical size={18} />
                   </button>
                 </div>
                 <p className="text-white/80 text-xs mt-1 truncate opacity-90">
-                  {item.owner}
+                  {item.owner_display_name}
                 </p>
 
                 {/* Avatar chủ sở hữu (Profile pic nhỏ) */}
                 <div className="absolute -bottom-6 right-4 w-12 h-12 rounded-full bg-surface shadow-md flex items-center justify-center border-4 border-surface overflow-hidden">
                   <div className="w-full h-full bg-ink-blue-fill flex items-center justify-center text-ink-blue-text font-bold text-sm">
-                    {item.owner.charAt(0).toUpperCase()}
+                    {item.owner_user_id ? String(item.owner_user_id).charAt(0) : "G"}
                   </div>
                 </div>
               </div>
@@ -65,18 +66,18 @@ export const HomePage = () => {
                   <div className="flex items-center gap-2">
                     <span
                       className={`text-[10px] px-2.5 py-0.5 rounded-md font-extrabold uppercase tracking-wider ${
-                        item.status === "PUBLIC"
+                        item.privacy === "PUBLIC"
                           ? "bg-ink-green-fill text-ink-green-text border border-ink-green-border"
                           : "bg-ink-amber-fill text-ink-amber-text border border-ink-amber-border"
                       }`}
                     >
-                      {item.status === "PUBLIC" ? "Cộng đồng" : "Nhóm kín"}
+                      {item.privacy === "PUBLIC" ? "Cộng đồng" : "Nhóm kín"}
                     </span>
                   </div>
 
                   {/* Meta data */}
                   <div className="flex flex-col gap-2">
-                    {item.status === "PRIVATE" && (
+                    {item.privacy === "PRIVATE" && (
                       <div className="flex items-center gap-2 text-xs text-ink-amber-text font-medium">
                         <Lock size={14} />
                         <span>Chờ duyệt</span>
