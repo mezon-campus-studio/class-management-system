@@ -1,6 +1,7 @@
 package com.mezon.classmanagement.backend.service;
 
 import com.mezon.classmanagement.backend.constant.JwtConstant;
+import com.mezon.classmanagement.backend.constant.WarningConstant;
 import com.mezon.classmanagement.backend.dto.signin.SignInRequestDto;
 import com.mezon.classmanagement.backend.dto.signout.SignOutRequestDto;
 import com.mezon.classmanagement.backend.dto.signup.SignUpRequestDto;
@@ -8,6 +9,7 @@ import com.mezon.classmanagement.backend.dto.signin.SignInResponseDto;
 import com.mezon.classmanagement.backend.dto.signout.SignOutResponseDto;
 import com.mezon.classmanagement.backend.dto.signup.SignUpResponseDto;
 import com.mezon.classmanagement.backend.entity.InvalidatedToken;
+import com.mezon.classmanagement.backend.entity.MezonUser;
 import com.mezon.classmanagement.backend.entity.User;
 import com.mezon.classmanagement.backend.exception.GlobalException;
 import com.mezon.classmanagement.backend.repository.InvalidatedTokenRepository;
@@ -32,6 +34,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Optional;
 
+@SuppressWarnings({WarningConstant.SPELL_CHECKING_INSPECTION})
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Service
@@ -59,12 +62,34 @@ public class AuthService {
 				.build();
 	}
 
+	public SignInResponseDto signInMezon(MezonUser mezonUser) {
+		userService.throwIfExistsByUsername(mezonUser.getUsername());
+
+		SignUpRequestDto signUpRequest = SignUpRequestDto.builder()
+				.type(User.Type.MEZON)
+				.username(mezonUser.getUsername())
+				.displayName(mezonUser.getDisplayName())
+				.avatarUrl(mezonUser.getAvatar())
+				.email(mezonUser.getEmail())
+				.build();
+		SignUpResponseDto signUpResponse = signUp(signUpRequest);
+
+		String accessToken = jwtService.generateAccessToken(signUpResponse.getId(), signUpResponse.getUsername());
+		String refreshToken = jwtService.generateRefreshToken(signUpResponse.getUsername());
+
+		return SignInResponseDto.builder()
+				.accessToken(accessToken)
+				.refreshToken(refreshToken)
+				.build();
+	}
+
 	public SignUpResponseDto signUp(SignUpRequestDto request) {
 		userService.throwIfExistsByUsername(request.getUsername());
 
 		User newUser = userService.createUser(request);
 
 		return SignUpResponseDto.builder()
+				.id(newUser.getId())
 				.username(newUser.getUsername())
 				.build();
 	}

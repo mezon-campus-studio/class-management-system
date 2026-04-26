@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 
-@SuppressWarnings({WarningConstant.UNUSED})
+@SuppressWarnings({WarningConstant.UNUSED, WarningConstant.SPELL_CHECKING_INSPECTION})
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
 public class GlobalException extends RuntimeException {
@@ -20,6 +20,7 @@ public class GlobalException extends RuntimeException {
 		NOT_FOUND(HttpStatus.NOT_FOUND.value()),
 		ALREADY_EXISTS(HttpStatus.CONFLICT.value()),
 		INVALID_AUTHENTICATION(HttpStatus.UNAUTHORIZED.value()),
+		MEZON_AUTH_ERROR(1000),
 		FORBIDDEN(HttpStatus.FORBIDDEN.value()),
 		INVALID_REQUEST(HttpStatus.BAD_REQUEST.value());
 

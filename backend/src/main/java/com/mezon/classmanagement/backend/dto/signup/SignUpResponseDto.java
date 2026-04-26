@@ -12,6 +12,9 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Builder
 public final class SignUpResponseDto {
+	@JsonProperty(value = "id")
+	Long id;
+
 	@JsonProperty(value = "username")
 	String username;
 }
