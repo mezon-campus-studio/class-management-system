@@ -3,6 +3,7 @@ package com.mezon.classmanagement.backend.service;
 import com.mezon.classmanagement.backend.dto.signup.SignUpRequestDto;
 import com.mezon.classmanagement.backend.entity.User;
 import com.mezon.classmanagement.backend.exception.GlobalException;
+import com.mezon.classmanagement.backend.mapper.UserMapper;
 import com.mezon.classmanagement.backend.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class UserService {
 	 * Mapper
 	 */
 
+	UserMapper userMapper;
 
 	/**
 	 * Bean
@@ -35,11 +37,8 @@ public class UserService {
 
 	@Transactional
 	public User createUser(SignUpRequestDto request) {
-		User user = User.builder()
-				.username(request.getUsername())
-				.hashedPassword(passwordEncoder.encode(request.getPassword()))
-				.displayName(request.getDisplayName())
-				.build();
+		User user = userMapper.toUser(request);
+		user.setHashedPassword(passwordEncoder.encode(request.getPassword()));
 
 		return save(user);
 	}
