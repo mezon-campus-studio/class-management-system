@@ -1,4 +1,4 @@
-package com.mezon.classmanagement.backend.dto.clazz.join;
+package com.mezon.classmanagement.backend.dto.activity.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
@@ -9,7 +9,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
 @Builder
-public final class JoinClassRequestDto {
-	@JsonProperty(value = "class_code")
-	String classCode;
+public final class ActivityIdResponseDto {
+	@JsonProperty(value = "activity_id")
+	Long activityId;
 }

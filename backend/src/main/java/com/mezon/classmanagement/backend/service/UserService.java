@@ -1,20 +1,15 @@
 package com.mezon.classmanagement.backend.service;
 
-import com.mezon.classmanagement.backend.dto.response.child.UserResponseDto;
 import com.mezon.classmanagement.backend.dto.signup.SignUpRequestDto;
 import com.mezon.classmanagement.backend.entity.User;
 import com.mezon.classmanagement.backend.exception.GlobalException;
-import com.mezon.classmanagement.backend.mapper.UserMapper;
 import com.mezon.classmanagement.backend.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -31,7 +26,6 @@ public class UserService {
 	 * Mapper
 	 */
 
-	UserMapper userMapper;
 
 	/**
 	 * Bean

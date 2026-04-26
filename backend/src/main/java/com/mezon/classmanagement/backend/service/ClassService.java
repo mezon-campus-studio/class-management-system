@@ -2,13 +2,11 @@ package com.mezon.classmanagement.backend.service;
 
 import com.mezon.classmanagement.backend.annotation.RequireClassPermission;
 import com.mezon.classmanagement.backend.constant.WarningConstant;
+import com.mezon.classmanagement.backend.dto.classmember.ClassMemberResponseDto;
 import com.mezon.classmanagement.backend.dto.clazz.ClassDto;
-import com.mezon.classmanagement.backend.dto.clazz.create.CreateClassRequestDto;
-import com.mezon.classmanagement.backend.dto.clazz.join.JoinClassResponseDto;
-import com.mezon.classmanagement.backend.dto.clazz.leave.LeaveClassResponseDto;
-import com.mezon.classmanagement.backend.dto.clazz.update.UpdateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.clazz.classid.ClassIdResponseDto;
+import com.mezon.classmanagement.backend.dto.clazz.createandupdate.CreateAndUpdateClassRequestDto;
 import com.mezon.classmanagement.backend.dto.clazz.join.JoinClassRequestDto;
-import com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto;
 import com.mezon.classmanagement.backend.entity.Class;
 import com.mezon.classmanagement.backend.entity.ClassUser;
 import com.mezon.classmanagement.backend.entity.User;
@@ -48,12 +46,8 @@ public class ClassService {
     ClassUserService classUserService;
     UserService userService;
 
-    /**
-     * For controller
-     */
-
     @Transactional
-    public ClassDto createClass(Long clientUserId, CreateClassRequestDto request) {
+    public ClassDto createClass(Long clientUserId, CreateAndUpdateClassRequestDto request) {
         userService.throwIfNotExistsById(clientUserId);
 
         User owner = User.builder()
@@ -71,7 +65,7 @@ public class ClassService {
 
     @RequireClassPermission
     @Transactional
-    public ClassDto updateClass(Long classId, UpdateClassRequestDto request) {
+    public ClassDto updateClass(Long classId, CreateAndUpdateClassRequestDto request) {
         Class currentClass = findByIdOrThrow(classId);
 
         classMapper.updateClassFromRequestDto(request, currentClass);
@@ -90,7 +84,7 @@ public class ClassService {
     }
 
     @Transactional
-    public JoinClassResponseDto joinClass(Long clientUserId, JoinClassRequestDto request) {
+    public ClassIdResponseDto joinClass(Long clientUserId, JoinClassRequestDto request) {
         Class currentClass = findByCodeOrThrow(request.getClassCode());
 
         userService.throwIfNotExistsById(clientUserId);
@@ -107,13 +101,13 @@ public class ClassService {
 
         classUserService.createClassUser(currentClass.getId(), clientUserId, role);
 
-        return JoinClassResponseDto.builder()
+        return ClassIdResponseDto.builder()
                 .classId(currentClass.getId())
                 .build();
     }
 
     @Transactional
-    public LeaveClassResponseDto leaveClass(Long clientUserId, Long classId) {
+    public ClassIdResponseDto leaveClass(Long clientUserId, Long classId) {
         throwIfNotExistsById(classId);
 
         userService.throwIfNotExistsById(clientUserId);
@@ -124,7 +118,7 @@ public class ClassService {
 
         classUserService.delete(currentClassUser);
 
-        return LeaveClassResponseDto.builder()
+        return ClassIdResponseDto.builder()
                 .classId(classId)
                 .build();
     }
@@ -187,13 +181,6 @@ public class ClassService {
     @Transactional
     public boolean existsById(Long id) {
         return classRepository.existsById(id);
-    }
-
-    @Transactional
-    public void throwIfExistsById(Long id) {
-        if (existsById(id)) {
-            throw new GlobalException(GlobalException.Type.ALREADY_EXISTS, "Class exists");
-        }
     }
 
     @Transactional

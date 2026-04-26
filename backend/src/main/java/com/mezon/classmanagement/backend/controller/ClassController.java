@@ -2,13 +2,10 @@ package com.mezon.classmanagement.backend.controller;
 
 import com.mezon.classmanagement.backend.dto.ResponseDTO;
 import com.mezon.classmanagement.backend.dto.clazz.ClassDto;
-import com.mezon.classmanagement.backend.dto.clazz.create.CreateClassRequestDto;
-import com.mezon.classmanagement.backend.dto.clazz.delete.DeleteClassResponseDto;
-import com.mezon.classmanagement.backend.dto.clazz.join.JoinClassResponseDto;
-import com.mezon.classmanagement.backend.dto.clazz.leave.LeaveClassResponseDto;
-import com.mezon.classmanagement.backend.dto.clazz.update.UpdateClassRequestDto;
 import com.mezon.classmanagement.backend.dto.clazz.join.JoinClassRequestDto;
-import com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto;
+import com.mezon.classmanagement.backend.dto.clazz.classid.ClassIdResponseDto;
+import com.mezon.classmanagement.backend.dto.clazz.createandupdate.CreateAndUpdateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.classmember.ClassMemberResponseDto;
 import com.mezon.classmanagement.backend.service.AuthService;
 import com.mezon.classmanagement.backend.service.ClassService;
 import com.mezon.classmanagement.backend.service.JwtService;
@@ -26,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Instant;
 import java.util.List;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -40,7 +36,7 @@ public class ClassController {
 	JwtService jwtService;
 
 	@PostMapping
-	public ResponseDTO<ClassDto> createClass(@RequestBody CreateClassRequestDto request) {
+	public ResponseDTO<ClassDto> createClass(@RequestBody CreateAndUpdateClassRequestDto request) {
 		Authentication authentication = authService.getAuthentication();
 		Long ownerUserId = jwtService.extractUserId(authentication);
 
@@ -55,7 +51,10 @@ public class ClassController {
 
 	@PreAuthorize("@ClassPermission.adminOnly(#classId)")
 	@PatchMapping("/{classId}")
-	public ResponseDTO<ClassDto> updateClass(@PathVariable Long classId, @RequestBody UpdateClassRequestDto request) {
+	public ResponseDTO<ClassDto> updateClass(
+			@PathVariable Long classId,
+			@RequestBody CreateAndUpdateClassRequestDto request
+	) {
 		ClassDto response = classService.updateClass(classId, request);
 
 		return ResponseDTO.<ClassDto>builder()
@@ -67,26 +66,26 @@ public class ClassController {
 
 	@PreAuthorize("@ClassPermission.adminOnly(#classId)")
 	@DeleteMapping("/{classId}")
-	public ResponseDTO<DeleteClassResponseDto> deleteClass(@PathVariable Long classId) {
+	public ResponseDTO<ClassIdResponseDto> deleteClass(@PathVariable Long classId) {
 		classService.deleteClass(classId);
 
-		return ResponseDTO.<DeleteClassResponseDto>builder()
+		return ResponseDTO.<ClassIdResponseDto>builder()
 				.success(true)
 				.message("Delete class successful")
-				.data(DeleteClassResponseDto.builder().classId(classId).build())
+				.data(ClassIdResponseDto.builder().classId(classId).build())
 				.build();
 	}
 
 	@PostMapping("/join")
-	public ResponseDTO<JoinClassResponseDto> joinClass(
+	public ResponseDTO<ClassIdResponseDto> joinClass(
 			@RequestBody JoinClassRequestDto request
 	) {
 		Authentication authentication = authService.getAuthentication();
 		Long userId = jwtService.extractUserId(authentication);
 
-		JoinClassResponseDto response = classService.joinClass(userId, request);
+		ClassIdResponseDto response = classService.joinClass(userId, request);
 
-		return ResponseDTO.<JoinClassResponseDto>builder()
+		return ResponseDTO.<ClassIdResponseDto>builder()
 				.success(true)
 				.message("Join class successful")
 				.data(response)
@@ -94,15 +93,15 @@ public class ClassController {
 	}
 
 	@DeleteMapping("/{classId}/leave")
-	public ResponseDTO<LeaveClassResponseDto> leaveClass(
+	public ResponseDTO<ClassIdResponseDto> leaveClass(
 			@PathVariable Long classId
 	) {
 		Authentication authentication = authService.getAuthentication();
 		Long userId = jwtService.extractUserId(authentication);
 
-		LeaveClassResponseDto response = classService.leaveClass(userId, classId);
+		ClassIdResponseDto response = classService.leaveClass(userId, classId);
 
-		return ResponseDTO.<LeaveClassResponseDto>builder()
+		return ResponseDTO.<ClassIdResponseDto>builder()
 				.success(true)
 				.message("Leave class successful")
 				.data(response)

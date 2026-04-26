@@ -1,8 +1,7 @@
 package com.mezon.classmanagement.backend.mapper;
 
 import com.mezon.classmanagement.backend.dto.clazz.ClassDto;
-import com.mezon.classmanagement.backend.dto.clazz.create.CreateClassRequestDto;
-import com.mezon.classmanagement.backend.dto.clazz.update.UpdateClassRequestDto;
+import com.mezon.classmanagement.backend.dto.clazz.createandupdate.CreateAndUpdateClassRequestDto;
 import com.mezon.classmanagement.backend.entity.Class;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -18,20 +17,16 @@ public interface ClassMapper {
 	 * Map Request to Entity
 	 */
 
-	Class toClass(CreateClassRequestDto request);
-	Class toClass(UpdateClassRequestDto request);
+	Class toClass(CreateAndUpdateClassRequestDto request);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-	void updateClassFromRequestDto(UpdateClassRequestDto request, @MappingTarget Class entity);
+	void updateClassFromRequestDto(CreateAndUpdateClassRequestDto request, @MappingTarget Class entity);
 
 	/**
 	 * Map Entity to Response
 	 */
 
-	@Mappings({
-			@Mapping(source = "owner.id", target = "ownerUserId"),
-			//@Mapping(target = "id", ignore = true)
-	})
+	@Mapping(source = "owner.id", target = "ownerUserId")
 	ClassDto toCreateClassResponseDto(Class clazz);
 
 	@Mapping(source = "owner.id", target = "ownerUserId")

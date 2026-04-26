@@ -1,7 +1,7 @@
 package com.mezon.classmanagement.backend.repository;
 
 import com.mezon.classmanagement.backend.dto.clazz.ClassDto;
-import com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto;
+import com.mezon.classmanagement.backend.dto.classmember.ClassMemberResponseDto;
 import com.mezon.classmanagement.backend.entity.Class;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,7 +16,7 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 	Optional<Class> findByCode(String code);
 
 	@Query(value = """
-		SELECT new com.mezon.classmanagement.backend.dto.response.child.ClassMemberResponseDto(
+		SELECT new com.mezon.classmanagement.backend.dto.classmember.ClassMemberResponseDto(
 			class.id,
 			class.name,
 			user.id,

@@ -1,6 +1,10 @@
-package com.mezon.classmanagement.backend.dto.activity.create;
+package com.mezon.classmanagement.backend.dto.activity.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.mezon.classmanagement.backend.constant.DateTimeConstant;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,12 +12,26 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 
+@JsonPropertyOrder({
+		"id",
+		"class_id",
+		"name",
+		"description",
+		"start_at",
+		"end_at",
+		"registration_end_at",
+		"location",
+		"point",
+		"is_mandatory",
+		"created_at"
+})
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Setter
 @Getter
-public final class CreateActivityResponseDto {
-	//@JsonProperty(value = "id")
-	//Long id;
+public final class ActivityResponseDto {
+	@JsonProperty(value = "id")
+	Long id;
 
 	@JsonProperty(value = "class_id")
 	Long classId;
@@ -42,6 +60,7 @@ public final class CreateActivityResponseDto {
 	@JsonProperty(value = "is_mandatory")
 	Boolean isMandatory;
 
-	//@JsonProperty(value = "created_at")
-	//Instant createdAt;
+	@JsonFormat(pattern = DateTimeConstant.PATTERN, timezone = DateTimeConstant.TIMEZONE)
+	@JsonProperty(value = "created_at")
+	Instant createdAt;
 }

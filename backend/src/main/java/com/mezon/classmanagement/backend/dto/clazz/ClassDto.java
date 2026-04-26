@@ -14,7 +14,17 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 
-@JsonPropertyOrder({"id", "owner_user_id", "owner_display_name", "name", "description", "code", "avatar_url", "privacy", "created_at"})
+@JsonPropertyOrder({
+		"id",
+		"owner_user_id",
+		"owner_display_name",
+		"name",
+		"description",
+		"code",
+		"avatar_url",
+		"privacy",
+		"created_at"
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Setter

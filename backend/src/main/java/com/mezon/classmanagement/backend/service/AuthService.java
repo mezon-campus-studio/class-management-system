@@ -123,6 +123,7 @@ public class AuthService {
 		return authentication;
 	}
 
+	@Deprecated
 	private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
 		JWSVerifier verifier = new MACVerifier(JwtConstant.SIGNER_KEY.getBytes());
 

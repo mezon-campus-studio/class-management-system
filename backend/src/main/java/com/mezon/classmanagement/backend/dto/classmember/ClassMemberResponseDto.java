@@ -1,4 +1,4 @@
-package com.mezon.classmanagement.backend.dto.response.child;
+package com.mezon.classmanagement.backend.dto.classmember;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mezon.classmanagement.backend.entity.ClassUser;
