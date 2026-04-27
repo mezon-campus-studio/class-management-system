@@ -1,4 +1,4 @@
-package com.mezon.classmanagement.backend.entity;
+package com.mezon.classmanagement.backend.oauth.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mezon.classmanagement.backend.constant.WarningConstant;

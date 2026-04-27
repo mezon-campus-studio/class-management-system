@@ -12,7 +12,10 @@ import lombok.experimental.FieldDefaults;
 @Builder
 public final class SignUpRequestDto {
 	@JsonProperty(value = "type")
-	User.Type type;
+	User.Provider provider;
+
+	@JsonProperty(value = "provider_id")
+	String providerId;
 
 	@JsonProperty(value = "username")
 	String username;

@@ -50,15 +50,11 @@ public class User implements UserDetails {
 	Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
-    Type type;
+    @Column(name = "provider", nullable = false)
+	Provider provider;
 
-	@PrePersist
-	public void prePersist() {
-		if (type == null) {
-			type = Type.INTERNAL;
-		}
-	}
+	@Column(name = "provider_id", nullable = true)
+	String providerId;
 
     @Column(name = "username", nullable = false, unique = true)
     String username;
@@ -81,10 +77,17 @@ public class User implements UserDetails {
 	@Column(name = "joined_at", nullable = false, insertable = false, updatable = false)
 	Instant joinedAt;
 
-	public enum Type {
+	public enum Provider {
 		GOOGLE,
 		MEZON,
 		INTERNAL
+	}
+
+	@PrePersist
+	public void prePersist() {
+		if (provider == null) {
+			provider = Provider.INTERNAL;
+		}
 	}
 
 	@NullMarked

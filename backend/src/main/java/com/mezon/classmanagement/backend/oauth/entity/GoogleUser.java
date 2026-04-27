@@ -1,4 +1,4 @@
-package com.mezon.classmanagement.backend.entity.oauth;
+package com.mezon.classmanagement.backend.oauth.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
@@ -16,6 +16,9 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GoogleUser {
+	@JsonProperty(value = "sub")
+	String sub;
+
 	@JsonProperty(value = "name")
 	String displayName;
 

@@ -9,12 +9,11 @@ import com.mezon.classmanagement.backend.dto.signin.SignInResponseDto;
 import com.mezon.classmanagement.backend.dto.signout.SignOutResponseDto;
 import com.mezon.classmanagement.backend.dto.signup.SignUpResponseDto;
 import com.mezon.classmanagement.backend.entity.InvalidatedToken;
-import com.mezon.classmanagement.backend.entity.MezonUser;
+import com.mezon.classmanagement.backend.oauth.entity.MezonUser;
 import com.mezon.classmanagement.backend.entity.User;
-import com.mezon.classmanagement.backend.entity.oauth.GoogleUser;
+import com.mezon.classmanagement.backend.oauth.entity.GoogleUser;
 import com.mezon.classmanagement.backend.exception.GlobalException;
 import com.mezon.classmanagement.backend.repository.InvalidatedTokenRepository;
-import com.mezon.classmanagement.backend.repository.UserRepository;
 import com.mezon.classmanagement.backend.util.EmailProcessor;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSVerifier;
@@ -27,14 +26,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.util.Date;
-import java.util.Optional;
 
 @SuppressWarnings({WarningConstant.SPELL_CHECKING_INSPECTION})
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -43,7 +40,6 @@ import java.util.Optional;
 public class AuthService {
 
 	AuthenticationManager authenticationManager;
-	//UserRepository userRepository;
 	UserService userService;
 	JwtService jwtService;
 	InvalidatedTokenRepository invalidatedTokenRepository;
@@ -65,11 +61,12 @@ public class AuthService {
 	}
 
 	public SignInResponseDto signInMezon(MezonUser mezonUser) {
-		userService.throwIfExistsByUsername(mezonUser.getUsername());
+		String username = EmailProcessor.extractAndClean(mezonUser.getEmail()) + "-mezon-" + System.currentTimeMillis();
 
 		SignUpRequestDto signUpRequest = SignUpRequestDto.builder()
-				.type(User.Type.MEZON)
-				.username(mezonUser.getUsername())
+				.provider(User.Provider.MEZON)
+				.providerId(mezonUser.getSub())
+				.username(username)
 				.displayName(mezonUser.getDisplayName())
 				.avatarUrl(mezonUser.getAvatar())
 				.email(mezonUser.getEmail())
@@ -86,11 +83,11 @@ public class AuthService {
 	}
 
 	public SignInResponseDto signInGoogle(GoogleUser googleUser) {
-		String username = EmailProcessor.extractAndClean(googleUser.getEmail()) + "-google";
-		userService.throwIfExistsByUsername(username);
+		String username = EmailProcessor.extractAndClean(googleUser.getEmail()) + "-google-" + System.currentTimeMillis();
 
 		SignUpRequestDto signUpRequest = SignUpRequestDto.builder()
-				.type(User.Type.GOOGLE)
+				.provider(User.Provider.GOOGLE)
+				.providerId(googleUser.getSub())
 				.username(username)
 				.displayName(googleUser.getDisplayName())
 				.avatarUrl(googleUser.getAvatarUrl())

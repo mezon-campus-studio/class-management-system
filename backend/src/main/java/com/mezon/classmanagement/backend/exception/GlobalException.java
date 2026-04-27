@@ -20,7 +20,7 @@ public class GlobalException extends RuntimeException {
 		NOT_FOUND(HttpStatus.NOT_FOUND.value()),
 		ALREADY_EXISTS(HttpStatus.CONFLICT.value()),
 		INVALID_AUTHENTICATION(HttpStatus.UNAUTHORIZED.value()),
-		MEZON_AUTH_ERROR(1000),
+		OAUTH_ERROR(1000),
 		FORBIDDEN(HttpStatus.FORBIDDEN.value()),
 		INVALID_REQUEST(HttpStatus.BAD_REQUEST.value());
 
