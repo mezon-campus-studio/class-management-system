@@ -3,12 +3,16 @@ package com.mezon.classmanagement.backend.dto.signup;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mezon.classmanagement.backend.entity.User;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
+@AllArgsConstructor
 @Builder
 public final class SignUpRequestDto {
 	@JsonProperty(value = "type")
