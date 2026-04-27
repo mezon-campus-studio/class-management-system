@@ -14,4 +14,8 @@ export const authApi = {
     signOut: async (data: SignOutRequest): Promise<ResponseDTO<SignOutResponse>> => {
         return apiClient.post<ResponseDTO<SignOutResponse>>("/auth/signout", data);
     },
+
+    callbackGoogle: async (code: string): Promise<ResponseDTO<AuthResponse>> => {
+        return apiClient.get<ResponseDTO<AuthResponse>>(`/auth/google/callback?code=${code}`);
+    },
 };

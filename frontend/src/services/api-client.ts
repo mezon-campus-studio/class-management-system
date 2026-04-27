@@ -5,7 +5,7 @@ import axios from 'axios';
  * Handles base URL, default headers, and common error handling
  */
 
-const BASE_URL = 'http://localhost:8080/api';
+export const BASE_URL = 'http://localhost:8080/api';
 
 const axiosInstance = axios.create({
     baseURL: BASE_URL,
