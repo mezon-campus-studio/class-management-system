@@ -11,9 +11,11 @@ import com.mezon.classmanagement.backend.dto.signup.SignUpResponseDto;
 import com.mezon.classmanagement.backend.entity.InvalidatedToken;
 import com.mezon.classmanagement.backend.entity.MezonUser;
 import com.mezon.classmanagement.backend.entity.User;
+import com.mezon.classmanagement.backend.entity.oauth.GoogleUser;
 import com.mezon.classmanagement.backend.exception.GlobalException;
 import com.mezon.classmanagement.backend.repository.InvalidatedTokenRepository;
 import com.mezon.classmanagement.backend.repository.UserRepository;
+import com.mezon.classmanagement.backend.util.EmailProcessor;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -71,6 +73,28 @@ public class AuthService {
 				.displayName(mezonUser.getDisplayName())
 				.avatarUrl(mezonUser.getAvatar())
 				.email(mezonUser.getEmail())
+				.build();
+		SignUpResponseDto signUpResponse = signUp(signUpRequest);
+
+		String accessToken = jwtService.generateAccessToken(signUpResponse.getId(), signUpResponse.getUsername());
+		String refreshToken = jwtService.generateRefreshToken(signUpResponse.getUsername());
+
+		return SignInResponseDto.builder()
+				.accessToken(accessToken)
+				.refreshToken(refreshToken)
+				.build();
+	}
+
+	public SignInResponseDto signInGoogle(GoogleUser googleUser) {
+		String username = EmailProcessor.extractAndClean(googleUser.getEmail()) + "-google";
+		userService.throwIfExistsByUsername(username);
+
+		SignUpRequestDto signUpRequest = SignUpRequestDto.builder()
+				.type(User.Type.GOOGLE)
+				.username(username)
+				.displayName(googleUser.getDisplayName())
+				.avatarUrl(googleUser.getAvatarUrl())
+				.email(googleUser.getEmail())
 				.build();
 		SignUpResponseDto signUpResponse = signUp(signUpRequest);
 
