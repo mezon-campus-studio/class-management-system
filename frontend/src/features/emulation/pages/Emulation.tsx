@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Plus, Minus, UserPlus, X } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useEmulation } from "@features/emulation/hooks/useEmulation";
@@ -269,7 +269,6 @@ export const Emulation = () => {
                 </p>
               )}
             </div>
-        </div>
       </Modal>
 
       {/* MODAL GHI ĐIỂM */}
@@ -339,7 +338,6 @@ export const Emulation = () => {
                   Xác nhận
                 </button>
               </div>
-            </div>
             </div>
       </Modal>
     </div>
