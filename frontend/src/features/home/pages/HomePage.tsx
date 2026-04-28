@@ -4,7 +4,7 @@ import { Lock, MoreVertical, ArrowRight, LogOut, Edit2, Trash2, Plus, AlertTrian
 import { ClassPrivacy } from "@shared/domain/enums";
 import { useAuth } from "@features/auth";
 import React, { useState } from "react";
-import type { ClassItems } from "../types";
+import type { ClassItems } from "@features/home/types";
 
 export const HomePage = () => {
   const navigate = useNavigate();

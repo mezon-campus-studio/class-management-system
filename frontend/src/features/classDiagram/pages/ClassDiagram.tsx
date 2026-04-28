@@ -4,7 +4,9 @@ import { useClassDiagram } from "@features/classDiagram/hooks/useClassDiagram";
 import { Seat } from "@features/classDiagram/pages/Seat";
 import type { AttendanceStatus } from "@features/classDiagram/types";
 import { classDiagramAPI } from "@features/classDiagram/api";
-// import { useAuth } from "@features/auth";
+import { useAuth } from "@features/auth";
+import { ClassRole } from "@shared/domain/enums";
+import { homeAPI } from "@features/home/api";
 
 export const ClassDiagram = () => {
   const { classId } = useParams();
@@ -15,12 +17,34 @@ export const ClassDiagram = () => {
     null,
   );
 
-  // Kiểm tra quyền chỉnh sửa (Ví dụ: role là 'teacher' hoặc 'admin')
-  // const { user } = useAuth();
-  // TODO: Fetch ClassMember data for current user in this classId
-  // const currentMember: ClassMember = await fetchCurrentClassMember(classId, user.id);
-  // const canEdit = currentMember?.role === "ADMIN" || currentMember?.permissions.includes("DIAGRAM_EDIT");
-  const canEdit = true;
+  // Kiểm tra quyền chỉnh sửa (Ví dụ: role là 'member' hoặc 'admin')
+  const { user } = useAuth();
+  const [canEdit, setCanEdit] = useState(false);
+
+  useEffect(() => {
+    const checkPermission = async () => {
+      if (!classId || !user?.id) return;
+      try {
+        const res = await homeAPI.getClassMembers(Number(classId));
+        if (res.success) {
+          // Tìm xem tôi (user.id) có nằm trong danh sách thành viên lớp không?
+          const currentMember = res.data.find(
+            (m) => String(m.member_id) === String(user.id)
+          );
+          // Nếu có mặt và giữ chức CLASS_ADMIN thì mới cho phép Edit
+          if (currentMember && currentMember.member_role === ClassRole.CLASS_ADMIN) {
+            setCanEdit(true);
+          } else {
+            setCanEdit(false);
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi kiểm tra quyền:", error);
+      }
+    };
+
+    checkPermission();
+  }, [classId, user?.id]);
 
   useEffect(() => {
     let isMounted = true;
