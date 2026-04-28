@@ -83,6 +83,54 @@ export const useHome = () => {
     }
   };
 
+// Hàm Xóa lớp
+  const deleteClassMutation = async (classId: number) => {
+    try {
+      const res = await homeAPI.deleteClass(classId);
+      if (res.success) {
+        console.log("Xóa lớp thành công!");
+        await loadData(); // Load lại danh sách sau khi xóa
+      } else {
+        throw new Error(res.message || "Không thể xóa lớp");
+      }
+    } catch (err: unknown) {
+      console.error("Lỗi khi xóa lớp:", err);
+      throw err;
+    }
+  };
+
+  // Hàm Rời lớp
+  const leaveClassMutation = async (classId: number) => {
+    try {
+      const res = await homeAPI.leaveClass(classId);
+      if (res.success) {
+        console.log("Rời lớp thành công!");
+        await loadData(); // Load lại danh sách, lớp đó sẽ tự biến mất
+      } else {
+        throw new Error(res.message || "Không thể rời lớp");
+      }
+    } catch (err: unknown) {
+      console.error("Lỗi khi rời lớp:", err);
+      throw err;
+    }
+  };
+
+  // Hàm Sửa lớp
+  const updateClassMutation = async (classId: number, updateData: Partial<ClassResponse>) => {
+    try {
+      const res = await homeAPI.updateClass(classId, updateData);
+      if (res.success) {
+        console.log("Cập nhật lớp thành công!");
+        await loadData(); 
+      } else {
+        throw new Error(res.message || "Cập nhật thất bại");
+      }
+    } catch (err: unknown) {
+      console.error("Lỗi khi cập nhật lớp:", err);
+      throw err;
+    }
+  };
+
   return {
     classes,
     isLoading,
@@ -92,5 +140,8 @@ export const useHome = () => {
     refresh: loadData,
     createClassMutation,
     joinClassMutation,
+    deleteClassMutation,
+    leaveClassMutation,
+    updateClassMutation,
   };
 };
