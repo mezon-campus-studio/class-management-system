@@ -509,7 +509,9 @@ module.exports = {
 				".pill-sage": { background: theme("colors.ink-sage.fill"), color: theme("colors.ink-sage.text"), borderColor: theme("colors.ink-sage.border") },
 				".pill-warm": { background: theme("colors.warm.fill"), color: theme("colors.warm.text"), borderColor: theme("colors.warm.border") },
 
-				// INPUT
+				// INPUT — single fixed-height wrapper used by every form field
+				// (text input, number, date, select, etc.) so they line up perfectly
+				// in a row regardless of the underlying control type.
 				".input-field": {
 					display: "flex",
 					alignItems: "center",
@@ -517,27 +519,75 @@ module.exports = {
 					background: theme("colors.surface.DEFAULT"),
 					border: `1px solid rgba(0,0,0,0.13)`,
 					borderRadius: theme("borderRadius.DEFAULT"),
+					height: "40px",
 					padding: "0 12px",
-					transition: "border 120ms ease, box-shadow 120ms ease",
+					transition: "border 120ms ease, outline 120ms ease",
+					// Use outline instead of box-shadow so the ring is NOT clipped by
+					// overflow:hidden on ancestor .card elements.
 					"&:focus-within": {
 						borderColor: theme("colors.ink-blue.text"),
-						boxShadow: theme("boxShadow.focus-blue"),
+						outline: "3px solid rgba(30,79,168,0.22)",
+						outlineOffset: "0px",
 					},
 				},
-				".input-field input, .input-field textarea, .input-field select": {
+				".input-field input, .input-field select": {
 					flex: "1",
+						alignSelf: "stretch",
+					minWidth: "0",
 					border: "none",
 					outline: "none",
 					background: "transparent",
 					fontFamily: `var(--font-sans)`,
 					fontSize: theme("fontSize.base[0]"),
+					lineHeight: "1.2",
 					color: theme("colors.ink.1"),
-					padding: "9px 0",
+					height: "100%",
+					padding: "0",
+					margin: "0",
+					boxSizing: "border-box",
+					"&::placeholder": { color: theme("colors.ink.4") },
+				},
+				// Native <select> needs explicit appearance reset so its height
+				// matches sibling <input> elements across browsers.
+				".input-field select": {
+					appearance: "none",
+					WebkitAppearance: "none",
+					MozAppearance: "none",
+					backgroundImage:
+						"url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%237a6f66' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><polyline points='2,2 6,6 10,2'/></svg>\")",
+					backgroundRepeat: "no-repeat",
+					backgroundPosition: "right 0px center",
+					paddingRight: "16px",
+				},
+				// Textarea wrapper: opt out of the fixed height by adding
+				// `.input-field-multiline` so multi-line content can grow.
+				".input-field-multiline": {
+					height: "auto",
+					alignItems: "flex-start",
+					padding: "8px 12px",
+				},
+				".input-field textarea": {
+					flex: "1",
+					minWidth: "0",
+					border: "none",
+					outline: "none",
+					background: "transparent",
+					fontFamily: `var(--font-sans)`,
+					fontSize: theme("fontSize.base[0]"),
+					lineHeight: "1.5",
+					color: theme("colors.ink.1"),
+					padding: "0",
+					margin: "0",
+					resize: "vertical",
+					minHeight: "72px",
 					"&::placeholder": { color: theme("colors.ink.4") },
 				},
 				".input-error .input-field": {
 					borderColor: theme("colors.ink-red.text"),
-					"&:focus-within": { boxShadow: theme("boxShadow.focus-red") },
+					"&:focus-within": {
+						outline: "3px solid rgba(207,81,81,0.22)",
+						outlineOffset: "0px",
+					},
 				},
 				".input-label": {
 					fontSize: theme("fontSize.2xs[0]"),

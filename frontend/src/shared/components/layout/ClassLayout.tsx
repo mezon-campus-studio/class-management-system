@@ -38,10 +38,8 @@ export const ClassLayout = () => {
       </div>
 
       {/* Nội dung trang con */}
-      <div className="p-4 md:p-6 overflow-y-auto">
-        <div className="max-w-7xl mx-auto">
-          <Outlet />
-        </div>
+      <div className="p-4 md:p-6 overflow-y-auto w-full">
+        <Outlet />
       </div>
     </div>
   );

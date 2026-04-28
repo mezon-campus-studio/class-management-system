@@ -1,14 +1,11 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { AppProvider } from './providers';
-import '@styles/global.css';
+import { RouterProvider } from 'react-router-dom';
+import { AppProviders } from './providers';
+import { router } from './router';
 
-const rootElement = document.getElementById('root');
-
-if (rootElement) {
-  createRoot(rootElement).render(
-    <StrictMode>
-      <AppProvider />
-    </StrictMode>
+export function App() {
+  return (
+    <AppProviders>
+      <RouterProvider router={router} />
+    </AppProviders>
   );
 }

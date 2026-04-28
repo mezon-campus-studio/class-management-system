@@ -1,11 +1,12 @@
-import { RouterProvider } from 'react-router-dom';
-import { router } from '../router';
+import { useEffect, type ReactNode } from 'react';
+import { useAuthStore } from '@/app/store';
 
-/**
- * Global application provider that wraps the app with various contexts (Router, Theme, etc.)
- */
-export const AppProvider = () => {
-  return (
-    <RouterProvider router={router} />
-  );
-};
+export function AppProviders({ children }: { children: ReactNode }) {
+  const initialize = useAuthStore((s) => s.initialize);
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  return <>{children}</>;
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useClassDiagram } from "@features/classDiagram/hooks/useClassDiagram";
 import { Seat } from "@features/classDiagram/pages/Seat";
@@ -17,7 +17,9 @@ export const ClassDiagram = () => {
 
   // Kiểm tra quyền chỉnh sửa (Ví dụ: role là 'teacher' hoặc 'admin')
   const { user } = useAuth();
-  const canEdit = user?.type === "TEACHER" || user?.type === "ADMIN";
+  const canEdit = user?.userType === "TEACHER";
+
+  const [teacherView, setTeacherView] = useState(() => user?.userType === "TEACHER");
 
   useEffect(() => {
     let isMounted = true;
@@ -75,34 +77,51 @@ export const ClassDiagram = () => {
     }
   };
 
-  // Chia hàng thành 2 nhóm: 3 hàng đầu và 3 hàng cuối
-  const firstRows = [1, 2, 3];
-  const lastRows = [4, 5, 6];
-  const cols = [1, 2, 3, 4];
+  // Teacher view: rows reversed, columns mirrored, left/right sides swapped
+  const cols = teacherView ? [4, 3, 2, 1] : [1, 2, 3, 4];
+  // topGroup is rendered first (visually at top), bottomGroup second
+  const topGroup = teacherView ? [6, 5, 4] : [1, 2, 3];
+  const bottomGroup = teacherView ? [3, 2, 1] : [4, 5, 6];
+  // In teacher view, right side appears on the left of screen (mirror)
+  const leftSide = teacherView ? "right" : "left";
+  const rightSide = teacherView ? "left" : "right";
 
   return (
     <div className="space-y-6 select-none max-w-7xl mx-auto p-2 md:p-4 bg-white min-h-screen">
       {/* 1. THANH CÔNG CỤ (1 HÀNG, ĐẦY ĐỦ NHÃN CHỮ) */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
         {canEdit && (
-          <div className="flex bg-slate-200/50 p-1 rounded-lg shrink-0">
-            {(["view", "attendance", "setup"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`px-3 py-1.5 rounded-md text-[10px] md:text-xs font-bold transition-all ${
-                  mode === m
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                {m === "view"
-                  ? "Xem"
-                  : m === "attendance"
-                    ? "Điểm danh"
-                    : "Xếp chỗ"}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex bg-slate-200/50 p-1 rounded-lg">
+              {(["view", "attendance", "setup"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className={`px-3 py-1.5 rounded-md text-[10px] md:text-xs font-bold transition-all ${
+                    mode === m
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  {m === "view"
+                    ? "Xem"
+                    : m === "attendance"
+                      ? "Điểm danh"
+                      : "Xếp chỗ"}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setTeacherView((v) => !v)}
+              className={`px-3 py-1.5 rounded-md text-[10px] md:text-xs font-bold border transition-all ${
+                teacherView
+                  ? "bg-indigo-600 text-white border-indigo-600"
+                  : "bg-white text-slate-500 border-slate-300 hover:text-slate-700"
+              }`}
+              title={teacherView ? "Đang xem góc giáo viên" : "Chuyển sang góc giáo viên"}
+            >
+              {teacherView ? "Góc GV ↕" : "Góc SV"}
+            </button>
           </div>
         )}
 
@@ -130,27 +149,24 @@ export const ClassDiagram = () => {
         </div>
       </div>
 
-      {/* 2. KHU VỰC GIẢNG ĐƯỜNG (Bàn sát trái, Bảng cân giữa lối đi) */}
-      <div className="flex items-end justify-between w-full pt-8 pb-4 px-4 md:px-10">
-        {/* Bàn giáo viên: Ép sát lề trái */}
-        <div className="flex flex-col items-start w-1/4">
-          <div className="bg-yellow-400 px-4 md:px-8 py-3 rounded-xl font-bold text-slate-800 shadow-md border-b-4 border-yellow-600 text-[9px] md:text-xs whitespace-nowrap transition-transform hover:scale-105">
-            BÀN GIÁO VIÊN
+      {/* 2. KHU VỰC GIẢNG ĐƯỜNG — hiển thị ở trên (góc SV) hoặc dưới (góc GV) */}
+      {!teacherView && (
+        <div className="flex items-end justify-between w-full pt-8 pb-4 px-4 md:px-10">
+          <div className="flex flex-col items-start w-1/4">
+            <div className="bg-yellow-400 px-4 md:px-8 py-3 rounded-xl font-bold text-slate-800 shadow-md border-b-4 border-yellow-600 text-[9px] md:text-xs whitespace-nowrap transition-transform hover:scale-105">
+              BÀN GIÁO VIÊN
+            </div>
           </div>
-        </div>
-
-        {/* Bảng đen: Căn giữa theo trục lối đi */}
-        <div className="flex flex-col items-center flex-1">
-          <div className="w-full max-w-[130px] md:max-w-[450px] h-3 bg-slate-800 rounded-full flex items-center justify-center shadow-2xl border border-slate-600 relative">
-            <span className="absolute -top-6 text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-[0.4em] md:tracking-[0.6em] whitespace-nowrap">
-              Bảng Đen
-            </span>
+          <div className="flex flex-col items-center flex-1">
+            <div className="w-full max-w-[130px] md:max-w-[450px] h-3 bg-slate-800 rounded-full flex items-center justify-center shadow-2xl border border-slate-600 relative">
+              <span className="absolute -top-6 text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-[0.4em] md:tracking-[0.6em] whitespace-nowrap">
+                Bảng Đen
+              </span>
+            </div>
           </div>
+          <div className="hidden md:block w-1/4"></div>
         </div>
-
-        {/* Khoảng trống bên phải để cân bằng layout (w-1/4 giống bàn GV) */}
-        <div className="hidden md:block w-1/4"></div>
-      </div>
+      )}
       {/* 3. KHAY CHỌN HỌC SINH (Setup Mode) */}
       {mode === "setup" && (
         <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 animate-in fade-in zoom-in-95 duration-300">
@@ -181,18 +197,18 @@ export const ClassDiagram = () => {
       <div
         className={`grid grid-cols-[1fr_auto_1fr] gap-4 md:gap-10 pt-4 ${mode !== "view" ? "cursor-crosshair" : ""}`}
       >
-        {/* Dãy Trái */}
+        {/* Dãy bên trái màn hình (= leftSide theo góc nhìn hiện tại) */}
         <div className="flex flex-col gap-6 md:gap-8">
           <div className="grid grid-cols-4 gap-2">
-            {firstRows.map((r) =>
+            {topGroup.map((r) =>
               cols.map((c) => (
                 <div
-                  key={`L-${r}-${c}`}
-                  onClick={() => handleSeatClick("left", r, c)}
+                  key={`${leftSide}-top-${r}-${c}`}
+                  onClick={() => handleSeatClick(leftSide as "left" | "right", r, c)}
                 >
                   <Seat
                     student={data.seats.find(
-                      (s) => s.side === "left" && s.row === r && s.column === c,
+                      (s) => s.side === leftSide && s.row === r && s.column === c,
                     )}
                   />
                 </div>
@@ -200,15 +216,15 @@ export const ClassDiagram = () => {
             )}
           </div>
           <div className="grid grid-cols-4 gap-2">
-            {lastRows.map((r) =>
+            {bottomGroup.map((r) =>
               cols.map((c) => (
                 <div
-                  key={`L-${r}-${c}`}
-                  onClick={() => handleSeatClick("left", r, c)}
+                  key={`${leftSide}-bot-${r}-${c}`}
+                  onClick={() => handleSeatClick(leftSide as "left" | "right", r, c)}
                 >
                   <Seat
                     student={data.seats.find(
-                      (s) => s.side === "left" && s.row === r && s.column === c,
+                      (s) => s.side === leftSide && s.row === r && s.column === c,
                     )}
                   />
                 </div>
@@ -226,19 +242,18 @@ export const ClassDiagram = () => {
           </div>
         </div>
 
-        {/* Dãy Phải */}
+        {/* Dãy bên phải màn hình (= rightSide theo góc nhìn hiện tại) */}
         <div className="flex flex-col gap-6 md:gap-8">
           <div className="grid grid-cols-4 gap-2">
-            {firstRows.map((r) =>
+            {topGroup.map((r) =>
               cols.map((c) => (
                 <div
-                  key={`R-${r}-${c}`}
-                  onClick={() => handleSeatClick("right", r, c)}
+                  key={`${rightSide}-top-${r}-${c}`}
+                  onClick={() => handleSeatClick(rightSide as "left" | "right", r, c)}
                 >
                   <Seat
                     student={data.seats.find(
-                      (s) =>
-                        s.side === "right" && s.row === r && s.column === c,
+                      (s) => s.side === rightSide && s.row === r && s.column === c,
                     )}
                   />
                 </div>
@@ -246,16 +261,15 @@ export const ClassDiagram = () => {
             )}
           </div>
           <div className="grid grid-cols-4 gap-2">
-            {lastRows.map((r) =>
+            {bottomGroup.map((r) =>
               cols.map((c) => (
                 <div
-                  key={`R-${r}-${c}`}
-                  onClick={() => handleSeatClick("right", r, c)}
+                  key={`${rightSide}-bot-${r}-${c}`}
+                  onClick={() => handleSeatClick(rightSide as "left" | "right", r, c)}
                 >
                   <Seat
                     student={data.seats.find(
-                      (s) =>
-                        s.side === "right" && s.row === r && s.column === c,
+                      (s) => s.side === rightSide && s.row === r && s.column === c,
                     )}
                   />
                 </div>
@@ -264,6 +278,24 @@ export const ClassDiagram = () => {
           </div>
         </div>
       </div>
+
+      {/* Bảng đen + bàn GV ở dưới khi ở góc giáo viên */}
+      {teacherView && (
+        <div className="flex items-start justify-between w-full pt-4 pb-2 px-4 md:px-10">
+          <div className="flex flex-col items-center flex-1">
+            <div className="w-full max-w-[130px] md:max-w-[450px] h-3 bg-slate-800 rounded-full flex items-center justify-center shadow-2xl border border-slate-600 relative">
+              <span className="absolute -bottom-6 text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-[0.4em] md:tracking-[0.6em] whitespace-nowrap">
+                Bảng Đen
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-col items-end w-1/4">
+            <div className="bg-yellow-400 px-4 md:px-8 py-3 rounded-xl font-bold text-slate-800 shadow-md border-b-4 border-yellow-600 text-[9px] md:text-xs whitespace-nowrap transition-transform hover:scale-105">
+              BÀN GIÁO VIÊN
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

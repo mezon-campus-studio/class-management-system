@@ -379,8 +379,8 @@
   50%       { opacity: 0.35; }
 }
 
-//ẨN THANH CUỘN
-/* Ẩn thanh cuộn cho Chrome, Safari và Opera */
+/* Ẩn thanh cuộn */
+/* Chrome, Safari, Opera */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

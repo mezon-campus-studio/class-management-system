@@ -1,1 +1,15 @@
 .idea/
+.vscode/
+.DS_Store
+
+# Env files (chứa secrets)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Backend uploads
+backend/uploads/

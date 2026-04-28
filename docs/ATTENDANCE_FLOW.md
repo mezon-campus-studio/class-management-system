@@ -1,0 +1,538 @@
+# Attendance Flow — Luồng điểm danh ClassroomHub
+
+> Phiên bản: 1.0 · Cập nhật: 2026-04-28
+
+---
+
+## Mục lục
+
+1. [Tổng quan](#1-tổng-quan)
+2. [Vòng đời phiên điểm danh](#2-vòng-đời-phiên-điểm-danh)
+3. [Tự động tạo phiên từ thời khoá biểu](#3-tự-động-tạo-phiên-từ-thời-khoá-biểu)
+4. [Scheduler tự động mở & đóng phiên](#4-scheduler-tự-động-mở--đóng-phiên)
+5. [Luồng học sinh điểm danh](#5-luồng-học-sinh-điểm-danh)
+6. [Luồng giáo viên quản lý điểm danh](#6-luồng-giáo-viên-quản-lý-điểm-danh)
+7. [Trường hợp đặc biệt](#7-trường-hợp-đặc-biệt)
+8. [Cấu trúc dữ liệu](#8-cấu-trúc-dữ-liệu)
+9. [API Reference](#9-api-reference)
+10. [Lịch tiết học (PeriodTimes)](#10-lịch-tiết-học-periodtimes)
+
+---
+
+## 1. Tổng quan
+
+ClassroomHub áp dụng mô hình điểm danh **tự động hoá theo thời khoá biểu**, loại bỏ hoàn toàn việc giáo viên phải tạo phiên điểm danh thủ công mỗi ngày. Quy trình hoạt động như sau:
+
+```
+Tạo thời khoá biểu
+        │
+        ▼
+Hệ thống tự động tạo AttendanceSession (SCHEDULED)
+cho 14 ngày tới dựa trên các TimetableEntry
+        │
+        ▼
+Đến giờ tiết học bắt đầu
+        │
+        ├─── Scheduler (mỗi 5 phút): SCHEDULED → OPEN
+        │
+        └─── On-demand (khi học sinh check-in): SCHEDULED → OPEN ngay
+        │
+        ▼
+Học sinh điểm danh trong vòng 30 phút kể từ khi tiết bắt đầu
+        │
+        ▼
+Scheduler (mỗi 5 phút): đóng phiên quá 30 phút → CLOSED
+```
+
+---
+
+## 2. Vòng đời phiên điểm danh
+
+### Sơ đồ trạng thái
+
+```
+                    ┌─────────────────────────────────────┐
+                    │                                     │
+  [Tạo từ TKB]      ▼             [Đến giờ tiết]         │
+  ─────────────► SCHEDULED ──────────────────────► OPEN ──┘
+                    │                                 │
+                    │                                 │ [Quá 30 phút từ startsAt]
+                    │ [Tạo thủ công bởi Teacher]      ▼
+                    └─────────────────────────────► CLOSED
+                                                     ▲
+                                              [Teacher đóng thủ công]
+```
+
+| Trạng thái | Badge UI | Mô tả |
+|---|---|---|
+| `SCHEDULED` | 🟡 Vàng "Chưa bắt đầu" | Đã lên lịch, chưa đến giờ tiết |
+| `OPEN` | 🟢 Xanh lá "Đang mở" | Đang trong thời gian điểm danh (30 phút) |
+| `CLOSED` | ⚫ Xám "Đã đóng" | Hết thời gian điểm danh |
+
+### Quy tắc chuyển trạng thái
+
+| Từ | Sang | Điều kiện | Tác nhân |
+|---|---|---|---|
+| `SCHEDULED` | `OPEN` | `startsAt <= now` | Scheduler (5 phút/lần) hoặc on-demand khi check-in |
+| `OPEN` | `CLOSED` | `startsAt + 30 phút <= now` | Scheduler (5 phút/lần) |
+| `OPEN` | `CLOSED` | Giáo viên nhấn "Đóng phiên" | Teacher / Owner |
+| _(none)_ | `OPEN` | Giáo viên tạo thủ công | Teacher / Owner |
+
+---
+
+## 3. Tự động tạo phiên từ thời khoá biểu
+
+### Khi nào phiên được tạo
+
+Mỗi khi **thời khoá biểu thay đổi**, hệ thống tự động gọi `preGenerateSessionsFromEntries()`:
+
+1. **Tạo tiết học thủ công** (`POST /api/v1/timetable/entries`) → tạo phiên cho entry mới.
+2. **Xếp lịch tự động** (`POST /api/v1/timetable/entries/generate` hoặc `/generate-from-config`) → tạo phiên cho tất cả entries được tạo mới.
+3. **Scheduler hàng ngày** (`@Scheduled cron="0 0 0 * * *"`) → `dailyPreGenerateSessions()` chạy lúc **00:00 mỗi ngày** để tạo phiên cho ngày thứ 14 tiếp theo (rolling window).
+
+### Thuật toán tạo phiên
+
+```
+preGenerateSessionsFromEntries(entries, requesterId, daysAhead = 14):
+  for each entry in entries:
+    for d in [today ... today + 14 days]:
+      if d.dayOfWeek == entry.dayOfWeek:
+        startsAt = d + periodStart(entry.periodNumber)
+        closesAt = startsAt + 30 minutes
+        
+        if session already exists for (classroomId, startsAt, subjectId):
+          skip (tránh duplicate)
+        
+        status = if startsAt > now: SCHEDULED else OPEN
+        
+        create AttendanceSession(status, startsAt, closesAt, ...)
+        create AttendanceRecord for each classroom member (status = ABSENT mặc định)
+  
+  saveAll(sessions) — batch insert
+  saveAll(records) — batch insert
+```
+
+**Lưu ý quan trọng:**
+- `preGenerateSessionsFromEntries` là **synchronous** (không dùng `@Async`), đảm bảo phiên tồn tại trong DB trước khi API response trả về.
+- Batch insert dùng `saveAll()` thay vì từng `save()` riêng lẻ để tối ưu performance.
+- Mỗi phiên tạo ra **một `AttendanceRecord` cho mỗi thành viên** với trạng thái mặc định là `ABSENT`.
+
+### Cấu trúc dữ liệu được tạo
+
+Ví dụ: Lớp 10A có tiết Toán vào **Thứ 2, Tiết 1** (07:00–07:45):
+
+```
+TimetableEntry {
+  classroomId: "abc-123",
+  subjectId: "math-001",
+  dayOfWeek: MONDAY,
+  periodNumber: 1
+}
+
+→ Tạo AttendanceSession cho mỗi Thứ 2 trong 14 ngày tới:
+
+AttendanceSession {
+  id: "sess-001",
+  classroomId: "abc-123",
+  subjectId: "math-001",
+  periodNumber: 1,
+  sessionDate: "2026-04-28",
+  startsAt: "2026-04-28T00:00:00Z",  // 07:00 ICT = 00:00 UTC
+  closesAt: "2026-04-28T00:30:00Z",  // 07:30 ICT = 00:30 UTC  (30 phút sau)
+  status: SCHEDULED,
+  autoGenerated: true
+}
+
+→ Kèm theo AttendanceRecord cho mỗi học sinh:
+AttendanceRecord { sessionId: "sess-001", userId: "student-1", status: ABSENT }
+AttendanceRecord { sessionId: "sess-001", userId: "student-2", status: ABSENT }
+...
+```
+
+---
+
+## 4. Scheduler tự động mở & đóng phiên
+
+Hệ thống có hai scheduler chạy song song, mỗi **5 phút** một lần:
+
+### Scheduler 1: Auto-Open (`autoOpenScheduledSessions`)
+
+```java
+@Scheduled(fixedDelay = 300_000)  // 5 phút
+public void autoOpenScheduledSessions() {
+    List<AttendanceSession> due = sessionRepository
+        .findAllByStatusAndStartsAtLessThanEqual(SCHEDULED, Instant.now());
+    due.forEach(s -> s.setStatus(OPEN));
+    sessionRepository.saveAll(due);
+}
+```
+
+- Tìm tất cả phiên `SCHEDULED` có `startsAt <= now`.
+- Chuyển sang `OPEN`.
+- **Delay tối đa 5 phút** — nếu tiết bắt đầu lúc 07:00 và scheduler chạy lúc 06:58, phiên sẽ được mở lúc 07:03 (lần chạy tiếp theo).
+
+### Scheduler 2: Auto-Close (`autoCloseExpiredAll`)
+
+```java
+@Scheduled(fixedDelay = 300_000)  // 5 phút
+public void autoCloseExpiredAll() {
+    List<AttendanceSession> expired = sessionRepository
+        .findAllByStatusAndClosesAtLessThanEqual(OPEN, Instant.now());
+    expired.forEach(s -> s.setStatus(CLOSED));
+    sessionRepository.saveAll(expired);
+}
+```
+
+- Tìm tất cả phiên `OPEN` có `closesAt <= now`.
+- Chuyển sang `CLOSED`.
+- `closesAt = startsAt + 30 phút`.
+
+### On-demand Open (khi học sinh check-in)
+
+Để tránh tình huống học sinh đến đúng giờ nhưng scheduler chưa kịp mở phiên (delay tối đa 5 phút), `checkIn()` tự động mở phiên nếu đủ điều kiện:
+
+```java
+public void checkIn(sessionId, userId) {
+    session = getSession(sessionId);
+    
+    if (session.status == SCHEDULED && session.startsAt <= now) {
+        session.status = OPEN;  // mở on-demand ngay lập tức
+        save(session);
+    } else if (session.status == SCHEDULED) {
+        throw BusinessException(SESSION_NOT_STARTED);  // chưa đến giờ
+    } else if (session.status != OPEN) {
+        throw BusinessException(SESSION_CLOSED);       // đã đóng
+    }
+    
+    record.status = PRESENT;
+    record.checkedInAt = now;
+    save(record);
+}
+```
+
+---
+
+## 5. Luồng học sinh điểm danh
+
+### Happy path (điểm danh thành công)
+
+```
+1. Học sinh mở app, vào trang Điểm danh
+2. Thấy danh sách phiên hôm nay:
+   - "Toán - Tiết 1" → badge 🟢 OPEN
+   - "Lý - Tiết 3"  → badge 🟡 SCHEDULED (chưa đến giờ)
+3. Nhấn vào phiên OPEN → nhấn "Điểm danh ngay"
+4. POST /attendance/sessions/{sid}/check-in
+5. Server xác nhận record hiện tại của user → status = ABSENT
+6. Server chuyển record → PRESENT, ghi checkedInAt = now
+7. Frontend hiển thị "Đã điểm danh thành công ✓"
+```
+
+### Các trường hợp lỗi
+
+| Trường hợp | HTTP Status | Lỗi hiển thị |
+|---|---|---|
+| Phiên `SCHEDULED`, chưa đến giờ | 400 | "Phiên điểm danh chưa bắt đầu" |
+| Phiên `CLOSED`, quá 30 phút | 400 | "Phiên điểm danh đã đóng" |
+| Đã điểm danh rồi | 409 | "Bạn đã điểm danh phiên này" |
+| Không phải thành viên lớp | 403 | "Bạn không có quyền truy cập" |
+
+### Sơ đồ luồng chi tiết
+
+```
+Học sinh nhấn "Điểm danh"
+         │
+         ▼
+   Session.status?
+         │
+   ┌─────┴──────┬────────────────────┐
+   │            │                    │
+SCHEDULED     OPEN               CLOSED
+   │            │                    │
+   ▼            ▼                    ▼
+startsAt    Tìm record          Ném lỗi
+<= now?     của user            SESSION_CLOSED
+   │
+ Yes │  No
+   │    │
+   ▼    ▼
+Auto- Ném lỗi
+Open  SESSION_NOT_STARTED
+   │
+   ▼
+record.status = ABSENT? ──No──► Ném lỗi ALREADY_CHECKED_IN
+   │
+  Yes
+   │
+   ▼
+record.status = PRESENT
+record.checkedInAt = now
+Lưu DB → Trả 200 OK
+```
+
+---
+
+## 6. Luồng giáo viên quản lý điểm danh
+
+### Xem tổng hợp điểm danh ngày
+
+```
+GET /api/v1/classrooms/{id}/attendance/daily
+→ Trả về danh sách phiên hôm nay + số liệu:
+  {
+    sessions: [
+      {
+        id, title, status,
+        totalRecords: 35,
+        presentCount: 30,
+        absentCount: 3,
+        lateCount: 1,
+        excusedCount: 1
+      }
+    ]
+  }
+```
+
+### Duyệt / sửa bản ghi điểm danh
+
+```
+PATCH /api/v1/classrooms/{id}/attendance/sessions/{sid}/records/{rid}
+Body: { status: "EXCUSED", note: "Có phép của phụ huynh" }
+
+→ Server cập nhật:
+  record.status = EXCUSED
+  record.note = "Có phép của phụ huynh"
+  record.reviewedBy = currentUserId
+  record.reviewedAt = now
+```
+
+### Tạo phiên thủ công
+
+Trường hợp giáo viên muốn điểm danh ngoài thời khoá biểu (buổi ngoại khoá, kiểm tra bù, v.v.):
+
+```
+POST /api/v1/classrooms/{id}/attendance/sessions
+Body: {
+  title: "Kiểm tra giữa kỳ",
+  description: "...",
+  subjectId: "...",      // tùy chọn
+  periodNumber: null,    // tùy chọn
+  sessionDate: "2026-04-28"
+}
+
+→ Phiên được tạo với status = OPEN ngay lập tức
+→ AttendanceRecord tạo cho toàn bộ thành viên lớp
+```
+
+---
+
+## 7. Trường hợp đặc biệt
+
+### 7.1 Học sinh tham gia lớp sau khi phiên đã tạo
+
+- Hệ thống **không** tự động tạo record cho thành viên mới tham gia lớp.
+- Giáo viên cần tạo record thủ công hoặc import.
+- _(Tính năng tự động retroactive backfill có thể phát triển ở giai đoạn sau)_
+
+### 7.2 Thời khoá biểu thay đổi sau khi phiên đã tạo
+
+- Phiên đã `OPEN` hoặc `CLOSED` **không bị xóa** khi TKB thay đổi.
+- Chỉ các TKB mới → tạo phiên mới cho 14 ngày tới.
+- Tránh duplicate: `preGenerateSessionsFromEntries` kiểm tra session đã tồn tại theo `(classroomId, startsAt, subjectId)` trước khi tạo.
+
+### 7.3 Delay scheduler tối đa 5 phút
+
+- Scheduler chạy `fixedDelay = 5 phút` nghĩa là: sau khi lần chạy trước **hoàn thành** 5 phút mới chạy lần tiếp.
+- Nếu lần chạy mất 10 giây → delay thực tế là 5 phút 10 giây.
+- Worst case: học sinh thấy phiên `SCHEDULED` trong tối đa **~5 phút** sau giờ tiết bắt đầu.
+- **Giải pháp:** `checkIn()` tự động mở on-demand → không có delay cho học sinh điểm danh.
+
+### 7.4 Nhiều lớp cùng tiết, cùng giờ
+
+- Scheduler xử lý tất cả lớp trong một lần chạy (bulk query).
+- Không có xung đột vì mỗi session thuộc một `classroomId` riêng biệt.
+
+### 7.5 Timezone
+
+- Backend lưu tất cả timestamp dạng **UTC** (`Instant`).
+- Frontend/API hiển thị múi giờ **Việt Nam (UTC+7)**.
+- `PeriodTimes` định nghĩa giờ tiết theo giờ Việt Nam: Tiết 1 = 07:00 ICT = 00:00 UTC.
+
+---
+
+## 8. Cấu trúc dữ liệu
+
+### AttendanceSession
+
+```sql
+CREATE TABLE attendance_sessions (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  classroom_id  UUID NOT NULL REFERENCES classrooms(id),
+  created_by    UUID NOT NULL REFERENCES users(id),
+  title         VARCHAR(255) NOT NULL,
+  description   TEXT,
+  status        VARCHAR(20) NOT NULL DEFAULT 'SCHEDULED',  -- SCHEDULED | OPEN | CLOSED
+  subject_id    UUID REFERENCES subjects(id),
+  period_number INT,                                        -- 1–10
+  session_date  DATE,
+  starts_at     TIMESTAMPTZ,
+  closes_at     TIMESTAMPTZ,
+  auto_generated BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+### AttendanceRecord
+
+```sql
+CREATE TABLE attendance_records (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id   UUID NOT NULL REFERENCES attendance_sessions(id),
+  user_id      UUID NOT NULL REFERENCES users(id),
+  status       VARCHAR(20) NOT NULL DEFAULT 'ABSENT',  -- PRESENT | ABSENT | LATE | EXCUSED
+  note         TEXT,
+  reviewed_by  UUID REFERENCES users(id),
+  reviewed_at  TIMESTAMPTZ,
+  checked_in_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (session_id, user_id)
+);
+```
+
+### Index quan trọng
+
+```sql
+-- Scheduler queries
+CREATE INDEX idx_sessions_status_starts_at ON attendance_sessions(status, starts_at);
+CREATE INDEX idx_sessions_status_closes_at ON attendance_sessions(status, closes_at);
+-- Daily view
+CREATE INDEX idx_sessions_classroom_date ON attendance_sessions(classroom_id, session_date);
+-- Timetable-based generation
+CREATE INDEX idx_sessions_classroom_starts ON attendance_sessions(classroom_id, starts_at);
+```
+
+---
+
+## 9. API Reference
+
+### Lấy danh sách phiên điểm danh
+
+```
+GET /api/v1/classrooms/{classroomId}/attendance/sessions
+Query: ?date=2026-04-28   (optional, lọc theo ngày)
+       ?status=OPEN        (optional, lọc theo trạng thái)
+
+Response: {
+  data: [
+    {
+      id, title, description, status,
+      subjectId, subjectName,
+      periodNumber, sessionDate,
+      startsAt, closesAt,
+      autoGenerated,
+      totalRecords, presentCount, absentCount, lateCount, excusedCount,
+      createdAt
+    }
+  ]
+}
+```
+
+### Tổng hợp điểm danh ngày hôm nay
+
+```
+GET /api/v1/classrooms/{classroomId}/attendance/daily
+
+Response: { data: [ ...sessions... ] }
+```
+
+### Điểm danh (học sinh)
+
+```
+POST /api/v1/classrooms/{classroomId}/attendance/sessions/{sessionId}/check-in
+
+Response 200: { message: "Điểm danh thành công" }
+Response 400: { error: "SESSION_NOT_STARTED" }   // chưa đến giờ
+Response 400: { error: "SESSION_CLOSED" }        // đã đóng
+Response 409: { error: "ALREADY_CHECKED_IN" }   // đã điểm danh
+```
+
+### Xem danh sách bản ghi
+
+```
+GET /api/v1/classrooms/{classroomId}/attendance/sessions/{sessionId}/records
+
+Response: {
+  data: [
+    {
+      id, sessionId, userId,
+      displayName, avatarUrl,
+      status,       // PRESENT | ABSENT | LATE | EXCUSED
+      note,
+      reviewedBy, reviewedAt,
+      checkedInAt
+    }
+  ]
+}
+```
+
+### Duyệt / sửa bản ghi
+
+```
+PATCH /api/v1/classrooms/{classroomId}/attendance/sessions/{sessionId}/records/{recordId}
+Body: {
+  status: "EXCUSED",
+  note: "Có giấy phép"
+}
+Quyền: TEACHER hoặc OWNER
+
+Response 200: { data: { ...record... } }
+```
+
+### Tạo phiên thủ công
+
+```
+POST /api/v1/classrooms/{classroomId}/attendance/sessions
+Body: {
+  title: "Kiểm tra 15 phút",
+  description: null,
+  subjectId: "uuid",     // optional
+  periodNumber: 3,       // optional (1-10)
+  sessionDate: "2026-04-28"
+}
+Quyền: TEACHER hoặc OWNER
+
+Response 201: { data: { ...session, status: "OPEN" } }
+```
+
+### Đóng phiên thủ công
+
+```
+POST /api/v1/classrooms/{classroomId}/attendance/sessions/{sessionId}/close
+Quyền: TEACHER hoặc OWNER
+
+Response 200: { data: { ...session, status: "CLOSED" } }
+```
+
+---
+
+## 10. Lịch tiết học (PeriodTimes)
+
+Hệ thống dùng lịch tiết chuẩn trường học Việt Nam (giờ ICT = UTC+7):
+
+| Tiết | Bắt đầu | Kết thúc | Cửa sổ điểm danh (30 phút) |
+|------|---------|----------|--------------------------|
+| 1 | 07:00 | 07:45 | 07:00 → 07:30 |
+| 2 | 07:55 | 08:40 | 07:55 → 08:25 |
+| 3 | 08:50 | 09:35 | 08:50 → 09:20 |
+| 4 | 09:55 | 10:40 | 09:55 → 10:25 |
+| 5 | 10:50 | 11:35 | 10:50 → 11:20 |
+| 6 | 13:30 | 14:15 | 13:30 → 14:00 |
+| 7 | 14:25 | 15:10 | 14:25 → 14:55 |
+| 8 | 15:30 | 16:15 | 15:30 → 16:00 |
+| 9 | 16:25 | 17:10 | 16:25 → 16:55 |
+| 10 | 17:20 | 18:05 | 17:20 → 17:50 |
+
+> **Cửa sổ điểm danh = 30 phút kể từ khi tiết bắt đầu** (không phải đến hết tiết).
+> Quy định này nhằm khuyến khích học sinh điểm danh đúng giờ và tránh tình trạng điểm danh cuối tiết.
+
+Các hằng số này được định nghĩa song song ở cả backend (`PeriodTimes.java`) và frontend (`PERIOD_TIMES` trong `attendance/types/index.ts`) để đảm bảo nhất quán.

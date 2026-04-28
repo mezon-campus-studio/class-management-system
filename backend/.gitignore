@@ -35,3 +35,19 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Env files (chứa secrets) ###
+.env
+.env.local
+.env.*.local
+
+### Uploads (file người dùng upload) ###
+uploads/
+
+### Logs ###
+*.log
+logs/
+
+### OS ###
+.DS_Store
+Thumbs.db
