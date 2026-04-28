@@ -8,6 +8,7 @@ import { HistoryTable } from "@features/emulation/pages/HistoryTable";
 // import { useAuth } from "@features/auth";
 import { classDiagramAPI } from "@features/classDiagram/api";
 import { emulationAPI } from "@features/emulation/api"; // Giả sử bạn có API này
+import { Modal } from "@shared/components/ui/Modal";
 
 export const Emulation = () => {
   const { classId } = useParams<{ classId: string }>();
@@ -240,23 +241,13 @@ export const Emulation = () => {
       />
 
       {/* MODAL */}
-      {showMemberModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-ink-1/40 backdrop-blur-sm p-4">
-          <div className="bg-surface rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
-            <div className="p-4 border-b flex justify-between items-center bg-surface-2">
-              <h3 className="font-bold text-ink-1 text-sm">
-                Thêm học sinh vào Tổ {selectedTeam}
-              </h3>
-              <button
-                onClick={() => setShowMemberModal(false)}
-                className="text-ink-3 hover:text-ink-1"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="max-h-64 overflow-y-auto p-2">
-              {members.length > 0 ? (
+      <Modal 
+        isOpen={showMemberModal} 
+        onClose={() => setShowMemberModal(false)} 
+        title={`Thêm học sinh vào Tổ ${selectedTeam}`}
+      >
+        <div className="flex flex-col gap-1">
+          {members.length > 0 ? (
                 members.map((m) => (
                   <div
                     key={m.id}
@@ -278,20 +269,16 @@ export const Emulation = () => {
                 </p>
               )}
             </div>
-          </div>
         </div>
-      )}
+      </Modal>
 
       {/* MODAL GHI ĐIỂM */}
-      {showPointModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-ink-1/40 backdrop-blur-sm p-4">
-          <div className="bg-surface rounded-2xl w-full max-w-sm shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="font-bold text-ink-1 mb-4 flex items-center gap-2">
-              <span className="w-2 h-5 bg-ink-blue-text rounded-full"></span>
-              Ghi điểm Tổ {selectedTeam}
-            </h3>
-
-            <div className="space-y-4">
+      <Modal 
+        isOpen={showPointModal} 
+        onClose={() => { setShowPointModal(false); setPointForm({ content: "", points: 0 }); }} 
+        title={`Ghi điểm Tổ ${selectedTeam}`}
+      >
+        <div className="space-y-4">
               <div>
                 <label className="text-[11px] font-black text-ink-3 uppercase mb-1 block">
                   Nội dung
@@ -353,9 +340,8 @@ export const Emulation = () => {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+            </div>
+      </Modal>
     </div>
   );
 };
