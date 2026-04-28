@@ -922,6 +922,7 @@ export function ChatPage() {
             {/* Drawer content */}
             <div className="flex-1 overflow-hidden flex flex-col p-3" style={{ background: 'var(--bg-surface-2)' }}>
               <ChatRightPanel
+                className="flex-1"
                 {...rightPanelProps}
                 onJumpToMessage={(id) => { handleJumpToPinned(id); closePanel(); }}
                 onPreviewAttachment={(url, name, ct) => {

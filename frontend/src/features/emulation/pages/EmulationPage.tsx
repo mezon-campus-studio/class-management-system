@@ -100,7 +100,7 @@ export function EmulationPage() {
         memberId: entryForm.memberId,
         score: entryForm.score,
         note: entryForm.note || undefined,
-        occurredAt: entryForm.occurredAt || undefined,
+        occurredAt: entryForm.occurredAt ? new Date(entryForm.occurredAt).toISOString() : undefined,
       });
       setEntries((prev) => [created, ...prev]);
       // Optimistic update of leaderboard
