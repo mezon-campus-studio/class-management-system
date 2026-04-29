@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, Check } from 'lucide-react';
 import { notificationApi } from '../api';
+import { getNotificationRoute } from '../utils';
 import type { Notification } from '../types';
 
 export function NotificationPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -23,9 +26,13 @@ export function NotificationPage() {
 
   useEffect(() => { load(0); }, []);
 
-  const handleMarkRead = async (id: string) => {
-    await notificationApi.markRead(id);
-    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  const handleClick = async (n: Notification) => {
+    if (!n.read) {
+      await notificationApi.markRead(n.id);
+      setItems((prev) => prev.map((item) => (item.id === n.id ? { ...item, read: true } : item)));
+    }
+    const route = getNotificationRoute(n.type, n.classroomId, n.referenceId);
+    if (route) navigate(route);
   };
 
   const handleMarkAllRead = async () => {
@@ -59,7 +66,7 @@ export function NotificationPage() {
           {items.map((n) => (
             <div
               key={n.id}
-              onClick={() => !n.read && handleMarkRead(n.id)}
+              onClick={() => handleClick(n)}
               className={`card card-body cursor-pointer transition-colors ${
                 n.read ? 'opacity-60' : 'border-l-4'
               }`}

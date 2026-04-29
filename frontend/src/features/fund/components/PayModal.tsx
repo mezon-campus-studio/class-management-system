@@ -178,35 +178,36 @@ function ResultPanel({
     return (
       <div className="space-y-3">
         <p className="text-sm text-ink-1 font-medium">Quét VietQR để chuyển khoản</p>
-        <div className="flex justify-center">
+        {/* Card + QR side by side */}
+        <div className="flex gap-4 items-stretch">
+          <div className="card card-body flex-1 min-w-0" style={{ background: 'var(--bg-surface-2)' }}>
+            <CopyRow
+              label="Ngân hàng"
+              value={`${fund.bankShortName ?? ''}${fund.bankShortName ? ' · ' : ''}${fund.bankBin ?? ''}`}
+              onCopy={onCopy}
+              copied={copied}
+            />
+            <CopyRow label="Số tài khoản" value={result.bankAccountNumber ?? ''} onCopy={onCopy} copied={copied} />
+            <CopyRow label="Chủ tài khoản" value={result.bankAccountName ?? ''} onCopy={onCopy} copied={copied} />
+            <CopyRow label="Số tiền" value={String(result.amount)} formatted={result.amount.toLocaleString('vi-VN') + ' ₫'} onCopy={onCopy} copied={copied} />
+            <CopyRow
+              label="Nội dung CK"
+              value={result.transferContent}
+              onCopy={onCopy}
+              copied={copied}
+              highlight
+            />
+          </div>
           <img
             src={result.qrImageUrl}
             alt="VietQR"
-            className="rounded-lg border border-rule"
-            style={{ maxWidth: 320 }}
-          />
-        </div>
-        <div className="card card-body" style={{ background: 'var(--bg-surface-2)' }}>
-          <CopyRow
-            label="Ngân hàng"
-            value={`${fund.bankShortName ?? ''}${fund.bankShortName ? ' · ' : ''}${fund.bankBin ?? ''}`}
-            onCopy={onCopy}
-            copied={copied}
-          />
-          <CopyRow label="Số tài khoản" value={result.bankAccountNumber ?? ''} onCopy={onCopy} copied={copied} />
-          <CopyRow label="Chủ tài khoản" value={result.bankAccountName ?? ''} onCopy={onCopy} copied={copied} />
-          <CopyRow label="Số tiền" value={String(result.amount)} formatted={result.amount.toLocaleString('vi-VN') + ' ₫'} onCopy={onCopy} copied={copied} />
-          <CopyRow
-            label="Nội dung chuyển khoản"
-            value={result.transferContent}
-            onCopy={onCopy}
-            copied={copied}
-            highlight
+            className="rounded-lg border border-rule shrink-0"
+            style={{ width: 192, objectFit: 'contain' }}
           />
         </div>
         <p className="text-xs text-ink-3">
-          Sau khi chuyển khoản thành công, vui lòng đợi thủ quỹ xác nhận. Trạng thái sẽ chuyển từ
-          <span className="font-medium"> "Chờ xác nhận" → "Đã đóng"</span>.
+          Sau khi chuyển khoản, vui lòng đợi thủ quỹ xác nhận.
+          Trạng thái sẽ chuyển từ<span className="font-medium"> "Chờ xác nhận" → "Đã đóng"</span>.
         </p>
         <div className="flex justify-end pt-2 border-t border-rule">
           <button onClick={onClose} className="btn btn-primary btn-sm">Tôi đã chuyển khoản</button>

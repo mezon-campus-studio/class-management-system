@@ -99,7 +99,16 @@ export function FundPage() {
       })),
     ])
       .then(([s, caps]) => {
-        if (s) setSummary(s);
+        if (s) {
+          setSummary(s);
+          // Eager-load all collection statuses so the payment button
+          // is visible without the user having to open each accordion first.
+          s.collections.forEach((col) =>
+            fundApi.getCollectionStatus(classroomId!, col.id)
+              .then((st) => setStatuses((prev) => ({ ...prev, [col.id]: st })))
+              .catch(() => undefined),
+          );
+        }
         setCapabilities(caps);
       })
       .catch(showError)
@@ -223,6 +232,16 @@ export function FundPage() {
         loadStatus(collectionId),
         fundApi.getFundSummary(classroomId).then(setSummary),
       ]);
+    } catch (err) {
+      showError(err);
+    }
+  };
+
+  const handleRejectPayment = async (paymentId: string, collectionId: string) => {
+    if (!classroomId || !confirm('Từ chối thanh toán này? Học sinh sẽ cần nộp lại từ đầu.')) return;
+    try {
+      await fundApi.rejectPayment(classroomId, paymentId);
+      await loadStatus(collectionId);
     } catch (err) {
       showError(err);
     }
@@ -521,13 +540,13 @@ export function FundPage() {
 
                       {/* Action buttons */}
                       <div className="flex items-center gap-2 shrink-0">
-                        {col.active && myRow && myRow.status !== 'CONFIRMED' && (
+                        {col.active && (!myRow || myRow.status !== 'CONFIRMED') && (
                           <button
                             onClick={() => setPayingCollection(col)}
                             className="btn btn-primary btn-sm gap-1.5"
                           >
                             <Wallet size={13} />
-                            {myRow.status === 'PENDING' ? 'Thanh toán lại' : 'Thanh toán'}
+                            {myRow?.status === 'PENDING' ? 'Thanh toán lại' : 'Thanh toán'}
                           </button>
                         )}
                         <button
@@ -624,13 +643,22 @@ export function FundPage() {
                                 </td>
                                 <td>
                                   {capabilities.canManage && row.status === 'PENDING' && row.paymentId && (
-                                    <button
-                                      onClick={() => handleConfirmPayment(row.paymentId!, col.id)}
-                                      className="btn btn-ghost btn-sm gap-1"
-                                      style={{ color: 'var(--green-text)' }}
-                                    >
-                                      <Check size={13} /> Xác nhận
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => handleConfirmPayment(row.paymentId!, col.id)}
+                                        className="btn btn-ghost btn-sm gap-1"
+                                        style={{ color: 'var(--green-text)' }}
+                                      >
+                                        <Check size={13} /> Xác nhận
+                                      </button>
+                                      <button
+                                        onClick={() => handleRejectPayment(row.paymentId!, col.id)}
+                                        className="btn btn-ghost btn-sm text-xs"
+                                        style={{ color: 'var(--red-text)' }}
+                                      >
+                                        Từ chối
+                                      </button>
+                                    </div>
                                   )}
                                   {capabilities.canManage && row.status === 'CONFIRMED' && row.paymentId && (
                                     <button
@@ -791,8 +819,8 @@ export function FundPage() {
                         )}
                       </td>
                       <td>
-                        <Badge variant={p.status === 'CONFIRMED' ? 'green' : 'amber'}>
-                          {p.status === 'CONFIRMED' ? 'Đã xác nhận' : 'Chờ xác nhận'}
+                        <Badge variant={p.status === 'CONFIRMED' ? 'green' : p.status === 'REJECTED' ? 'red' : 'amber'}>
+                          {p.status === 'CONFIRMED' ? 'Đã xác nhận' : p.status === 'REJECTED' ? 'Bị từ chối' : 'Chờ xác nhận'}
                         </Badge>
                       </td>
                       <td className="text-ink-3 text-xs">

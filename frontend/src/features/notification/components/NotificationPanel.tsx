@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell, Check, Settings, ChevronDown,
   CheckCircle, ClipboardList, MessageCircle, DollarSign, Star, X,
 } from 'lucide-react';
 import { useNotificationStore } from '../store/notificationStore';
 import { NotificationSettings } from './NotificationSettings';
+import { getNotificationRoute } from '../utils';
 import type { NotificationType } from '../types';
 
 function getIcon(type: NotificationType) {
@@ -16,8 +18,12 @@ function getIcon(type: NotificationType) {
   if (type === 'DUTY_ASSIGNED' || type === 'DUTY_CONFIRMED' || type === 'DUTY_REMINDER')
     return <ClipboardList size={15} />;
   if (type === 'MESSAGE_RECEIVED' || type === 'MESSAGE_MENTION') return <MessageCircle size={15} />;
-  if (type === 'FUND_PAYMENT_CONFIRMED' || type === 'FUND_COLLECTION_CREATED')
-    return <DollarSign size={15} />;
+  if (
+    type === 'FUND_PAYMENT_INITIATED' ||
+    type === 'FUND_PAYMENT_CONFIRMED' ||
+    type === 'FUND_PAYMENT_REJECTED' ||
+    type === 'FUND_COLLECTION_CREATED'
+  ) return <DollarSign size={15} />;
   if (type === 'EMULATION_ENTRY_ADDED' || type === 'EVALUATION_ADDED')
     return <Star size={15} />;
   return <Bell size={15} />;
@@ -45,7 +51,17 @@ export function NotificationPanel() {
     loadMore,
   } = useNotificationStore();
 
+  const navigate = useNavigate();
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const handleClick = (id: string, read: boolean, classroomId: string | null, type: NotificationType, referenceId: string | null) => {
+    if (!read) markRead(id);
+    const route = getNotificationRoute(type, classroomId, referenceId);
+    if (route) {
+      closePanel();
+      navigate(route);
+    }
+  };
 
   return (
     <>
@@ -129,7 +145,7 @@ export function NotificationPanel() {
               {notifications.map((n) => (
                 <button
                   key={n.id}
-                  onClick={() => { if (!n.read) markRead(n.id); }}
+                  onClick={() => handleClick(n.id, n.read, n.classroomId, n.type, n.referenceId)}
                   className="w-full flex items-start gap-3 px-4 py-3.5 text-left transition-fast"
                   style={{
                     background: n.read ? 'var(--bg-surface)' : 'var(--warm-fill)',

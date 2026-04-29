@@ -107,12 +107,28 @@ public class FundController {
         return ApiResponse.ok(fundService.initiatePayment(classroomId, req, userId, ip));
     }
 
+    @GetMapping("/payments/{paymentId}")
+    public ApiResponse<PaymentResponse> getPayment(
+            @PathVariable UUID classroomId,
+            @PathVariable UUID paymentId) {
+        UUID userId = SecurityUtils.getCurrentUser().getId();
+        return ApiResponse.ok(fundService.getPayment(classroomId, paymentId, userId));
+    }
+
     @PostMapping("/payments/{paymentId}/confirm")
     public ApiResponse<PaymentResponse> confirmPayment(
             @PathVariable UUID classroomId,
             @PathVariable UUID paymentId) {
         UUID userId = SecurityUtils.getCurrentUser().getId();
         return ApiResponse.ok(fundService.confirmPayment(classroomId, paymentId, userId));
+    }
+
+    @PostMapping("/payments/{paymentId}/reject")
+    public ApiResponse<PaymentResponse> rejectPayment(
+            @PathVariable UUID classroomId,
+            @PathVariable UUID paymentId) {
+        UUID userId = SecurityUtils.getCurrentUser().getId();
+        return ApiResponse.ok(fundService.rejectPayment(classroomId, paymentId, userId));
     }
 
     @PostMapping("/payments/{paymentId}/revert")

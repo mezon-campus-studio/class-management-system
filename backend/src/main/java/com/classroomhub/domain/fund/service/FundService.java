@@ -9,9 +9,13 @@ import com.classroomhub.domain.classroom.repository.ClassroomMemberRepository;
 import com.classroomhub.domain.classroom.service.ClassroomService;
 import com.classroomhub.domain.fund.dto.*;
 import com.classroomhub.domain.fund.entity.*;
+import com.classroomhub.domain.auth.service.MailService;
 import com.classroomhub.domain.fund.payment.PaymentGateways;
 import com.classroomhub.domain.fund.repository.*;
+import com.classroomhub.domain.notification.entity.Notification;
+import com.classroomhub.domain.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +32,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FundService {
 
+    @Value("${classroomhub.app.base-url:http://localhost:5173}")
+    private String appBaseUrl;
+
     private final FundRepository fundRepository;
     private final FundCollectionRepository collectionRepository;
     private final FundPaymentRepository paymentRepository;
@@ -36,6 +43,8 @@ public class FundService {
     private final UserRepository userRepository;
     private final ClassroomService classroomService;
     private final PaymentGateways paymentGateways;
+    private final NotificationService notificationService;
+    private final MailService mailService;
 
     @Transactional
     public FundResponse createFund(UUID classroomId, CreateFundRequest req, UUID userId) {
@@ -146,7 +155,7 @@ public class FundService {
             User u = users.get(m.getUserId());
             FundPayment p = latestByUser.get(m.getUserId());
             CollectionStatusResponse.Status st;
-            if (p == null) {
+            if (p == null || p.getStatus() == FundPayment.Status.REJECTED) {
                 st = CollectionStatusResponse.Status.NONE;
                 unpaid++;
             } else if (p.getStatus() == FundPayment.Status.CONFIRMED) {
@@ -269,6 +278,7 @@ public class FundService {
                         amount,
                         transferContent
                 );
+                notifyTreasurers(classroomId, userId, collection, amount, transferContent, payment.getId());
             }
             case VNPAY -> {
                 if (!paymentGateways.isVnpayConfigured()) {
@@ -358,6 +368,30 @@ public class FundService {
         return PaymentResponse.from(payment);
     }
 
+    /** Từ chối thanh toán — trạng thái về REJECTED, học sinh cần nộp lại. */
+    @Transactional
+    public PaymentResponse rejectPayment(UUID classroomId, UUID paymentId, UUID userId) {
+        classroomService.requirePermission(classroomId, userId, ClassroomMember.DelegatedPermission.MANAGE_FUND);
+        FundPayment payment = paymentRepository.findByIdAndClassroomId(paymentId, classroomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
+        if (payment.getStatus() != FundPayment.Status.PENDING) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+        }
+        payment.setStatus(FundPayment.Status.REJECTED);
+        paymentRepository.save(payment);
+
+        FundCollection collection = collectionRepository.findById(payment.getCollectionId()).orElse(null);
+        String collectionTitle = collection != null ? collection.getTitle() : "đợt thu";
+        notificationService.send(
+                payment.getMemberId(), classroomId,
+                Notification.Type.FUND_PAYMENT_REJECTED,
+                "Giao dịch bị từ chối",
+                "Thanh toán của bạn cho đợt thu \"" + collectionTitle + "\" đã bị từ chối. Vui lòng liên hệ thủ quỹ hoặc nộp lại.",
+                payment.getId());
+
+        return PaymentResponse.from(payment);
+    }
+
     @Transactional
     public ExpenseResponse addExpense(UUID classroomId, CreateExpenseRequest req, UUID userId) {
         classroomService.requirePermission(classroomId, userId, ClassroomMember.DelegatedPermission.MANAGE_FUND);
@@ -420,6 +454,60 @@ public class FundService {
 
     public boolean isVnpayEnabled() { return paymentGateways.isVnpayConfigured(); }
     public boolean isMomoEnabled()  { return paymentGateways.isMomoConfigured(); }
+
+    /** Returns a single payment; only the payment owner or a fund manager may read it. */
+    @Transactional(readOnly = true)
+    public PaymentResponse getPayment(UUID classroomId, UUID paymentId, UUID userId) {
+        classroomService.requireMember(classroomId, userId);
+        FundPayment payment = paymentRepository.findByIdAndClassroomId(paymentId, classroomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
+        if (!payment.getMemberId().equals(userId) && !canManageFund(classroomId, userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        return PaymentResponse.from(payment);
+    }
+
+    /**
+     * Finds all fund managers of a classroom and sends each of them an in-app
+     * notification + email so they can quickly confirm the incoming transfer.
+     * Runs inside the same transaction as initiatePayment but notification
+     * delivery is @Async so it won't block the response.
+     */
+    private void notifyTreasurers(UUID classroomId, UUID studentId,
+                                   FundCollection collection, BigDecimal amount,
+                                   String txnRef, UUID paymentId) {
+        User student = userRepository.findById(studentId).orElse(null);
+        String studentName = student != null ? student.getDisplayName() : "Học sinh";
+
+        String notifTitle = "Thanh toán mới đang chờ xác nhận";
+        String notifBody  = "%s vừa chuyển khoản %s ₫ cho đợt thu \"%s\" — nội dung: %s"
+                .formatted(studentName, String.format("%,d", amount.longValue()),
+                        collection.getTitle(), txnRef);
+        String fundUrl = appBaseUrl + "/classrooms/" + classroomId + "/fund";
+
+        classroomMemberRepository.findAllByClassroomId(classroomId).stream()
+                .filter(m -> m.getRole() == ClassroomMember.Role.OWNER
+                          || m.getRole() == ClassroomMember.Role.TEACHER
+                          || m.getDelegatedPermissions()
+                               .contains(ClassroomMember.DelegatedPermission.MANAGE_FUND))
+                .filter(m -> !m.getUserId().equals(studentId))
+                .forEach(manager -> {
+                    notificationService.send(
+                            manager.getUserId(), classroomId,
+                            Notification.Type.FUND_PAYMENT_INITIATED,
+                            notifTitle, notifBody, paymentId);
+
+                    userRepository.findById(manager.getUserId()).ifPresent(u ->
+                            mailService.sendFundPaymentInitiated(
+                                    u.getEmail(),
+                                    u.getDisplayName(),
+                                    studentName,
+                                    collection.getTitle(),
+                                    amount.longValue(),
+                                    txnRef,
+                                    fundUrl));
+                });
+    }
 
     private static String emptyToNull(String s) {
         if (s == null) return null;

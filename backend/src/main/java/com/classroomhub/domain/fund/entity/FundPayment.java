@@ -71,7 +71,8 @@ public class FundPayment {
 
     public enum Status {
         PENDING,
-        CONFIRMED
+        CONFIRMED,
+        REJECTED
     }
 
     public enum Method {

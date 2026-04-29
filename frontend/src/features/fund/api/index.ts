@@ -78,9 +78,19 @@ export const fundApi = {
       .post<ApiResponse<InitiatePaymentResult>>(`${base(classroomId)}/payments/initiate`, body)
       .then((r) => r.data.data),
 
+  getPayment: (classroomId: string, paymentId: string) =>
+    api
+      .get<ApiResponse<FundPayment>>(`${base(classroomId)}/payments/${paymentId}`)
+      .then((r) => r.data.data),
+
   confirmPayment: (classroomId: string, paymentId: string) =>
     api
       .post<ApiResponse<FundPayment>>(`${base(classroomId)}/payments/${paymentId}/confirm`, {})
+      .then((r) => r.data.data),
+
+  rejectPayment: (classroomId: string, paymentId: string) =>
+    api
+      .post<ApiResponse<FundPayment>>(`${base(classroomId)}/payments/${paymentId}/reject`, {})
       .then((r) => r.data.data),
 
   revertPayment: (classroomId: string, paymentId: string) =>

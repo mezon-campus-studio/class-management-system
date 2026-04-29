@@ -1,4 +1,4 @@
-export type PaymentStatus = 'PENDING' | 'CONFIRMED';
+export type PaymentStatus = 'PENDING' | 'CONFIRMED' | 'REJECTED';
 export type PaymentMethod = 'CASH' | 'BANK_TRANSFER' | 'VNPAY' | 'MOMO';
 export type CollectionMemberStatus = 'NONE' | 'PENDING' | 'CONFIRMED';
 

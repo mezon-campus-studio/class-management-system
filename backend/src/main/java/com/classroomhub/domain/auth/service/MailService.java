@@ -19,6 +19,47 @@ public class MailService {
     private String fromAddress;
 
     @Async
+    public void sendFundPaymentInitiated(String to, String treasurerName,
+                                         String studentName, String collectionTitle,
+                                         long amountVnd, String txnRef, String fundUrl) {
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(fromAddress);
+            msg.setTo(to);
+            msg.setSubject("[ClassroomHub] Thanh toán mới đang chờ xác nhận — " + collectionTitle);
+            msg.setText("""
+                    Xin chào %s,
+
+                    Học sinh %s vừa khởi tạo thanh toán quỹ lớp và đang chờ bạn xác nhận sau khi tiền về.
+
+                    Thông tin thanh toán:
+                      • Đợt thu  : %s
+                      • Số tiền  : %s ₫
+                      • Phương thức: Chuyển khoản ngân hàng (VietQR)
+                      • Nội dung CK: %s
+
+                    Sau khi kiểm tra tiền đã về tài khoản, vui lòng xác nhận tại:
+                    %s
+
+                    Nếu chưa nhận được tiền, bạn có thể bỏ qua email này.
+
+                    Trân trọng,
+                    Đội ngũ ClassroomHub
+                    """.formatted(
+                    treasurerName,
+                    studentName,
+                    collectionTitle,
+                    String.format("%,d", amountVnd),
+                    txnRef,
+                    fundUrl
+            ));
+            mailSender.send(msg);
+        } catch (Exception e) {
+            log.error("Failed to send fund payment email to {}: {}", to, e.getMessage());
+        }
+    }
+
+    @Async
     public void sendPasswordResetOtp(String to, String otp) {
         try {
             SimpleMailMessage msg = new SimpleMailMessage();
