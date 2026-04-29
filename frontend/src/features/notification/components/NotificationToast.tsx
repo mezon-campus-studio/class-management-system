@@ -12,7 +12,7 @@ function getIcon(type: NotificationType) {
   ) return <CheckCircle size={14} />;
   if (type === 'DUTY_ASSIGNED' || type === 'DUTY_CONFIRMED' || type === 'DUTY_REMINDER')
     return <ClipboardList size={14} />;
-  if (type === 'MESSAGE_RECEIVED' || type === 'MESSAGE_MENTION') return <MessageCircle size={14} />;
+  if (type === 'MESSAGE_RECEIVED' || type === 'MESSAGE_MENTION' || type === 'MESSAGE_REACTION') return <MessageCircle size={14} />;
   if (type === 'FUND_PAYMENT_CONFIRMED' || type === 'FUND_COLLECTION_CREATED')
     return <DollarSign size={14} />;
   if (type === 'EMULATION_ENTRY_ADDED' || type === 'EVALUATION_ADDED')

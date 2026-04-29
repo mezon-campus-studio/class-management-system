@@ -26,6 +26,8 @@ interface AuthState {
   ) => Promise<void>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
+  updateProfile: (displayName: string, avatarUrl?: string | null) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<void>;
 }
 
 // ─── Proactive refresh timer ──────────────────────────────────────────────────
@@ -132,5 +134,21 @@ export const useAuthStore = create<AuthState>((set) => ({
     try { await api.post('/auth/logout'); } catch { /* ignore */ }
     memToken.clear();
     set({ user: null, isAuthenticated: false });
+  },
+
+  updateProfile: async (displayName, avatarUrl) => {
+    const body: { displayName: string; avatarUrl?: string | null } = { displayName };
+    if (avatarUrl !== undefined) body.avatarUrl = avatarUrl;
+    const { data } = await api.put<{ data: UserInfo }>('/auth/me', body);
+    set((s) => ({ user: s.user ? { ...s.user, ...data.data } : s.user }));
+  },
+
+  uploadAvatar: async (file) => {
+    const form = new FormData();
+    form.append('file', file);
+    const { data } = await api.post<{ data: UserInfo }>('/auth/me/avatar', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    set((s) => ({ user: s.user ? { ...s.user, ...data.data } : s.user }));
   },
 }));

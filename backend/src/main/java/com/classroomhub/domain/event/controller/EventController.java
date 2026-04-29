@@ -122,6 +122,14 @@ public class EventController {
         return ApiResponse.ok(eventService.listPolls(classroomId, userId));
     }
 
+    @GetMapping("/polls/{pollId}")
+    public ApiResponse<PollResponse> getPoll(
+            @PathVariable UUID classroomId,
+            @PathVariable UUID pollId) {
+        UUID userId = SecurityUtils.getCurrentUser().getId();
+        return ApiResponse.ok(eventService.getPoll(classroomId, pollId, userId));
+    }
+
     @PostMapping("/polls/{pollId}/vote")
     public ApiResponse<PollResponse> vote(
             @PathVariable UUID classroomId,

@@ -6,7 +6,7 @@ import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { Breadcrumb } from './Breadcrumb';
 import { classroomApi } from '@/features/classroom/api';
-import { memToken } from '@/services/api-client';
+import { memToken, refreshAccessToken } from '@/services/api-client';
 import { WS_BASE } from '@/shared/constants';
 import { useAuthStore } from '@/app/store';
 import { useNotificationStore } from '@/features/notification/store/notificationStore';
@@ -110,8 +110,7 @@ function MainLayoutInner({ sidebarOpen, setSidebarOpen }: {
       disconnect();
       return;
     }
-    const token = memToken.get();
-    init(user.id, token ?? '');
+    init(user.id);
     return () => {
       disconnect();
     };
@@ -126,10 +125,16 @@ function MainLayoutInner({ sidebarOpen, setSidebarOpen }: {
       return;
     }
 
-    const token = memToken.get();
     const client = new Client({
       webSocketFactory: () => new SockJS(`${WS_BASE}/ws`),
-      connectHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
+      reconnectDelay: 5000,
+      beforeConnect: async () => {
+        let tok = memToken.get();
+        if (!tok) {
+          try { tok = await refreshAccessToken(); } catch { /* server will reject gracefully */ }
+        }
+        client.connectHeaders = tok ? { Authorization: `Bearer ${tok}` } : {};
+      },
       onConnect: () => {
         client.subscribe(`/topic/classrooms/${classroomId}/chat`, (frame) => {
           const notify: ChatNotify = JSON.parse(frame.body);

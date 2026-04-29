@@ -55,6 +55,17 @@ public class ChatController {
                 SecurityUtils.getCurrentUser().getId()));
     }
 
+    @GetMapping("/conversations/{conversationId}/messages/{messageId}/page-number")
+    public ApiResponse<ChatService.MessagePageInfo> getMessagePageNumber(
+            @PathVariable UUID classroomId,
+            @PathVariable UUID conversationId,
+            @PathVariable UUID messageId,
+            @RequestParam(defaultValue = "100") int size) {
+        int pageNumber = chatService.getMessagePageNumber(classroomId, conversationId, messageId, size,
+                SecurityUtils.getCurrentUser().getId());
+        return ApiResponse.ok(new ChatService.MessagePageInfo(pageNumber));
+    }
+
     @PostMapping("/conversations/{conversationId}/messages")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<MessageResponse> sendMessage(

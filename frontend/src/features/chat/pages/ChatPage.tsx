@@ -1,10 +1,10 @@
 import React, {
   useState, useEffect, useRef, useCallback, forwardRef, useMemo,
 } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import {
   Send, Paperclip, Image as ImageIcon, Plus, BarChart3, Calendar, FileText, Download, X, Pin,
-  Loader2, Info,
+  Loader2, Info, CheckCircle, ArrowDown,
 } from 'lucide-react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
@@ -14,6 +14,9 @@ import { permissionsOf } from '@/features/classroom/permissions';
 import type { MemberRole, ClassroomMember } from '@/features/classroom/types';
 import { RoleBadges } from '@/features/classroom/components/RoleBadges';
 import type { Conversation, Message, MessageType, PollPayload, EventPayload } from '../types';
+import { eventApi } from '@/features/event/api';
+import type { Poll, EventRsvp, RsvpResponse } from '@/features/event/types';
+import { RSVP_LABELS, RSVP_COLOR } from '@/features/event/types';
 import { ImageThumbnail } from '../components/ImageThumbnail';
 import { ChatAttachmentPreview } from '../components/ChatAttachmentPreview';
 import { CreatePollModal } from '../components/CreatePollModal';
@@ -23,7 +26,7 @@ import { QuotedMessage } from '../components/QuotedMessage';
 import { ReactionRow } from '../components/ReactionRow';
 import { ChatRightPanel } from '../components/ChatRightPanel';
 import { useAuth } from '@/features/auth';
-import { memToken } from '@/services/api-client';
+import { memToken, refreshAccessToken } from '@/services/api-client';
 import { WS_BASE } from '@/shared/constants';
 
 // ─── Utilities ─────────────────────────────────────────────────────────────────
@@ -138,16 +141,17 @@ function buildListItems(messages: Message[]): ListItem[] {
 
   for (let i = 0; i < visible.length; i++) {
     const msg = visible[i];
-    const next = i < visible.length - 1 ? visible[i + 1] : null;
+    const prev = i > 0 ? visible[i - 1] : null;
     const date = new Date(msg.createdAt);
     const dateStr = date.toDateString();
     if (dateStr !== lastDateStr) {
       lastDateStr = dateStr;
       items.push({ type: 'date', label: getDateLabel(date), key: `date-${dateStr}` });
     }
-    const showTime = !next
-      || next.senderId !== msg.senderId
-      || new Date(next.createdAt).getTime() - date.getTime() > MINUTE_MS;
+    // Show time above the FIRST message in a group (time is now above the bubble).
+    const showTime = !prev
+      || prev.senderId !== msg.senderId
+      || date.getTime() - new Date(prev.createdAt).getTime() > MINUTE_MS;
     items.push({ type: 'message', msg, position: positions[i], showTime, key: msg.id });
   }
   return items;
@@ -158,6 +162,7 @@ function buildListItems(messages: Message[]): ListItem[] {
 export function ChatPage() {
   const { classroomId } = useParams<{ classroomId: string }>();
   const { user } = useAuth();
+  const location = useLocation();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [myRole, setMyRole] = useState<MemberRole | null>(null);
@@ -174,6 +179,9 @@ export function ChatPage() {
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
   const [hasOlder, setHasOlder] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  const [hasNewer, setHasNewer] = useState(false);
+  const [loadingNewer, setLoadingNewer] = useState(false);
+  const [isJumpContext, setIsJumpContext] = useState(false);
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
   const [members, setMembers] = useState<ClassroomMember[]>([]);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -192,8 +200,11 @@ export function ChatPage() {
   const [wallpaperBlobUrl, setWallpaperBlobUrl] = useState<string | null>(null);
   const settingsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const nextPageRef = useRef(1);
+  const nextPageRef = useRef(1);   // next page index going backward (older)
+  const newerPageRef = useRef(-1); // next page index going forward (newer, toward present)
+  const isJumpContextRef = useRef(false); // synced ref so upsertMessage closure can read it
   const bottomRef = useRef<HTMLDivElement>(null);
+  const newerSentinelRef = useRef<HTMLDivElement>(null); // triggers load-newer
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const clientRef = useRef<Client | null>(null);
@@ -207,6 +218,9 @@ export function ChatPage() {
   const perms = myRole ? permissionsOf(myRole) : null;
   const canPin = perms ? perms.canManageEvents : false;
   const canDeleteOthers = perms ? perms.canApproveAbsence : false;
+
+  // Keep ref in sync so upsertMessage (captured in a closure) can read current jump state
+  useEffect(() => { isJumpContextRef.current = isJumpContext; }, [isJumpContext]);
 
   // ─── Wallpaper blob — fetch authenticated image for background ────────────
 
@@ -317,7 +331,8 @@ export function ChatPage() {
     }
 
     if (fromStomp && isNew) {
-      if (isMine || isNearBottomRef.current) {
+      // Don't auto-scroll when viewing an old batch via jump — let the user read
+      if (!isJumpContextRef.current && (isMine || isNearBottomRef.current)) {
         setTimeout(() => scrollToBottom('smooth'), 50);
       }
     }
@@ -361,32 +376,55 @@ export function ChatPage() {
   useEffect(() => {
     if (!loading && !initialLoadDone.current) {
       initialLoadDone.current = true;
-      requestAnimationFrame(() => scrollToBottom('instant' as ScrollBehavior));
+      const scrollToId = (location.state as { scrollTo?: string } | null)?.scrollTo;
+      if (scrollToId) {
+        setTimeout(() => jumpToMessage(scrollToId), 300);
+      } else {
+        requestAnimationFrame(() => scrollToBottom('instant' as ScrollBehavior));
+      }
     }
+  // jumpToMessage and location.state intentionally read once on first load
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, scrollToBottom]);
 
   // ─── STOMP subscription ────────────────────────────────────────────────────
 
   useEffect(() => {
     if (!conversation) return;
-    const token = memToken.get();
     const client = new Client({
       webSocketFactory: () => new SockJS(`${WS_BASE}/ws`),
-      connectHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
+      reconnectDelay: 5000,
+      beforeConnect: async () => {
+        let tok = memToken.get();
+        if (!tok) {
+          try { tok = await refreshAccessToken(); } catch { /* server will reject gracefully */ }
+        }
+        client.connectHeaders = tok ? { Authorization: `Bearer ${tok}` } : {};
+      },
       onConnect: () => {
         client.subscribe(`/topic/conversations/${conversation.id}`, (frame) => {
           const msg: Message = JSON.parse(frame.body);
           const isMine = msg.senderId === user?.id;
           upsertMessage(msg, true, isMine);
         });
+
+        // Forward poll/RSVP realtime updates to PluginCards via window event.
+        // A single subscription serves every visible card without each one
+        // opening its own STOMP connection.
+        if (classroomId) {
+          client.subscribe(`/topic/classrooms/${classroomId}/events`, (frame) => {
+            const detail = JSON.parse(frame.body);
+            window.dispatchEvent(new CustomEvent('events-realtime', { detail }));
+          });
+        }
       },
     });
     client.activate();
     clientRef.current = client;
     return () => { client.deactivate(); };
-  }, [conversation, upsertMessage, user?.id]);
+  }, [conversation, upsertMessage, user?.id, classroomId]);
 
-  // ─── IntersectionObserver for lazy loading older messages ─────────────────
+  // ─── IntersectionObserver: load older messages (scroll up) ───────────────
 
   useEffect(() => {
     if (!sentinelRef.current || !conversation || !classroomId) return;
@@ -424,6 +462,38 @@ export function ChatPage() {
     return () => observer.disconnect();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversation, classroomId, hasOlder, loadingOlder]);
+
+  // ─── IntersectionObserver: load newer messages (scroll down in jump context) ─
+
+  useEffect(() => {
+    if (!newerSentinelRef.current || !hasNewer || !conversation || !classroomId) return;
+
+    const observer = new IntersectionObserver(
+      async (entries) => {
+        if (!entries[0].isIntersecting) return;
+        if (!hasNewer || loadingNewer) return;
+        if (newerPageRef.current < 0) return;
+
+        setLoadingNewer(true);
+        try {
+          const page = await chatApi.getMessages(classroomId, conversation.id, newerPageRef.current);
+          const newer = [...page.content].reverse();
+          setMessages((prev) => [...prev, ...newer]);
+          newerPageRef.current -= 1;
+          const stillHasNewer = newerPageRef.current >= 0;
+          setHasNewer(stillHasNewer);
+          if (!stillHasNewer) setIsJumpContext(false);
+        } finally {
+          setLoadingNewer(false);
+        }
+      },
+      { root: scrollContainerRef.current, threshold: 0.1 },
+    );
+
+    observer.observe(newerSentinelRef.current);
+    return () => observer.disconnect();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation, classroomId, hasNewer, loadingNewer]);
 
   useEffect(() => {
     if (replyTarget) inputRef.current?.focus();
@@ -610,7 +680,7 @@ export function ChatPage() {
     }
   };
 
-  const handleJumpToPinned = (messageId: string) => {
+  const highlightMessage = (messageId: string) => {
     const el = messageRefs.current.get(messageId);
     if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -619,6 +689,48 @@ export function ChatPage() {
     el.style.transition = 'box-shadow 0.5s';
     setTimeout(() => { el.style.boxShadow = prev; }, 1500);
   };
+
+  const jumpToMessage = useCallback(async (messageId: string) => {
+    // Already in DOM — just scroll to it
+    if (messageRefs.current.has(messageId)) {
+      highlightMessage(messageId);
+      return;
+    }
+    if (!classroomId || !conversation) return;
+    try {
+      // Find which page this message lives on
+      const pageNum = await chatApi.getMessagePageNumber(classroomId, conversation.id, messageId);
+      // Load that page, replacing the current window
+      const page = await chatApi.getMessages(classroomId, conversation.id, pageNum);
+      const msgs = [...page.content].reverse();
+      setMessages(msgs);
+      // Older direction (scrolling up)
+      nextPageRef.current = pageNum + 1;
+      setHasOlder(pageNum + 1 < page.totalPages);
+      // Newer direction (scrolling down toward present)
+      newerPageRef.current = pageNum - 1;
+      const jumpCtx = pageNum > 0;
+      setHasNewer(jumpCtx);
+      setIsJumpContext(jumpCtx);
+      // Scroll to target after render
+      requestAnimationFrame(() => setTimeout(() => highlightMessage(messageId), 80));
+    } catch {
+      // Message gone or network error — silently ignore
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classroomId, conversation]);
+
+  const returnToLatest = useCallback(async () => {
+    if (!classroomId || !conversation) return;
+    const page = await chatApi.getMessages(classroomId, conversation.id, 0);
+    setMessages([...page.content].reverse());
+    setHasOlder(page.totalPages > 1);
+    nextPageRef.current = 1;
+    setHasNewer(false);
+    setIsJumpContext(false);
+    newerPageRef.current = -1;
+    setTimeout(() => scrollToBottom('instant' as ScrollBehavior), 50);
+  }, [classroomId, conversation, scrollToBottom]);
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -629,7 +741,7 @@ export function ChatPage() {
   const rightPanelProps = {
     pinnedMessages,
     messages,
-    onJumpToMessage: handleJumpToPinned,
+    onJumpToMessage: jumpToMessage,
     bubbleColor,
     onBubbleColorChange: handleBubbleColorChange,
     wallpaper,
@@ -643,7 +755,7 @@ export function ChatPage() {
     <div className="flex gap-3 max-w-[1100px] mx-auto px-4 py-6" style={{ height: 'calc(100vh - 120px)' }}>
 
       {/* ── Chat column ─────────────────────────────────────────────────────── */}
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 relative">
 
         {/* Header */}
         <div className="card mb-3 px-4 py-3 flex items-center gap-2">
@@ -743,7 +855,7 @@ export function ChatPage() {
                   handleToggleReaction(msg.id, emoji, cur?.reactedByMe ?? false);
                 }}
                 onTogglePin={() => handleTogglePin(msg)}
-                onJumpToReply={(id) => handleJumpToPinned(id)}
+                onJumpToReply={(id) => jumpToMessage(id)}
               />
             );
           })}
@@ -752,8 +864,35 @@ export function ChatPage() {
             <PendingUploadBubble key={p.id} pending={p} />
           ))}
 
+          {/* Newer-messages sentinel — triggers load when user scrolls near bottom in jump context */}
+          {hasNewer && <div ref={newerSentinelRef} className="h-1" />}
+
+          {loadingNewer && (
+            <div className="flex justify-center py-2">
+              <Loader2 size={16} className="animate-spin text-ink-3" />
+            </div>
+          )}
+
           <div ref={bottomRef} />
         </div>
+
+        {/* Back-to-latest button — shown when viewing an older batch */}
+        {isJumpContext && (
+          <button
+            onClick={returnToLatest}
+            className="absolute flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg transition-all"
+            style={{
+              bottom: '80px',
+              right: '16px',
+              background: 'var(--sidebar-accent)',
+              color: '#fff',
+              zIndex: 20,
+            }}
+          >
+            <ArrowDown size={13} />
+            Tin nhắn mới nhất
+          </button>
+        )}
 
         {/* Reply banner */}
         {replyTarget && (
@@ -924,7 +1063,7 @@ export function ChatPage() {
               <ChatRightPanel
                 className="flex-1"
                 {...rightPanelProps}
-                onJumpToMessage={(id) => { handleJumpToPinned(id); closePanel(); }}
+                onJumpToMessage={(id) => { jumpToMessage(id); closePanel(); }}
                 onPreviewAttachment={(url, name, ct) => {
                   setPreviewing({ url, name, contentType: ct });
                   closePanel();
@@ -1027,26 +1166,7 @@ const MessageBubble = React.memo(forwardRef<HTMLDivElement, BubbleProps>(
         // into the next message.
         style={msg.reactions.length > 0 && !msg.deleted ? { paddingBottom: 14 } : undefined}
       >
-        {/* Sender name + role badges — sit ABOVE the bubble row so they
-            don't widen the column and misalign reactions to the right. */}
-        {!isMine && isFirstInGroup && (
-          <div className="flex items-center gap-1.5 mb-1 pl-9">
-            <p className="text-[11px] font-semibold text-ink-2">
-              {msg.senderName ?? 'Người dùng'}
-            </p>
-            {senderPrimaryRole && senderPrimaryRole !== 'MEMBER' && (
-              <RoleBadges
-                primary={senderPrimaryRole}
-                extras={senderExtraRoles ?? []}
-                short
-                max={2}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Bubble row — items-end so avatar aligns with the bubble bottom,
-            independent of the time row that sits below. */}
+        {/* Bubble row — items-end so avatar aligns with the bubble bottom. */}
         <div className={`flex gap-2 items-end ${isMine ? 'flex-row-reverse' : ''}`}>
           {!isMine && (
             isLastInGroup ? (
@@ -1062,7 +1182,8 @@ const MessageBubble = React.memo(forwardRef<HTMLDivElement, BubbleProps>(
           )}
 
           <div className={`max-w-[75%] flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
-          {/* Pin label — above the bubble, outside content */}
+
+          {/* Pin label — top row when pinned */}
           {msg.pinned && !msg.deleted && (
             <div
               className="flex items-center gap-1 text-[10px] mb-0.5 px-1"
@@ -1071,6 +1192,39 @@ const MessageBubble = React.memo(forwardRef<HTMLDivElement, BubbleProps>(
               <Pin size={9} />
               <span className="font-medium">Đã ghim</span>
             </div>
+          )}
+
+          {/* Header row: name + time on same row for received first-in-group */}
+          {!msg.deleted && !isMine && isFirstInGroup && (
+            <div className="flex items-center gap-1.5 mb-0.5 px-1 w-full">
+              <p className="text-[11px] font-semibold text-ink-2 shrink-0">
+                {msg.senderName ?? 'Người dùng'}
+              </p>
+              {senderPrimaryRole && senderPrimaryRole !== 'MEMBER' && (
+                <RoleBadges
+                  primary={senderPrimaryRole}
+                  extras={senderExtraRoles ?? []}
+                  short
+                  max={2}
+                />
+              )}
+              {showTime && (
+                <p className="ml-auto text-[10px] text-ink-3 shrink-0 pl-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {formatTime(msg.createdAt)}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Time alone — for my messages or subsequent messages in group */}
+          {!msg.deleted && showTime && (isMine || !isFirstInGroup) && (
+            <p
+              className={`text-[10px] text-ink-3 mb-0.5 px-1 opacity-0 group-hover:opacity-100 transition-opacity ${
+                isMine ? 'self-start' : 'self-end'
+              }`}
+            >
+              {formatTime(msg.createdAt)}
+            </p>
           )}
 
           {/* Bubble + actions wrapper — relative so MessageActions and the
@@ -1191,18 +1345,6 @@ const MessageBubble = React.memo(forwardRef<HTMLDivElement, BubbleProps>(
 
           </div>{/* end inner message column */}
         </div>{/* end bubble row */}
-
-        {/* Time — sits OUTSIDE the bubble row so it doesn't extend the
-            row height and pull the avatar below the bubble. */}
-        {!msg.deleted && showTime && (
-          <p
-            className={`text-[10px] text-ink-3 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${
-              isMine ? 'text-right pr-1' : 'text-left pl-9'
-            }`}
-          >
-            {formatTime(msg.createdAt)}
-          </p>
-        )}
       </div>
     );
   },
@@ -1256,43 +1398,231 @@ function FileCard({ url, name, contentType, size, onClick }: {
   );
 }
 
-// ─── Plugin card (Poll/Event) ──────────────────────────────────────────────────
+// ─── Plugin card (Poll/Event) — interactive inline ─────────────────────────────
 
 function PluginCard({ classroomId, type, payloadJson }: {
   classroomId: string; type: 'POLL' | 'EVENT'; payloadJson: string; isMine?: boolean;
 }) {
-  let payload: PollPayload | EventPayload | null = null;
-  try { payload = JSON.parse(payloadJson); } catch { /* malformed */ }
-  if (!payload) return <p className="text-xs opacity-60 italic px-3 py-2">(payload lỗi)</p>;
+  const { user } = useAuth();
+  const userId = user?.id;
 
-  const targetPath = `/classrooms/${classroomId}/events`;
-  const isPoll = type === 'POLL';
-  const Icon = isPoll ? BarChart3 : Calendar;
-  const label = isPoll ? 'BÌNH CHỌN' : 'SỰ KIỆN';
+  const [poll, setPoll] = useState<Poll | null>(null);
+  const [rsvps, setRsvps] = useState<EventRsvp[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+
+  const payload = useMemo<PollPayload | EventPayload | null>(() => {
+    try { return JSON.parse(payloadJson); } catch { return null; }
+  }, [payloadJson]);
+
+  useEffect(() => {
+    if (!payload) return;
+    if (type === 'POLL') {
+      eventApi.getPoll(classroomId, (payload as PollPayload).pollId)
+        .then(setPoll)
+        .catch(() => setNotFound(true));
+    } else {
+      eventApi.listRsvps(classroomId, (payload as EventPayload).eventId)
+        .then(setRsvps)
+        .catch(() => setNotFound(true));
+    }
+  }, [classroomId, type, payload]);
+
+  // Realtime sync — apply poll vote / RSVP updates broadcast from any
+  // surface (Events page or another chat client) without re-fetching.
+  useEffect(() => {
+    if (!payload) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { event: string; payload: unknown };
+      if (type === 'POLL' && detail.event === 'POLL_VOTE_UPDATED') {
+        const updated = detail.payload as Poll;
+        if (updated.id === (payload as PollPayload).pollId) {
+          // Preserve the local viewer's myOptionIds — the broadcast carries
+          // the voter's perspective, not each subscriber's.
+          setPoll((prev) => ({ ...updated, myOptionIds: prev?.myOptionIds ?? updated.myOptionIds }));
+        }
+      } else if (type === 'EVENT' && detail.event === 'RSVP_UPDATED') {
+        const { eventId, rsvp } = detail.payload as { eventId: string; rsvp: EventRsvp };
+        if (eventId === (payload as EventPayload).eventId) {
+          setRsvps((prev) => {
+            const list = [...(prev ?? [])];
+            const i = list.findIndex((r) => r.userId === rsvp.userId);
+            if (i >= 0) list[i] = rsvp; else list.push(rsvp);
+            return list;
+          });
+        }
+      }
+    };
+    window.addEventListener('events-realtime', handler);
+    return () => window.removeEventListener('events-realtime', handler);
+  }, [type, payload]);
+
+  const cardStyle: React.CSSProperties = {
+    background: '#ffffff',
+    color: 'var(--ink-1)',
+    border: '1px solid var(--rule)',
+  };
+
+  if (!payload || notFound) {
+    const isPoll = type === 'POLL';
+    const Icon = isPoll ? BarChart3 : Calendar;
+    const label = isPoll ? 'BÌNH CHỌN' : 'SỰ KIỆN';
+    const title = payload
+      ? (isPoll ? (payload as PollPayload).question : (payload as EventPayload).title)
+      : '—';
+    return (
+      <Link to={`/classrooms/${classroomId}/events`}
+            className="flex items-start gap-3 px-3 py-2.5 rounded-md min-w-[260px] hover:opacity-90 transition-opacity"
+            style={cardStyle}>
+        <Icon size={18} className="shrink-0 mt-0.5" style={{ color: 'var(--sidebar-accent)' }} />
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-3">{label}</p>
+          <p className="text-sm font-medium text-ink-1 line-clamp-2">{title}</p>
+          {notFound && <p className="text-[10px] text-ink-3 mt-0.5 italic">Không còn tồn tại</p>}
+        </div>
+      </Link>
+    );
+  }
+
+  // ── POLL card ──────────────────────────────────────────────────────────────
+  if (type === 'POLL') {
+    const handleVote = async (optionId: string) => {
+      if (!poll || !poll.isOpen || busy || !userId) return;
+      const current = poll.myOptionIds ?? [];
+      const next = poll.multiChoice
+        ? (current.includes(optionId) ? current.filter((id) => id !== optionId) : [...current, optionId])
+        : (current[0] === optionId ? [] : [optionId]);
+      const optimistic: Poll = {
+        ...poll,
+        myOptionIds: next,
+        options: poll.options.map((o) => {
+          const was = current.includes(o.id);
+          const will = next.includes(o.id);
+          if (was === will) return o;
+          return { ...o, voteCount: Math.max(0, o.voteCount + (will ? 1 : -1)) };
+        }),
+      };
+      setPoll(optimistic);
+      setBusy(true);
+      try {
+        const updated = await eventApi.vote(classroomId, poll.id, next);
+        setPoll({ ...updated, myOptionIds: updated.myOptionIds ?? next });
+      } catch { setPoll(poll); }
+      finally { setBusy(false); }
+    };
+
+    const totalVotes = poll ? poll.options.reduce((s, o) => s + o.voteCount, 0) : 0;
+    const selected = poll?.myOptionIds ?? [];
+
+    return (
+      <div className="rounded-md min-w-[260px] max-w-[340px]" style={cardStyle}>
+        <div className="px-3 pt-2.5 pb-1 flex items-center gap-2">
+          <BarChart3 size={15} style={{ color: 'var(--sidebar-accent)' }} />
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Bình chọn</p>
+        </div>
+        <p className="px-3 text-sm font-medium text-ink-1 line-clamp-2 mb-2">{poll?.question}</p>
+        {poll && (
+          <div className="px-3 pb-1 space-y-2">
+            {poll.options.map((opt) => {
+              const pct = totalVotes > 0 ? (opt.voteCount / totalVotes) * 100 : 0;
+              const checked = selected.includes(opt.id);
+              return (
+                <div key={opt.id}>
+                  <button
+                    disabled={!poll.isOpen || busy}
+                    onClick={() => handleVote(opt.id)}
+                    className="w-full text-left flex items-center gap-2 text-xs mb-0.5"
+                    style={{ color: checked ? 'var(--sidebar-accent)' : 'var(--ink-2)' }}
+                  >
+                    {checked
+                      ? <CheckCircle size={12} style={{ color: 'var(--sidebar-accent)', flexShrink: 0 }} />
+                      : <span className="w-3 h-3 rounded-full border border-current shrink-0 inline-block" />}
+                    <span className="truncate flex-1">{opt.text}</span>
+                    <span className="shrink-0 text-ink-3">{opt.voteCount}</span>
+                  </button>
+                  <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--bg-surface-2)' }}>
+                    <div className="h-full rounded-full transition-all"
+                         style={{ width: `${pct}%`, background: checked ? 'var(--sidebar-accent)' : 'var(--warm-400)' }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <div className="px-3 py-2 flex items-center justify-between border-t border-rule mt-1">
+          <p className="text-[10px] text-ink-3">{totalVotes} lượt · {poll?.isOpen ? 'Đang mở' : 'Đã đóng'}</p>
+          <Link to={`/classrooms/${classroomId}/events`}
+                className="text-[10px] hover:underline"
+                style={{ color: 'var(--sidebar-accent)' }}>
+            Xem chi tiết →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ── EVENT card ─────────────────────────────────────────────────────────────
+  const evPayload = payload as EventPayload;
+  const myRsvp = userId ? rsvps?.find((r) => r.userId === userId)?.response : undefined;
+
+  const handleRsvp = async (response: RsvpResponse) => {
+    if (busy || !userId) return;
+    setBusy(true);
+    const optimistic: EventRsvp = { id: 'pending', eventId: evPayload.eventId, userId, response, note: null };
+    setRsvps((prev) => {
+      const list = [...(prev ?? [])];
+      const i = list.findIndex((r) => r.userId === userId);
+      if (i >= 0) list[i] = optimistic; else list.push(optimistic);
+      return list;
+    });
+    try {
+      const updated = await eventApi.rsvp(classroomId, evPayload.eventId, response);
+      setRsvps((prev) => (prev ?? []).map((r) => (r.userId === userId ? updated : r)));
+    } catch {
+      setRsvps((prev) => (prev ?? []).filter((r) => r.id !== 'pending'));
+    } finally { setBusy(false); }
+  };
 
   return (
-    <Link to={targetPath}
-          className="flex items-start gap-3 px-3 py-2.5 rounded-md min-w-[260px] hover:opacity-90 transition-opacity"
-          style={{
-            background: '#ffffff',
-            color: 'var(--ink-1)',
-            border: '1px solid var(--rule)',
-          }}>
-      <Icon size={18} className="shrink-0 mt-0.5" style={{ color: 'var(--sidebar-accent)' }} />
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-3">{label}</p>
-        <p className="text-sm font-medium text-ink-1 line-clamp-2">
-          {isPoll ? (payload as PollPayload).question : (payload as EventPayload).title}
-        </p>
-        {!isPoll && (
-          <p className="text-[10px] text-ink-3 mt-0.5">
-            {new Date((payload as EventPayload).startTime).toLocaleString('vi-VN', {
-              dateStyle: 'medium', timeStyle: 'short',
-            })}
-          </p>
-        )}
+    <div className="rounded-md min-w-[260px] max-w-[340px]" style={cardStyle}>
+      <div className="px-3 pt-2.5 pb-1 flex items-center gap-2">
+        <Calendar size={15} style={{ color: 'var(--sidebar-accent)' }} />
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Sự kiện</p>
       </div>
-    </Link>
+      <p className="px-3 text-sm font-medium text-ink-1 line-clamp-2">{evPayload.title}</p>
+      <p className="px-3 text-[10px] text-ink-3 mt-0.5 mb-2">
+        {new Date(evPayload.startTime).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' })}
+      </p>
+      <div className="px-3 pb-2 flex flex-wrap gap-1.5">
+        {(['ATTENDING', 'MAYBE', 'NOT_ATTENDING'] as RsvpResponse[]).map((r) => {
+          const active = myRsvp === r;
+          return (
+            <button
+              key={r}
+              disabled={busy}
+              onClick={() => handleRsvp(r)}
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium transition-all"
+              style={{
+                background: active ? RSVP_COLOR[r] : 'var(--bg-surface-2)',
+                color: active ? '#fff' : RSVP_COLOR[r],
+                border: `1px solid ${RSVP_COLOR[r]}`,
+                opacity: busy ? 0.6 : 1,
+              }}
+            >
+              {active && <CheckCircle size={10} />}
+              {RSVP_LABELS[r]}
+            </button>
+          );
+        })}
+      </div>
+      <div className="px-3 py-2 border-t border-rule flex justify-end">
+        <Link to={`/classrooms/${classroomId}/events`}
+              className="text-[10px] hover:underline"
+              style={{ color: 'var(--sidebar-accent)' }}>
+          Xem chi tiết →
+        </Link>
+      </div>
+    </div>
   );
 }
 

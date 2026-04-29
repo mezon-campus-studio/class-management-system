@@ -32,6 +32,7 @@ export function getNotificationRoute(
 
     case 'MESSAGE_RECEIVED':
     case 'MESSAGE_MENTION':
+    case 'MESSAGE_REACTION':
       return `${base}/chat`;
 
     case 'FUND_PAYMENT_INITIATED':

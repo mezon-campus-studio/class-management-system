@@ -35,30 +35,35 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
     private String allowedOriginsRaw;
 
+    @Value("${springdoc.swagger-ui.enabled:true}")
+    private boolean swaggerEnabled;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST,
-                                "/api/v1/auth/register",
-                                "/api/v1/auth/login",
-                                "/api/v1/auth/refresh",
-                                "/api/v1/auth/forgot-password",
-                                "/api/v1/auth/reset-password")
-                        .permitAll()
-                        .requestMatchers(
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers(HttpMethod.POST,
+                                    "/api/v1/auth/register",
+                                    "/api/v1/auth/login",
+                                    "/api/v1/auth/refresh",
+                                    "/api/v1/auth/forgot-password",
+                                    "/api/v1/auth/reset-password")
+                            .permitAll();
+                    if (swaggerEnabled) {
+                        auth.requestMatchers(
                                 "/swagger-ui.html", "/swagger-ui/**",
                                 "/v3/api-docs", "/v3/api-docs/**")
-                        .permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        .requestMatchers("/actuator/prometheus").permitAll()
-                        .requestMatchers("/actuator/**").authenticated()
-                        .requestMatchers("/ws/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+                            .permitAll();
+                    }
+                    auth.requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                            .requestMatchers("/actuator/prometheus").permitAll()
+                            .requestMatchers("/actuator/**").authenticated()
+                            .requestMatchers("/ws/**").permitAll()
+                            .anyRequest().authenticated();
+                })
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, authEx) -> {
                             res.setStatus(401);
@@ -80,6 +85,15 @@ public class SecurityConfig {
                         .contentTypeOptions(ct -> {})
                         .referrerPolicy(referrer ->
                                 referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'self'; " +
+                                "script-src 'self'; " +
+                                "style-src 'self' 'unsafe-inline'; " +
+                                "img-src 'self' data: blob:; " +
+                                "font-src 'self'; " +
+                                "connect-src 'self' ws: wss:; " +
+                                "frame-ancestors 'none'"
+                        ))
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

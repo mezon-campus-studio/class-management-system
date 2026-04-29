@@ -17,7 +17,7 @@ function getIcon(type: NotificationType) {
   ) return <CheckCircle size={15} />;
   if (type === 'DUTY_ASSIGNED' || type === 'DUTY_CONFIRMED' || type === 'DUTY_REMINDER')
     return <ClipboardList size={15} />;
-  if (type === 'MESSAGE_RECEIVED' || type === 'MESSAGE_MENTION') return <MessageCircle size={15} />;
+  if (type === 'MESSAGE_RECEIVED' || type === 'MESSAGE_MENTION' || type === 'MESSAGE_REACTION') return <MessageCircle size={15} />;
   if (
     type === 'FUND_PAYMENT_INITIATED' ||
     type === 'FUND_PAYMENT_CONFIRMED' ||
@@ -59,7 +59,9 @@ export function NotificationPanel() {
     const route = getNotificationRoute(type, classroomId, referenceId);
     if (route) {
       closePanel();
-      navigate(route);
+      // For reaction notifications, pass the message ID so ChatPage can scroll to it
+      const state = type === 'MESSAGE_REACTION' && referenceId ? { scrollTo: referenceId } : undefined;
+      navigate(route, state ? { state } : undefined);
     }
   };
 

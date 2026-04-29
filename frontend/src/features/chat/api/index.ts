@@ -26,6 +26,11 @@ export const chatApi = {
       `${base(classroomId)}/conversations/${conversationId}/messages?page=${page}&size=100`,
     ).then((r) => r.data.data),
 
+  getMessagePageNumber: (classroomId: string, conversationId: string, messageId: string) =>
+    api.get<{ data: { pageNumber: number } }>(
+      `${base(classroomId)}/conversations/${conversationId}/messages/${messageId}/page-number?size=100`,
+    ).then((r) => r.data.data.pageNumber),
+
   sendMessage: (classroomId: string, conversationId: string, body: SendMessageBody) =>
     api.post<{ data: Message }>(
       `${base(classroomId)}/conversations/${conversationId}/messages`,

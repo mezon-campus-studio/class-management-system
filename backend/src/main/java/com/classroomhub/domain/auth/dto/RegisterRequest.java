@@ -1,6 +1,8 @@
 package com.classroomhub.domain.auth.dto;
 
 import com.classroomhub.domain.auth.entity.User;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.deser.std.StringDeserializer;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,6 +15,7 @@ public record RegisterRequest(
 
         @NotBlank(message = "Mật khẩu không được để trống")
         @Size(min = 6, message = "Mật khẩu tối thiểu 6 ký tự")
+        @JsonDeserialize(using = StringDeserializer.class)
         String password,
 
         @NotBlank(message = "Tên hiển thị không được để trống")

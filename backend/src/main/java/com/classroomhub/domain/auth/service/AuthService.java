@@ -24,7 +24,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -48,6 +54,9 @@ public class AuthService {
 
     @Value("${app.jwt.refresh-token-expiry}")
     private long refreshTokenExpiry;
+
+    @Value("${app.upload.dir:uploads}")
+    private String uploadDir;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final long OTP_EXPIRY_MS = 10 * 60 * 1000L; // 10 minutes
@@ -195,6 +204,40 @@ public class AuthService {
         if (req.avatarUrl() != null) user.setAvatarUrl(req.avatarUrl());
         userRepository.save(user);
         return toUserInfo(user);
+    }
+
+    @Transactional
+    public AuthResponse.UserInfo uploadAvatar(UUID userId, MultipartFile file) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN));
+        String ct = file.getContentType();
+        if (ct == null || !ct.startsWith("image/")) {
+            throw new BusinessException(ErrorCode.UPLOAD_FAILED);
+        }
+        try {
+            Path dir = Paths.get(uploadDir, "avatars", userId.toString());
+            Files.createDirectories(dir);
+            String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "avatar";
+            String sanitized = original.replaceAll("[^a-zA-Z0-9._\\-]", "_");
+            String stored = UUID.randomUUID() + "_" + sanitized;
+            file.transferTo(dir.resolve(stored));
+            String url = "/api/v1/auth/avatars/" + userId + "/" + stored;
+            user.setAvatarUrl(url);
+            userRepository.save(user);
+            return toUserInfo(user);
+        } catch (IOException e) {
+            throw new BusinessException(ErrorCode.UPLOAD_FAILED);
+        }
+    }
+
+    public Path resolveAvatar(UUID userId, String filename) {
+        String sanitized = filename.replaceAll("[^a-zA-Z0-9._\\-]", "_");
+        Path base = Paths.get(uploadDir, "avatars", userId.toString()).normalize().toAbsolutePath();
+        Path file = base.resolve(sanitized).normalize();
+        if (!file.startsWith(base) || !Files.exists(file)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        return file;
     }
 
     // ─── Forgot / Reset password ──────────────────────────────────────────────────

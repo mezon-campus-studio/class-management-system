@@ -105,6 +105,23 @@ public class ChatService {
         return messages.map(m -> toResponse(m, ctx));
     }
 
+    /** Returns the 0-based descending page number that contains the given message,
+     *  given the requested page size. The page is calculated by counting non-deleted
+     *  messages newer than the target, then dividing by the page size. */
+    @Transactional(readOnly = true)
+    public int getMessagePageNumber(UUID classroomId, UUID conversationId, UUID messageId, int size, UUID userId) {
+        classroomService.requireMember(classroomId, userId);
+        conversationRepository.findByIdAndClassroomId(conversationId, classroomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONVERSATION_NOT_FOUND));
+        Message msg = messageRepository.findById(messageId)
+                .filter(m -> m.getConversationId().equals(conversationId))
+                .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
+        long newerCount = messageRepository.countNewerNonDeletedThan(conversationId, msg.getCreatedAt());
+        return (int) (newerCount / size);
+    }
+
+    public record MessagePageInfo(int pageNumber) {}
+
     @Transactional(readOnly = true)
     public List<MessageResponse> getPinnedMessages(UUID classroomId, UUID conversationId, UUID userId) {
         classroomService.requireMember(classroomId, userId);
@@ -249,9 +266,22 @@ public class ChatService {
         if (msg.isDeleted()) throw new BusinessException(ErrorCode.MESSAGE_NOT_FOUND);
         String e = sanitizeEmoji(emoji);
 
-        if (!reactionRepository.existsByMessageIdAndUserIdAndEmoji(messageId, userId, e)) {
+        boolean isNew = !reactionRepository.existsByMessageIdAndUserIdAndEmoji(messageId, userId, e);
+        if (isNew) {
             reactionRepository.save(MessageReaction.builder()
                     .messageId(messageId).userId(userId).emoji(e).createdAt(Instant.now()).build());
+
+            // Notify the message author (skip if reacting to own message)
+            if (!msg.getSenderId().equals(userId)) {
+                User reactor = userRepository.findById(userId).orElse(null);
+                String reactorName = reactor != null ? reactor.getDisplayName() : "Ai đó";
+                notificationService.send(
+                        msg.getSenderId(), classroomId,
+                        com.classroomhub.domain.notification.entity.Notification.Type.MESSAGE_REACTION,
+                        reactorName + " đã thả cảm xúc vào tin nhắn của bạn",
+                        e + " — " + previewOf(msg),
+                        messageId);
+            }
         }
         return broadcast(msg, userId, classroomId);
     }

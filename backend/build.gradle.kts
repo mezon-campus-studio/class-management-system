@@ -57,6 +57,9 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
 
+    // XSS sanitization
+    implementation("org.jsoup:jsoup:1.18.3")
+
     // Email
     implementation("org.springframework.boot:spring-boot-starter-mail")
 

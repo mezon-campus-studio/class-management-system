@@ -16,6 +16,7 @@ import com.classroomhub.domain.notification.entity.Notification;
 import com.classroomhub.domain.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +46,7 @@ public class FundService {
     private final PaymentGateways paymentGateways;
     private final NotificationService notificationService;
     private final MailService mailService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public FundResponse createFund(UUID classroomId, CreateFundRequest req, UUID userId) {
@@ -340,7 +342,19 @@ public class FundService {
         fund.setBalance(fund.getBalance().add(payment.getAmount()));
         fundRepository.save(fund);
 
-        return PaymentResponse.from(payment);
+        PaymentResponse response = PaymentResponse.from(payment);
+        broadcastFundEvent(classroomId, "PAYMENT_CONFIRMED", response);
+
+        FundCollection collection = collectionRepository.findById(payment.getCollectionId()).orElse(null);
+        String collectionTitle = collection != null ? collection.getTitle() : "đợt thu";
+        notificationService.send(
+                payment.getMemberId(), classroomId,
+                Notification.Type.FUND_PAYMENT_CONFIRMED,
+                "Thanh toán được xác nhận",
+                "Thanh toán của bạn cho đợt thu \"" + collectionTitle + "\" đã được xác nhận thành công.",
+                payment.getId());
+
+        return response;
     }
 
     /**
@@ -365,7 +379,9 @@ public class FundService {
         fund.setBalance(fund.getBalance().subtract(payment.getAmount()));
         fundRepository.save(fund);
 
-        return PaymentResponse.from(payment);
+        PaymentResponse response = PaymentResponse.from(payment);
+        broadcastFundEvent(classroomId, "PAYMENT_REVERTED", response);
+        return response;
     }
 
     /** Từ chối thanh toán — trạng thái về REJECTED, học sinh cần nộp lại. */
@@ -380,6 +396,9 @@ public class FundService {
         payment.setStatus(FundPayment.Status.REJECTED);
         paymentRepository.save(payment);
 
+        PaymentResponse response = PaymentResponse.from(payment);
+        broadcastFundEvent(classroomId, "PAYMENT_REJECTED", response);
+
         FundCollection collection = collectionRepository.findById(payment.getCollectionId()).orElse(null);
         String collectionTitle = collection != null ? collection.getTitle() : "đợt thu";
         notificationService.send(
@@ -389,7 +408,7 @@ public class FundService {
                 "Thanh toán của bạn cho đợt thu \"" + collectionTitle + "\" đã bị từ chối. Vui lòng liên hệ thủ quỹ hoặc nộp lại.",
                 payment.getId());
 
-        return PaymentResponse.from(payment);
+        return response;
     }
 
     @Transactional
@@ -508,6 +527,17 @@ public class FundService {
                                     fundUrl));
                 });
     }
+
+    /** Broadcast fund payment status change so every connected client on the fund screen updates in real-time. */
+    private void broadcastFundEvent(UUID classroomId, String eventType, PaymentResponse payment) {
+        try {
+            messagingTemplate.convertAndSend(
+                    "/topic/classrooms/" + classroomId + "/fund",
+                    new FundPaymentEvent(eventType, payment));
+        } catch (Exception ignored) {}
+    }
+
+    public record FundPaymentEvent(String event, PaymentResponse payment) {}
 
     private static String emptyToNull(String s) {
         if (s == null) return null;

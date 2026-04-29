@@ -17,11 +17,19 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -106,6 +114,27 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<AuthResponse.UserInfo> updateProfile(@Valid @RequestBody UpdateProfileRequest req) {
         return ApiResponse.ok(authService.updateProfile(SecurityUtils.getCurrentUser().getId(), req));
+    }
+
+    @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<AuthResponse.UserInfo> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        return ApiResponse.ok(authService.uploadAvatar(SecurityUtils.getCurrentUser().getId(), file));
+    }
+
+    @GetMapping("/avatars/{userId}/{filename}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Resource> serveAvatar(
+            @PathVariable java.util.UUID userId,
+            @PathVariable String filename) {
+        Path file = authService.resolveAvatar(userId, filename);
+        Resource resource = new FileSystemResource(file);
+        String ct = "application/octet-stream";
+        try { ct = Files.probeContentType(file); if (ct == null) ct = "application/octet-stream"; } catch (Exception ignored) {}
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(ct))
+                .header(HttpHeaders.CACHE_CONTROL, "max-age=86400")
+                .body(resource);
     }
 
     @PostMapping("/forgot-password")

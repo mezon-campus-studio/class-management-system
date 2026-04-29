@@ -8,6 +8,12 @@ export const eventApi = {
   listEvents: (classroomId: string, page = 0, size = 10) =>
     api.get<{ data: Page<ClassEvent> }>(`${base(classroomId)}`, { params: { page, size } }).then((r) => r.data.data),
 
+  getEvent: (classroomId: string, eventId: string) =>
+    api.get<{ data: ClassEvent }>(`${base(classroomId)}/${eventId}`).then((r) => r.data.data),
+
+  getPoll: (classroomId: string, pollId: string) =>
+    api.get<{ data: Poll }>(`${base(classroomId)}/polls/${pollId}`).then((r) => r.data.data),
+
   createEvent: (
     classroomId: string,
     body: {

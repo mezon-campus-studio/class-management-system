@@ -12,6 +12,7 @@ import com.classroomhub.domain.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,7 @@ public class EventService {
     private final PollVoteRepository pollVoteRepository;
     private final ClassroomService classroomService;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public EventResponse createEvent(UUID classroomId, CreateEventRequest req, UUID userId) {
         // Mọi thành viên trong lớp có thể tạo sự kiện.
@@ -133,7 +135,10 @@ public class EventService {
                         .note(req.note())
                         .build());
         eventRsvpRepository.save(rsvp);
-        return toRsvpResponse(rsvp);
+        RsvpResponse result = toRsvpResponse(rsvp);
+        broadcastEventsEvent(classroomId, "RSVP_UPDATED",
+                Map.of("eventId", eventId.toString(), "rsvp", result));
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -322,7 +327,9 @@ public class EventService {
             pollVoteRepository.save(vote);
         }
         List<PollVote> votes = pollVoteRepository.findByPollId(pollId);
-        return toPollResponse(poll, options, votes, userId);
+        PollResponse result = toPollResponse(poll, options, votes, userId);
+        broadcastEventsEvent(classroomId, "POLL_VOTE_UPDATED", result);
+        return result;
     }
 
     @Scheduled(cron = "0 0 20 * * *")
@@ -342,6 +349,26 @@ public class EventService {
                 )
         );
     }
+
+    @Transactional(readOnly = true)
+    public PollResponse getPoll(UUID classroomId, UUID pollId, UUID userId) {
+        classroomService.requireMember(classroomId, userId);
+        Poll poll = pollRepository.findByIdAndClassroomId(pollId, classroomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POLL_NOT_FOUND));
+        List<PollOption> options = pollOptionRepository.findByPollId(pollId);
+        List<PollVote> votes = pollVoteRepository.findByPollId(pollId);
+        return toPollResponse(poll, options, votes, userId);
+    }
+
+    private void broadcastEventsEvent(UUID classroomId, String eventType, Object payload) {
+        try {
+            messagingTemplate.convertAndSend(
+                    "/topic/classrooms/" + classroomId + "/events",
+                    new EventsSocketEvent(eventType, payload));
+        } catch (Exception ignored) {}
+    }
+
+    public record EventsSocketEvent(String event, Object payload) {}
 
     private PollResponse toPollResponse(Poll poll, List<PollOption> options, List<PollVote> votes, UUID requesterId) {
         Map<UUID, Long> voteCountByOption = votes.stream()

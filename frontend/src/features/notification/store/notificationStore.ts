@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { WS_BASE } from '@/shared/constants';
+import { memToken, refreshAccessToken } from '@/services/api-client';
 import { notificationApi } from '../api';
 import type { Notification, ChatLevel } from '../types';
 
@@ -18,7 +19,7 @@ interface NotificationState {
   page: number;
   hasMore: boolean;
   globalChatLevel: ChatLevel;
-  init: (userId: string, token: string) => void;
+  init: (userId: string) => void;
   disconnect: () => void;
   togglePanel: () => void;
   closePanel: () => void;
@@ -41,7 +42,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   hasMore: false,
   globalChatLevel: 'ALL',
 
-  init: (_userId: string, token: string) => {
+  init: (_userId: string) => {
     if (stompClient?.active) {
       stompClient.deactivate();
       stompClient = null;
@@ -65,8 +66,17 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
     const client = new Client({
       webSocketFactory: () => new SockJS(`${WS_BASE}/ws`),
-      connectHeaders: token ? { Authorization: `Bearer ${token}` } : undefined,
       reconnectDelay: 5000,
+      // beforeConnect runs before every CONNECT frame (initial + every reconnect).
+      // Reading memToken here means reconnects always use the latest refreshed token
+      // instead of the stale one captured at init time.
+      beforeConnect: async () => {
+        let tok = memToken.get();
+        if (!tok) {
+          try { tok = await refreshAccessToken(); } catch { /* server will reject — that's fine */ }
+        }
+        client.connectHeaders = tok ? { Authorization: `Bearer ${tok}` } : {};
+      },
       onConnect: () => {
         client.subscribe(`/user/queue/notifications`, (frame) => {
           const notification: Notification = JSON.parse(frame.body);

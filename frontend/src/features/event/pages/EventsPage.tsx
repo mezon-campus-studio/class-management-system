@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Plus,
@@ -15,8 +15,14 @@ import {
   Trash2,
   Pencil,
   Lock,
+  MessageSquare,
 } from 'lucide-react';
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 import { eventApi } from '../api';
+import { chatApi } from '@/features/chat/api';
+import { memToken, refreshAccessToken } from '@/services/api-client';
+import { WS_BASE } from '@/shared/constants';
 import { Badge } from '@/shared/components/Badge';
 import { classroomApi } from '@/features/classroom/api';
 import type { ClassroomMember } from '@/features/classroom/types';
@@ -97,6 +103,78 @@ export function EventsPage() {
   });
   const [pollSubmitting, setPollSubmitting] = useState(false);
   const [expandedPollVoters, setExpandedPollVoters] = useState<string | null>(null);
+  const [sharingId, setSharingId] = useState<string | null>(null);
+
+  const stompClientRef = useRef<Client | null>(null);
+
+  // ─── WebSocket subscription for realtime event/poll updates ──────────────
+  useEffect(() => {
+    if (!classroomId) return;
+    const client = new Client({
+      webSocketFactory: () => new SockJS(`${WS_BASE}/ws`),
+      reconnectDelay: 5000,
+      beforeConnect: async () => {
+        let tok = memToken.get();
+        if (!tok) {
+          try { tok = await refreshAccessToken(); } catch { /* server will reject gracefully */ }
+        }
+        client.connectHeaders = tok ? { Authorization: `Bearer ${tok}` } : {};
+      },
+      onConnect: () => {
+        client.subscribe(`/topic/classrooms/${classroomId}/events`, (frame) => {
+          const msg = JSON.parse(frame.body) as { event: string; payload: unknown };
+          if (msg.event === 'RSVP_UPDATED') {
+            const { eventId, rsvp } = msg.payload as { eventId: string; rsvp: EventRsvp };
+            setRsvpsByEvent((prev) => {
+              const list = [...(prev[eventId] ?? [])];
+              const i = list.findIndex((r) => r.userId === rsvp.userId);
+              if (i >= 0) list[i] = rsvp; else list.push(rsvp);
+              return { ...prev, [eventId]: list };
+            });
+          } else if (msg.event === 'POLL_VOTE_UPDATED') {
+            const updated = msg.payload as Poll;
+            setPolls((prev) => prev.map((p) => {
+              if (p.id !== updated.id) return p;
+              // Preserve current user's myOptionIds — server broadcasts for the voter,
+              // not for each subscriber individually.
+              return { ...updated, myOptionIds: p.myOptionIds };
+            }));
+          }
+        });
+      },
+      reconnectDelay: 5000,
+    });
+    client.activate();
+    stompClientRef.current = client;
+    return () => { client.deactivate(); };
+  }, [classroomId]);
+
+  // ─── Share to chat ────────────────────────────────────────────────────────
+  const shareEventToChat = async (event: ClassEvent) => {
+    if (!classroomId || sharingId) return;
+    setSharingId(event.id);
+    try {
+      const conv = await chatApi.getClassConversation(classroomId);
+      await chatApi.sendMessage(classroomId, conv.id, {
+        messageType: 'EVENT',
+        payload: { eventId: event.id, title: event.title, startTime: event.startTime },
+      });
+    } catch (err) { showError(err); }
+    finally { setSharingId(null); }
+  };
+
+  const sharePollToChat = async (poll: Poll) => {
+    if (!classroomId || sharingId) return;
+    setSharingId(poll.id);
+    try {
+      const conv = await chatApi.getClassConversation(classroomId);
+      await chatApi.sendMessage(classroomId, conv.id, {
+        messageType: 'POLL',
+        payload: { pollId: poll.id, question: poll.question },
+      });
+    } catch (err) { showError(err); }
+    finally { setSharingId(null); }
+  };
 
   useEffect(() => {
     if (!classroomId) return;
@@ -402,8 +480,8 @@ export function EventsPage() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'events', label: 'Sự kiện' },
-    { key: 'absence', label: 'Đơn xin vắng' },
     { key: 'polls', label: 'Bình chọn' },
+    { key: 'absence', label: 'Đơn xin vắng' },
   ];
 
   return (
@@ -547,6 +625,14 @@ export function EventsPage() {
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           {event.mandatory && <Badge variant="red">Bắt buộc</Badge>}
+                          <button
+                            onClick={() => shareEventToChat(event)}
+                            disabled={sharingId === event.id}
+                            className="btn btn-ghost btn-sm"
+                            title="Chia sẻ vào chat"
+                          >
+                            <MessageSquare size={13} style={{ color: 'var(--sidebar-accent)' }} />
+                          </button>
                           {event.createdById === currentUserId && (
                             <>
                               <button
@@ -947,6 +1033,14 @@ export function EventsPage() {
                           <Badge variant={poll.isOpen ? 'green' : 'sage'}>
                             {poll.isOpen ? 'Đang mở' : 'Đã đóng'}
                           </Badge>
+                          <button
+                            onClick={() => sharePollToChat(poll)}
+                            disabled={sharingId === poll.id}
+                            className="btn btn-ghost btn-sm"
+                            title="Chia sẻ vào chat"
+                          >
+                            <MessageSquare size={13} style={{ color: 'var(--sidebar-accent)' }} />
+                          </button>
                           {poll.createdById === currentUserId && (
                             <>
                               <button
