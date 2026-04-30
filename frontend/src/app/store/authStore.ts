@@ -149,6 +149,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { data } = await api.post<{ data: UserInfo }>('/auth/me/avatar', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    set((s) => ({ user: s.user ? { ...s.user, ...data.data } : s.user }));
+    const userInfo = { ...data.data };
+    // Force useAuthenticatedImage to re-fetch even if the server reuses the same URL path
+    if (userInfo.avatarUrl) {
+      const sep = userInfo.avatarUrl.includes('?') ? '&' : '?';
+      userInfo.avatarUrl = `${userInfo.avatarUrl}${sep}_v=${Date.now()}`;
+    }
+    set((s) => ({ user: s.user ? { ...s.user, ...userInfo } : s.user }));
   },
 }));

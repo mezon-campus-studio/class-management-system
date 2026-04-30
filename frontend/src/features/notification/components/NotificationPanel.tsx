@@ -59,8 +59,9 @@ export function NotificationPanel() {
     const route = getNotificationRoute(type, classroomId, referenceId);
     if (route) {
       closePanel();
-      // For reaction notifications, pass the message ID so ChatPage can scroll to it
-      const state = type === 'MESSAGE_REACTION' && referenceId ? { scrollTo: referenceId } : undefined;
+      // For any message notification, pass the message ID so ChatPage can jump to it
+      const isMessageType = type === 'MESSAGE_REACTION' || type === 'MESSAGE_RECEIVED' || type === 'MESSAGE_MENTION';
+      const state = isMessageType && referenceId ? { scrollTo: referenceId } : undefined;
       navigate(route, state ? { state } : undefined);
     }
   };

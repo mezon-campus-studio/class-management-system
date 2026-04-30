@@ -4,7 +4,7 @@ import React, {
 import { useParams, Link, useLocation } from 'react-router-dom';
 import {
   Send, Paperclip, Image as ImageIcon, Plus, BarChart3, Calendar, FileText, Download, X, Pin,
-  Loader2, Info, CheckCircle, ArrowDown,
+  Loader2, Info, CheckCircle, ArrowDown, Smile, Shuffle,
 } from 'lucide-react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
@@ -25,6 +25,9 @@ import { MessageActions } from '../components/MessageActions';
 import { QuotedMessage } from '../components/QuotedMessage';
 import { ReactionRow } from '../components/ReactionRow';
 import { ChatRightPanel } from '../components/ChatRightPanel';
+import { EmojiPickerPopup } from '../components/EmojiPickerPopup';
+import { LuckyDrawModal } from '../components/LuckyDrawModal';
+import { SenderAvatar } from '@/shared/components/SenderAvatar';
 import { useAuth } from '@/features/auth';
 import { memToken, refreshAccessToken } from '@/services/api-client';
 import { WS_BASE } from '@/shared/constants';
@@ -175,7 +178,11 @@ export function ChatPage() {
   const [pluginMenuOpen, setPluginMenuOpen] = useState(false);
   const [pollOpen, setPollOpen] = useState(false);
   const [eventOpen, setEventOpen] = useState(false);
-  const [previewing, setPreviewing] = useState<{ url: string; name: string; contentType: string | null } | null>(null);
+  const [previewing, setPreviewing] = useState<{
+    url: string; name: string; contentType: string | null;
+    gallery?: { url: string; name: string; contentType: string | null }[];
+    galleryIndex?: number;
+  } | null>(null);
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
   const [hasOlder, setHasOlder] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -183,6 +190,9 @@ export function ChatPage() {
   const [loadingNewer, setLoadingNewer] = useState(false);
   const [isJumpContext, setIsJumpContext] = useState(false);
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
+  const [stagedImages, setStagedImages] = useState<Array<{ id: string; file: File; objectUrl: string }>>([]);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [luckyDrawOpen, setLuckyDrawOpen] = useState(false);
   const [members, setMembers] = useState<ClassroomMember[]>([]);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -373,19 +383,32 @@ export function ChatPage() {
       .finally(() => setLoading(false));
   }, [classroomId]);
 
+  // Initial scroll — fires once when page finishes loading for the first time
   useEffect(() => {
     if (!loading && !initialLoadDone.current) {
       initialLoadDone.current = true;
       const scrollToId = (location.state as { scrollTo?: string } | null)?.scrollTo;
       if (scrollToId) {
-        setTimeout(() => jumpToMessage(scrollToId), 300);
+        // Defer so messageRefs are populated after the first paint
+        setTimeout(() => jumpToMessage(scrollToId), 100);
       } else {
         requestAnimationFrame(() => scrollToBottom('instant' as ScrollBehavior));
       }
     }
-  // jumpToMessage and location.state intentionally read once on first load
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, scrollToBottom]);
+
+  // Navigation-triggered jump — fires on every navigate() call, even to the same URL.
+  // location.key is a unique token that React Router changes on each navigation,
+  // so this fires whether the user was already on the chat page or coming from elsewhere.
+  useEffect(() => {
+    const scrollToId = (location.state as { scrollTo?: string } | null)?.scrollTo;
+    if (!scrollToId) return;
+    // If still loading on first mount, the effect above will handle it
+    if (!initialLoadDone.current) return;
+    jumpToMessage(scrollToId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
 
   // ─── STOMP subscription ────────────────────────────────────────────────────
 
@@ -519,6 +542,86 @@ export function ChatPage() {
     }
   }, [classroomId, conversation, input, replyTarget, scrollToBottom]);
 
+  // ─── Upload a single staged image (no reply target) ───────────────────────
+
+  const uploadStaged = useCallback(async (file: File) => {
+    if (!classroomId || !conversation) return;
+    const pendingId = crypto.randomUUID();
+    const objectUrl = URL.createObjectURL(file);
+    setPendingUploads((prev) => [...prev, { id: pendingId, file, asImage: true, objectUrl }]);
+    setUploading(true);
+    try {
+      const att = await chatApi.uploadAttachment(classroomId, conversation.id, file);
+      const messageType: MessageType = isImageType(att.contentType) ? 'IMAGE' : 'FILE';
+      await chatApi.sendMessage(classroomId, conversation.id, {
+        messageType,
+        attachmentUrl: att.url,
+        attachmentName: att.name,
+        attachmentType: att.contentType ?? undefined,
+        attachmentSize: att.size,
+      });
+    } catch {
+      setPendingUploads((prev) => {
+        const entry = prev.find((p) => p.id === pendingId);
+        if (entry) URL.revokeObjectURL(entry.objectUrl);
+        return prev.filter((p) => p.id !== pendingId);
+      });
+    } finally {
+      setUploading(false);
+    }
+  }, [classroomId, conversation]);
+
+  // ─── Master send — handles staged images + text ────────────────────────────
+
+  const handleSend = useCallback(async () => {
+    const hasText = input.trim().length > 0;
+    const hasImages = stagedImages.length > 0;
+    if (!hasText && !hasImages) return;
+
+    if (hasImages) {
+      const toUpload = [...stagedImages];
+      setStagedImages([]);
+      toUpload.forEach((img) => {
+        URL.revokeObjectURL(img.objectUrl);
+        uploadStaged(img.file);
+      });
+    }
+
+    if (hasText) {
+      await sendText();
+    }
+  }, [input, stagedImages, sendText, uploadStaged]);
+
+  // ─── Emoji insert ──────────────────────────────────────────────────────────
+
+  const insertEmoji = useCallback((emoji: string) => {
+    const ta = inputRef.current;
+    if (!ta) { setInput((prev) => prev + emoji); return; }
+    const start = ta.selectionStart ?? input.length;
+    const end = ta.selectionEnd ?? input.length;
+    const newVal = input.slice(0, start) + emoji + input.slice(end);
+    setInput(newVal);
+    setEmojiPickerOpen(false);
+    setTimeout(() => {
+      ta.focus();
+      const pos = start + emoji.length;
+      ta.setSelectionRange(pos, pos);
+    }, 0);
+  }, [input]);
+
+  // ─── Lucky draw share ──────────────────────────────────────────────────────
+
+  const handleLuckyDrawShare = useCallback(async (winner: string, count: number) => {
+    if (!classroomId || !conversation) return;
+    try {
+      await chatApi.sendMessage(classroomId, conversation.id, {
+        content: `LUCKY_DRAW_RESULT:${JSON.stringify({ winner, count })}`,
+        messageType: 'TEXT',
+      });
+      setTimeout(() => scrollToBottom('smooth'), 100);
+    } catch { /* ignore */ }
+  }, [classroomId, conversation, scrollToBottom]);
+
   // ─── @mention helpers ──────────────────────────────────────────────────────
 
   const mentionCandidates = useMemo(
@@ -565,7 +668,7 @@ export function ChatPage() {
       if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); insertMention(mentionCandidates[mentionIndex].displayName); return; }
       if (e.key === 'Escape') { setMentionQuery(null); return; }
     }
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
     if (e.key === 'Escape' && replyTarget) { setReplyTarget(null); }
   };
 
@@ -609,11 +712,14 @@ export function ChatPage() {
 
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = Array.from(e.clipboardData.items);
-    const imageItem = items.find((it) => it.type.startsWith('image/'));
-    if (!imageItem) return;
+    const imageItems = items.filter((it) => it.type.startsWith('image/'));
+    if (imageItems.length === 0) return;
     e.preventDefault();
-    const file = imageItem.getAsFile();
-    if (file) handleUpload(file, true);
+    const newStaged = imageItems
+      .map((it) => it.getAsFile())
+      .filter((f): f is File => f !== null)
+      .map((file) => ({ id: crypto.randomUUID(), file, objectUrl: URL.createObjectURL(file) }));
+    if (newStaged.length > 0) setStagedImages((prev) => [...prev, ...newStaged]);
   };
 
   const handlePollCreated = async (poll: { id: string; question: string }) => {
@@ -652,6 +758,12 @@ export function ChatPage() {
     if (!classroomId || !conversation) return;
     if (!confirm('Xóa tin nhắn này?')) return;
     await chatApi.deleteMessage(classroomId, conversation.id, messageId);
+  };
+
+  const handleDeleteGroup = async (messageIds: string[]) => {
+    if (!classroomId || !conversation) return;
+    if (!confirm(`Xóa ${messageIds.length} ảnh này?`)) return;
+    await Promise.all(messageIds.map((id) => chatApi.deleteMessage(classroomId!, conversation!.id, id)));
   };
 
   const handleToggleReaction = async (messageId: string, emoji: string, currentlyReacted: boolean) => {
@@ -736,6 +848,54 @@ export function ChatPage() {
 
   const listItems = useMemo(() => buildListItems(messages), [messages]);
 
+  // Flat list of all non-deleted images in the conversation for gallery navigation
+  const imageGallery = useMemo(
+    () =>
+      messages
+        .filter((m) => !m.deleted && m.messageType === 'IMAGE' && m.attachmentUrl)
+        .map((m) => ({ url: m.attachmentUrl!, name: m.attachmentName ?? '', contentType: m.attachmentType })),
+    [messages],
+  );
+
+  const openImagePreview = useCallback((url: string, name: string, ct: string | null) => {
+    const idx = imageGallery.findIndex((g) => g.url === url);
+    setPreviewing({ url, name, contentType: ct, gallery: imageGallery, galleryIndex: idx >= 0 ? idx : 0 });
+  }, [imageGallery]);
+
+  // Compute image groups: consecutive IMAGE messages from same sender within 30s
+  const imageGroupMap = useMemo(() => {
+    const groups = new Map<string, { msgs: Message[]; lastPosition: BubblePosition; lastMarginBottom: string }>();
+    const siblings = new Set<string>();
+    const msgItems = listItems.filter((it): it is Extract<typeof it, { type: 'message' }> => it.type === 'message');
+    let i = 0;
+    while (i < msgItems.length) {
+      const head = msgItems[i];
+      if (head.msg.messageType !== 'IMAGE' || !head.msg.attachmentUrl) { i++; continue; }
+      const group: Message[] = [head.msg];
+      let lastIdx = i;
+      let j = i + 1;
+      while (j < msgItems.length) {
+        const nxt = msgItems[j];
+        if (nxt.msg.messageType !== 'IMAGE' || !nxt.msg.attachmentUrl) break;
+        if (nxt.msg.senderId !== head.msg.senderId) break;
+        const dt = new Date(nxt.msg.createdAt).getTime() - new Date(head.msg.createdAt).getTime();
+        if (dt > 30_000) break;
+        group.push(nxt.msg);
+        lastIdx = j;
+        j++;
+      }
+      if (group.length > 1) {
+        const lastItem = msgItems[lastIdx];
+        const lastPos = lastItem.position;
+        const lastMb = lastPos === 'last' || lastPos === 'single' ? 'mb-1' : 'mb-0.5';
+        groups.set(head.msg.id, { msgs: group, lastPosition: lastPos, lastMarginBottom: lastMb });
+        for (let k = 1; k < group.length; k++) siblings.add(group[k].id);
+      }
+      i = j > i ? j : i + 1;
+    }
+    return { groups, siblings };
+  }, [listItems]);
+
   if (loading) return <div className="animate-pulse text-center py-10 text-ink-3">Đang tải...</div>;
 
   const rightPanelProps = {
@@ -747,8 +907,7 @@ export function ChatPage() {
     wallpaper,
     onWallpaperChange: handleWallpaperChange,
     onWallpaperImageUpload: handleWallpaperImageUpload,
-    onPreviewAttachment: (url: string, name: string, ct: string | null) =>
-      setPreviewing({ url, name, contentType: ct }),
+    onPreviewAttachment: openImagePreview,
   };
 
   return (
@@ -824,6 +983,51 @@ export function ChatPage() {
             const marginBottom = position === 'last' || position === 'single' ? 'mb-1' : 'mb-0.5';
             const senderMember = members.find((m) => m.userId === msg.senderId);
 
+            // Skip images that are part of a group (they'll be rendered by their leader)
+            if (imageGroupMap.siblings.has(msg.id)) return null;
+
+            // Render image group grid
+            const grp = imageGroupMap.groups.get(msg.id);
+            if (grp) {
+              const firstMsg = grp.msgs[0];
+              return (
+                <div
+                  key={item.key}
+                  ref={(el) => {
+                    // Register ALL group message IDs to the same container element
+                    grp.msgs.forEach((m) => {
+                      if (el) messageRefs.current.set(m.id, el as HTMLDivElement);
+                      else messageRefs.current.delete(m.id);
+                    });
+                  }}
+                >
+                  <ImageGroupBubble
+                    msgs={grp.msgs}
+                    isMine={isMine}
+                    showTime={showTime}
+                    isFirstInGroup={isFirstInGroup}
+                    isLastInGroup={grp.lastPosition === 'last' || grp.lastPosition === 'single'}
+                    marginBottom={grp.lastMarginBottom}
+                    senderPrimaryRole={senderMember?.role}
+                    senderExtraRoles={senderMember?.extraRoles}
+                    bubbleColor={bubbleColor}
+                    canPin={canPin || firstMsg.senderId === user?.id}
+                    canDelete={canDeleteOthers}
+                    pickerOpen={activePickerMsgId === firstMsg.id}
+                    onPickerChange={(open) => setActivePickerMsgId(open ? firstMsg.id : null)}
+                    onPreviewAttachment={openImagePreview}
+                    onDelete={() => handleDeleteGroup(grp.msgs.map((m) => m.id))}
+                    onReply={() => setReplyTarget(firstMsg)}
+                    onReact={(emoji) => {
+                      const cur = firstMsg.reactions.find((r) => r.emoji === emoji);
+                      handleToggleReaction(firstMsg.id, emoji, cur?.reactedByMe ?? false);
+                    }}
+                    onTogglePin={() => handleTogglePin(firstMsg)}
+                  />
+                </div>
+              );
+            }
+
             return (
               <MessageBubble
                 key={item.key}
@@ -847,7 +1051,7 @@ export function ChatPage() {
                 resolveUserName={(uid) => members.find((m) => m.userId === uid)?.displayName}
                 pickerOpen={activePickerMsgId === msg.id}
                 onPickerChange={(open) => setActivePickerMsgId(open ? msg.id : null)}
-                onPreviewAttachment={(url, name, ct) => setPreviewing({ url, name, contentType: ct })}
+                onPreviewAttachment={openImagePreview}
                 onDelete={() => handleDelete(msg.id)}
                 onReply={() => setReplyTarget(msg)}
                 onReact={(emoji) => {
@@ -937,6 +1141,40 @@ export function ChatPage() {
 
         {/* Input bar */}
         <div className="card mt-2 flex flex-col" style={{ overflow: 'visible' }}>
+          {/* Staged image preview strip */}
+          {stagedImages.length > 0 && (
+            <div
+              className="flex items-center gap-2 px-3 pt-2.5 pb-0 flex-wrap"
+              style={{ borderBottom: '1px solid var(--rule)' }}
+            >
+              {stagedImages.map((img) => (
+                <div key={img.id} className="relative group shrink-0">
+                  <img
+                    src={img.objectUrl}
+                    alt="preview"
+                    className="rounded-lg object-cover"
+                    style={{ width: 64, height: 64, border: '1px solid var(--rule)' }}
+                  />
+                  <button
+                    onClick={() => setStagedImages((prev) => {
+                      URL.revokeObjectURL(img.objectUrl);
+                      return prev.filter((s) => s.id !== img.id);
+                    })}
+                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ background: 'var(--ink-1)', color: 'var(--bg-surface)' }}
+                    title="Xoá ảnh"
+                  >
+                    <X size={9} />
+                  </button>
+                </div>
+              ))}
+              <p className="text-[10px] text-ink-3 self-end mb-1.5">
+                {stagedImages.length} ảnh · Nhấn Send để gửi
+              </p>
+              <div className="w-full h-2.5" />
+            </div>
+          )}
+
           <div className="flex items-center gap-2 px-3 py-2.5">
             <div className="relative" style={pluginMenuOpen ? { zIndex: 60 } : undefined}>
               <button
@@ -970,6 +1208,9 @@ export function ChatPage() {
                     <PluginButton icon={<Calendar size={14} />} label="Tạo sự kiện" onClick={() => {
                       setPluginMenuOpen(false); setEventOpen(true);
                     }} />
+                    <PluginButton icon={<Shuffle size={14} />} label="Lucky Draw" onClick={() => {
+                      setPluginMenuOpen(false); setLuckyDrawOpen(true);
+                    }} />
                   </div>
                 </>
               )}
@@ -988,18 +1229,41 @@ export function ChatPage() {
               style={{ maxHeight: '120px' }}
             />
 
+            {/* Emoji picker button */}
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setEmojiPickerOpen((v) => !v)}
+                className="btn btn-ghost btn-icon"
+                title="Emoji"
+              >
+                <Smile size={18} />
+              </button>
+              {emojiPickerOpen && (
+                <EmojiPickerPopup
+                  onSelect={insertEmoji}
+                  onClose={() => setEmojiPickerOpen(false)}
+                />
+              )}
+            </div>
+
             <button
-              onClick={sendText}
-              disabled={!input.trim() || uploading}
+              onClick={handleSend}
+              disabled={(!input.trim() && stagedImages.length === 0) || uploading}
               className="btn btn-primary btn-sm shrink-0"
             >
               <Send size={14} />
             </button>
           </div>
 
-          <input ref={imageInputRef} type="file" accept="image/*" className="hidden"
+          <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden"
                  onChange={(e) => {
-                   const f = e.target.files?.[0]; if (f) handleUpload(f, true);
+                   const files = Array.from(e.target.files ?? []);
+                   if (files.length > 0) {
+                     const newStaged = files.map((file) => ({
+                       id: crypto.randomUUID(), file, objectUrl: URL.createObjectURL(file),
+                     }));
+                     setStagedImages((prev) => [...prev, ...newStaged]);
+                   }
                    if (imageInputRef.current) imageInputRef.current.value = '';
                  }} />
           <input ref={fileInputRef} type="file" className="hidden"
@@ -1065,7 +1329,7 @@ export function ChatPage() {
                 {...rightPanelProps}
                 onJumpToMessage={(id) => { jumpToMessage(id); closePanel(); }}
                 onPreviewAttachment={(url, name, ct) => {
-                  setPreviewing({ url, name, contentType: ct });
+                  openImagePreview(url, name, ct);
                   closePanel();
                 }}
               />
@@ -1087,6 +1351,13 @@ export function ChatPage() {
       )}
       {previewing && (
         <ChatAttachmentPreview {...previewing} onClose={() => setPreviewing(null)} />
+      )}
+      {luckyDrawOpen && (
+        <LuckyDrawModal
+          onClose={() => setLuckyDrawOpen(false)}
+          onShare={handleLuckyDrawShare}
+          members={members.map((m) => ({ displayName: m.displayName, userId: m.userId }))}
+        />
       )}
     </div>
   );
@@ -1112,6 +1383,164 @@ function PendingUploadBubble({ pending }: { pending: PendingUpload }) {
           </span>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Image group bubble ────────────────────────────────────────────────────────
+
+interface ImageGroupBubbleProps {
+  msgs: Message[];
+  isMine: boolean;
+  showTime: boolean;
+  isFirstInGroup: boolean;
+  isLastInGroup: boolean;
+  marginBottom: string;
+  senderPrimaryRole?: MemberRole;
+  senderExtraRoles?: MemberRole[];
+  bubbleColor: string;
+  canPin: boolean;
+  canDelete: boolean;
+  pickerOpen: boolean;
+  onPickerChange: (open: boolean) => void;
+  onPreviewAttachment: (url: string, name: string, ct: string | null) => void;
+  onDelete: () => void;
+  onReply: () => void;
+  onReact: (emoji: string) => void;
+  onTogglePin: () => void;
+}
+
+function ImageGroupBubble({
+  msgs, isMine, showTime, isFirstInGroup, isLastInGroup, marginBottom,
+  senderPrimaryRole, senderExtraRoles,
+  canPin, canDelete, pickerOpen, onPickerChange,
+  onPreviewAttachment, onDelete, onReply, onReact, onTogglePin,
+}: ImageGroupBubbleProps) {
+  const first = msgs[0];
+  const MAX = 4;
+  const visible = msgs.slice(0, MAX);
+  const hidden = msgs.length - MAX;
+
+  return (
+    <div className={`flex flex-col group relative ${marginBottom}`}>
+      <div className={`flex gap-2 items-end ${isMine ? 'flex-row-reverse' : ''}`}>
+        {!isMine && (
+          isLastInGroup ? (
+            <SenderAvatar name={first.senderName ?? '?'} avatarUrl={first.senderAvatar} size={28} />
+          ) : <div className="w-7 h-7 shrink-0" />
+        )}
+
+        <div className={`max-w-[75%] flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
+          {/* Name + time row */}
+          {!isMine && isFirstInGroup && (
+            <div className="flex items-center gap-1.5 mb-0.5 px-1 w-full">
+              <p className="text-[11px] font-semibold text-ink-2 shrink-0">{first.senderName ?? 'Người dùng'}</p>
+              {senderPrimaryRole && senderPrimaryRole !== 'MEMBER' && (
+                <RoleBadges primary={senderPrimaryRole} extras={senderExtraRoles ?? []} short max={2} />
+              )}
+              {showTime && (
+                <p className="ml-auto text-[10px] text-ink-3 shrink-0 pl-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {formatTime(first.createdAt)}
+                </p>
+              )}
+            </div>
+          )}
+          {showTime && (isMine || !isFirstInGroup) && (
+            <p className={`text-[10px] text-ink-3 mb-0.5 px-1 opacity-0 group-hover:opacity-100 transition-opacity ${isMine ? 'self-start' : 'self-end'}`}>
+              {formatTime(first.createdAt)}
+            </p>
+          )}
+
+          {/* Image grid — wrapped in relative so MessageActions can anchor to it */}
+          <div className="relative">
+            <MessageActions
+              isMine={isMine}
+              pinned={first.pinned}
+              canPin={canPin}
+              canDelete={canDelete}
+              pickerOpen={pickerOpen}
+              onPickerChange={onPickerChange}
+              onReply={onReply}
+              onReact={onReact}
+              onTogglePin={onTogglePin}
+              onDelete={onDelete}
+            />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2, maxWidth: 264 }}>
+              {visible.map((msg, i) => {
+                const isLastCell = i === visible.length - 1 && hidden > 0;
+                return (
+                  <div
+                    key={msg.id}
+                    style={{
+                      width: visible.length === 1 ? '100%' : 'calc(50% - 1px)',
+                      position: 'relative',
+                      borderRadius: 8,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <SquareThumb
+                      url={msg.attachmentUrl!}
+                      alt={msg.attachmentName ?? ''}
+                      onClick={() => onPreviewAttachment(msg.attachmentUrl!, msg.attachmentName ?? '', msg.attachmentType)}
+                    />
+                    {isLastCell && (
+                      <div
+                        style={{
+                          position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.52)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => onPreviewAttachment(msg.attachmentUrl!, msg.attachmentName ?? '', msg.attachmentType)}
+                      >
+                        <span style={{ color: 'white', fontSize: 22, fontWeight: 700 }}>+{hidden}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Square thumbnail for image groups ────────────────────────────────────────
+
+function SquareThumb({ url, alt, onClick }: { url: string; alt: string; onClick: () => void }) {
+  const [src, setSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    let revoke: string | null = null;
+    chatApi.fetchAttachmentBlob(url).then((blob) => {
+      const u = URL.createObjectURL(blob);
+      revoke = u;
+      setSrc(u);
+    }).catch(() => {});
+    return () => { if (revoke) URL.revokeObjectURL(revoke); };
+  }, [url]);
+
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        width: '100%', height: 128, cursor: 'pointer',
+        background: 'var(--bg-surface-2)',
+      }}
+    >
+      {src && (
+        <img
+          src={src}
+          alt={alt}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      )}
+      {!src && (
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Loader2 size={16} className="animate-spin text-ink-3" />
+        </div>
+      )}
     </div>
   );
 }
@@ -1170,12 +1599,7 @@ const MessageBubble = React.memo(forwardRef<HTMLDivElement, BubbleProps>(
         <div className={`flex gap-2 items-end ${isMine ? 'flex-row-reverse' : ''}`}>
           {!isMine && (
             isLastInGroup ? (
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
-                style={{ background: 'var(--sidebar-accent)' }}
-              >
-                {msg.senderName?.charAt(0).toUpperCase() ?? '?'}
-              </div>
+              <SenderAvatar name={msg.senderName ?? '?'} avatarUrl={msg.senderAvatar} size={28} />
             ) : (
               <div className="w-7 h-7 shrink-0" />
             )
@@ -1276,12 +1700,13 @@ const MessageBubble = React.memo(forwardRef<HTMLDivElement, BubbleProps>(
                 )}
 
                 {msg.messageType === 'TEXT' && msg.content && (
-                  <p
-                    className="whitespace-pre-wrap break-words"
-                    style={{ color: textColor }}
-                  >
-                    {msg.content}
-                  </p>
+                  msg.content.startsWith('LUCKY_DRAW_RESULT:')
+                    ? <LuckyDrawResultCard content={msg.content} textColor={textColor} />
+                    : (
+                      <p className="whitespace-pre-wrap break-words" style={{ color: textColor }}>
+                        {msg.content}
+                      </p>
+                    )
                 )}
 
                 {msg.messageType === 'IMAGE' && msg.attachmentUrl && (
@@ -1622,6 +2047,56 @@ function PluginCard({ classroomId, type, payloadJson }: {
           Xem chi tiết →
         </Link>
       </div>
+    </div>
+  );
+}
+
+// ─── Lucky draw result card (rendered inside a TEXT message bubble) ────────────
+
+const LD_PREFIX = 'LUCKY_DRAW_RESULT:';
+
+function LuckyDrawResultCard({ content, textColor }: { content: string; textColor: string }) {
+  let winner = '';
+  let count = 0;
+  try {
+    const data = JSON.parse(content.slice(LD_PREFIX.length)) as { winner?: string; count?: number };
+    winner = data.winner ?? '';
+    count = data.count ?? 0;
+  } catch {
+    return null;
+  }
+
+  return (
+    <div style={{ minWidth: 200, maxWidth: 280 }}>
+      {/* Label row */}
+      <div
+        style={{
+          display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10,
+          opacity: 0.55, color: textColor,
+        }}
+      >
+        <Shuffle size={11} />
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          Lucky Draw
+        </span>
+      </div>
+
+      {/* Winner */}
+      <p
+        style={{
+          fontSize: 17, fontWeight: 700, color: textColor,
+          lineHeight: 1.35, wordBreak: 'break-word',
+        }}
+      >
+        🎉 {winner}
+      </p>
+
+      {/* Participants */}
+      {count > 0 && (
+        <p style={{ fontSize: 11, color: textColor, opacity: 0.5, marginTop: 7 }}>
+          {count} người tham gia
+        </p>
+      )}
     </div>
   );
 }

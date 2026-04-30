@@ -1,64 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Menu, LogOut, User, Camera, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/app/store';
 import { NotificationBell } from '@/features/notification/components/NotificationBell';
-import { memToken } from '@/services/api-client';
+import { SenderAvatar } from '@/shared/components/SenderAvatar';
+import { AvatarCropModal } from './AvatarCropModal';
 
 interface HeaderProps {
   toggleSidebar: () => void;
-}
-
-function useAuthenticatedImage(url: string | null | undefined) {
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!url || !url.startsWith('/')) { setBlobUrl(null); return; }
-    let revoked = false;
-    let objectUrl: string | null = null;
-    const token = memToken.get();
-    fetch(url, token ? { headers: { Authorization: `Bearer ${token}` } } : {})
-      .then((r) => r.blob())
-      .then((blob) => {
-        if (revoked) return;
-        objectUrl = URL.createObjectURL(blob);
-        setBlobUrl(objectUrl);
-      })
-      .catch(() => {});
-    return () => {
-      revoked = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [url]);
-
-  return blobUrl;
-}
-
-function UserAvatar({ displayName, avatarUrl, size = 28 }: {
-  displayName: string; avatarUrl: string | null | undefined; size?: number;
-}) {
-  const blobUrl = useAuthenticatedImage(avatarUrl);
-  const src = blobUrl ?? (avatarUrl?.startsWith('http') ? avatarUrl : null);
-
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt={displayName}
-        className="rounded-full object-cover shrink-0"
-        style={{ width: size, height: size }}
-      />
-    );
-  }
-
-  return (
-    <div
-      className="rounded-full flex items-center justify-center font-semibold text-white shrink-0"
-      style={{ width: size, height: size, background: 'var(--sidebar-accent)', fontSize: size * 0.43 }}
-    >
-      {displayName.charAt(0).toUpperCase()}
-    </div>
-  );
 }
 
 export function Header({ toggleSidebar }: HeaderProps) {
@@ -66,6 +15,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
   const { user, isAuthenticated, logout, uploadAvatar } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogout = async () => {
@@ -73,10 +23,16 @@ export function Header({ toggleSidebar }: HeaderProps) {
     navigate('/login');
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (fileInputRef.current) fileInputRef.current.value = '';
+    setCropFile(file);
+  };
+
+  const handleCropConfirm = async (blob: Blob) => {
+    setCropFile(null);
+    const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
     setUploading(true);
     try {
       await uploadAvatar(file);
@@ -123,7 +79,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
                 className="flex items-center gap-2 px-2 py-1 rounded-lg transition-colors"
                 style={{ color: 'var(--sidebar-text)' }}
               >
-                <UserAvatar displayName={user?.displayName ?? ''} avatarUrl={user?.avatarUrl} />
+                <SenderAvatar name={user?.displayName ?? ''} avatarUrl={user?.avatarUrl} />
                 <span className="text-sm hidden sm:block">{user?.displayName}</span>
               </button>
 
@@ -135,7 +91,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
                     <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--rule)' }}>
                       <div className="flex items-center gap-3 mb-2">
                         <div className="relative group/avatar">
-                          <UserAvatar displayName={user?.displayName ?? ''} avatarUrl={user?.avatarUrl} size={40} />
+                          <SenderAvatar name={user?.displayName ?? ''} avatarUrl={user?.avatarUrl} size={40} />
                           <button
                             onClick={() => fileInputRef.current?.click()}
                             disabled={uploading}
@@ -191,6 +147,14 @@ export function Header({ toggleSidebar }: HeaderProps) {
         className="hidden"
         onChange={handleAvatarChange}
       />
+
+      {cropFile && (
+        <AvatarCropModal
+          file={cropFile}
+          onConfirm={handleCropConfirm}
+          onCancel={() => setCropFile(null)}
+        />
+      )}
     </header>
   );
 }
