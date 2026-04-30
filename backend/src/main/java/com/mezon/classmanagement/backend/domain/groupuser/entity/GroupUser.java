@@ -56,6 +56,12 @@ public class GroupUser {
 	@Column(name = "role", nullable = false)
 	Role role;
 
+	@Column(name = "desk", nullable = true)
+	Short desk;
+
+	@Column(name = "desk_position", nullable = true)
+	Short deskPosition;
+
 	@Column(name = "joined_at", nullable = false, insertable = false, updatable = false)
 	Instant joinedAt;
 

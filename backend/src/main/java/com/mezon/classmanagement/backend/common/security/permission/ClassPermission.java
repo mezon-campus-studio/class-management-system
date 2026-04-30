@@ -8,6 +8,9 @@ import com.mezon.classmanagement.backend.domain.clazz.service.ClassService;
 import com.mezon.classmanagement.backend.domain.classuser.service.ClassUserService;
 import com.mezon.classmanagement.backend.common.security.service.JwtService;
 import com.mezon.classmanagement.backend.domain.auth.service.UserService;
+import com.mezon.classmanagement.backend.domain.group.service.GroupService;
+import com.mezon.classmanagement.backend.domain.groupuser.entity.GroupUser;
+import com.mezon.classmanagement.backend.domain.groupuser.service.GroupUserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -24,6 +27,8 @@ public class ClassPermission {
 	AuthService authService;
 	ClassService classService;
 	UserService userService;
+	GroupService groupService;
+	GroupUserService groupUserService;
 	ClassUserService classUserService;
 	JwtService jwtService;
 
@@ -41,22 +46,42 @@ public class ClassPermission {
 	}
 
 	public boolean manageActivity(Long classId) {
-		return hasAccess(classId, Permission.MANAGE_ACTIVITY.name());
+		return hasClassAccess(classId, Permission.MANAGE_ACTIVITY.name());
 	}
 
-	public boolean manageGroup(Long classId) {
-		return hasAccess(classId, Permission.MANAGE_GROUP.name());
+	public boolean manageGroupUser(Long classId, Long groupId) {
+		return manageGroup(classId, groupId) || hasGroupAccess(classId, groupId);
+	}
+
+	public boolean manageGroup(Long classId, Long groupId) {
+		return hasClassAccess(classId, Permission.MANAGE_GROUP.name());
 	}
 
 	public boolean manageFund(Long classId) {
-		return hasAccess(classId, Permission.MANAGE_FUND.name());
+		return hasClassAccess(classId, Permission.MANAGE_FUND.name());
 	}
 
 	public boolean managePoint(Long classId) {
-		return hasAccess(classId, Permission.MANAGE_POINT.name());
+		return hasClassAccess(classId, Permission.MANAGE_POINT.name());
 	}
 
-	public boolean hasAccess(Long classId, String permission) {
+	public boolean hasGroupAccess(Long classId, Long groupId) {
+		Authentication authentication = authService.getAuthentication();
+		Long userId = jwtService.extractUserId(authentication);
+
+		GroupUser groupUser = groupUserService.findByClassIdAndGroupIdAndUserIdOrThrow(classId, groupId, userId);
+
+		return groupUserService.isLeader(groupUser);
+	}
+
+	public boolean isClassUser(Long classId) {
+		Authentication authentication = authService.getAuthentication();
+		Long userId = jwtService.extractUserId(authentication);
+
+		return classUserService.existsByClassIdAndUserId(classId, userId);
+	}
+
+	public boolean hasClassAccess(Long classId, String permission) {
 		classService.throwIfNotExistsById(classId);
 
 		Authentication authentication = authService.getAuthentication();
