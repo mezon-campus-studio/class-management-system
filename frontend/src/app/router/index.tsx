@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import { LoginPage } from "@features/auth/pages/LoginPage";
 import { RegisterPage } from "@features/auth/pages/RegisterPage";
+import { GoogleCallbackPage } from "@features/auth/pages/GoogleCallbackPage";
 import App from "@/App";
 import { HomePage } from "@features/home/pages/HomePage";
 import { ClassDiagram } from "@features/classDiagram/pages/ClassDiagram";
@@ -21,6 +22,10 @@ export const router = createBrowserRouter([
   {
     path: "/register",
     element: <RegisterPage />,
+  },
+  {
+    path: "/google-callback",
+    element: <GoogleCallbackPage />,
   },
   {
     path: "/",

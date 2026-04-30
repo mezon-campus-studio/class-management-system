@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import type { ID } from "@shared/utils/common";
 import type { FundStatus, FundTransaction } from "@features/fund/types";
 import { fundAPI } from "@features/fund/api";
+import { Modal } from "@shared/components/ui/Modal";
 
 interface AdminApprovalModalProps {
     isOpen: boolean;
@@ -41,15 +42,8 @@ export const AdminApprovalModal: React.FC<AdminApprovalModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-ink-1/40 backdrop-blur-sm">
-            <div className="bg-surface w-full max-w-2xl rounded-xl shadow-xl overflow-hidden animate-scale-in max-h-[80vh] flex flex-col">
-                <div className="px-6 py-4 border-b border-rule flex justify-between items-center bg-surface-2">
-                    <h3 className="font-serif font-semibold text-xl text-ink-1">Duyệt giao dịch</h3>
-                    <button onClick={onClose} className="text-ink-3 hover:text-ink-1">✕</button>
-                </div>
-
-                <div className="p-6 overflow-y-auto flex-1">
-                    {isLoading ? (
+        <Modal isOpen={isOpen} onClose={onClose} title="Duyệt giao dịch">
+            {isLoading ? (
                         <div className="space-y-4">
                             {[1, 2].map(i => <div key={i} className="skeleton h-24 w-full rounded-lg" />)}
                         </div>
@@ -91,9 +85,7 @@ export const AdminApprovalModal: React.FC<AdminApprovalModalProps> = ({
                                 </div>
                             ))}
                         </div>
-                    )}
-                </div>
-            </div>
-        </div>
+            )}
+        </Modal>
     );
 };

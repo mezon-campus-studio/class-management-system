@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuthInternal } from '@features/auth/hooks/useAuthInternal';
 import { User, Lock, Home } from 'lucide-react';
 import { GoogleIcon, MezonIcon } from '@shared/components/icons';
+import { BASE_URL } from '@services/api-client';
 
 export const LoginPage = () => {
     const [username, setUsername] = useState('');
@@ -18,6 +19,11 @@ export const LoginPage = () => {
         if (success) {
             navigate('/');
         }
+    };
+
+    const handleGoogleLogin = () => {
+        // Chuyển hướng trình duyệt tới endpoint của Backend để bắt đầu luồng OAuth2
+        window.location.href = `${BASE_URL}/auth/google/signin`;
     };
 
     return (
@@ -37,7 +43,12 @@ export const LoginPage = () => {
 
                 <div className="px-8 space-y-4">
                     <div className="grid grid-cols-2 gap-3">
-                        <button className="btn btn-secondary flex items-center justify-center gap-2 py-2.5">
+                        <button 
+                            type="button"
+                            onClick={handleGoogleLogin}
+                            disabled={isLoading}
+                            className="btn btn-secondary flex items-center justify-center gap-2 py-2.5"
+                        >
                             <span className="text-lg leading-none mt-0.5">
                                 <GoogleIcon/>
                             </span>
