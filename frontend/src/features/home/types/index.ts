@@ -20,3 +20,7 @@ export interface ClassResponse {
   avatar_url: string;
   createdAt?: string;
 }
+
+export interface ClassIdResponse {
+  classId: number;
+}

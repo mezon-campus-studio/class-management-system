@@ -31,6 +31,7 @@ dependencies {
     implementation("org.springframework.security:spring-security-crypto")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     implementation("org.springframework.boot:spring-boot-starter-security-oauth2-client")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
     //implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     testImplementation("org.springframework.security:spring-security-test")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
