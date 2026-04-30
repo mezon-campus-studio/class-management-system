@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface GroupRepository extends JpaRepository<Group, Long> {
-	boolean existsByClazz_Id(Long classId);
+	boolean existsByClazz_IdAndId(Long classId, Long groupId);
 }

@@ -67,7 +67,7 @@ public class GroupService {
     @RequireClassPermission
     @Transactional
     public GroupResponseDto updateGroup(Long classId, Long groupId, CreateAndUpdateGroupRequestDto request) {
-        throwIfNotExistsByClassId(classId);
+        throwIfNotExistsByClassIdAndGroupId(classId, groupId);
 
         Group currentGroup = findByIdOrThrow(groupId);
 
@@ -81,7 +81,7 @@ public class GroupService {
     @RequireClassPermission
     @Transactional
     public void deleteGroup(Long classId, Long groupId) {
-        throwIfNotExistsByClassId(classId);
+        throwIfNotExistsByClassIdAndGroupId(classId, groupId);
 
         Group currentGroup = findByIdOrThrow(groupId);
 
@@ -120,13 +120,13 @@ public class GroupService {
      */
 
     @Transactional
-    public boolean existsByClassId(Long classId) {
-        return groupRepository.existsByClazz_Id(classId);
+    public boolean existsByClassIdAndGroupId(Long classId, Long groupId) {
+        return groupRepository.existsByClazz_IdAndId(classId, groupId);
     }
 
     @Transactional
-    public void throwIfNotExistsByClassId(Long id) {
-        if (!existsByClassId(id)) {
+    public void throwIfNotExistsByClassIdAndGroupId(Long classId, Long groupId) {
+        if (!existsByClassIdAndGroupId(classId, groupId)) {
             throw new GlobalException(GlobalException.Type.NOT_FOUND, "Group not found");
         }
     }
