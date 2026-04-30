@@ -45,7 +45,7 @@ public class GroupUserController {
 				.build();
 	}
 
-	@PreAuthorize("@ClassPermission.manageGroup(#classId, #groupId)")
+	@PreAuthorize("@ClassPermission.manageGroup(#classId)")
 	@PostMapping("/leader/{userId}")
 	public ResponseDTO<GroupUserResponseDto> createGroupUserAsLeader(
 			@PathVariable Long classId,

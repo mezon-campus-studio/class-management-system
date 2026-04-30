@@ -50,10 +50,10 @@ public class ClassPermission {
 	}
 
 	public boolean manageGroupUser(Long classId, Long groupId) {
-		return manageGroup(classId, groupId) || hasGroupAccess(classId, groupId);
+		return manageGroup(classId) || hasGroupAccess(classId, groupId);
 	}
 
-	public boolean manageGroup(Long classId, Long groupId) {
+	public boolean manageGroup(Long classId) {
 		return hasClassAccess(classId, Permission.MANAGE_GROUP.name());
 	}
 
