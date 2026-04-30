@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import type { FundCampaign } from "@features/fund/types"
+import type { FundCampaign } from "@features/fund/types";
+import { Modal } from "@shared/components/ui/Modal";
 
 interface CreateCampaignModalProps {
     isOpen: boolean;
@@ -43,14 +44,8 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-ink-1/40 backdrop-blur-sm">
-            <div className="bg-surface w-full max-w-lg rounded-xl shadow-xl overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
-                <div className="px-6 py-4 border-b border-rule flex justify-between items-center bg-surface-2">
-                    <h3 className="font-serif font-semibold text-xl text-ink-1">Tạo khoản thu mới</h3>
-                    <button onClick={onClose} className="text-ink-3 hover:text-ink-1">✕</button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4">
+        <Modal isOpen={isOpen} onClose={onClose} title="Tạo khoản thu mới">
+            <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="input-wrap">
                         <label className="input-label">Tên khoản thu</label>
                         <div className="input-field">
@@ -141,8 +136,7 @@ export const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
                             {isSubmitting ? "Đang tạo..." : "Tạo ngay"}
                         </button>
                     </div>
-                </form>
-            </div>
-        </div>
+            </form>
+        </Modal>
     );
 };
