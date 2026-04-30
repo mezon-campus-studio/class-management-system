@@ -16,7 +16,7 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 	Optional<Class> findByCode(String code);
 
 	@Query(value = """
-		SELECT new com.mezon.classmanagement.backend.dto.classmember.ClassMemberResponseDto(
+		SELECT new com.mezon.classmanagement.backend.domain.classuser.dto.ClassMemberResponseDto(
 			class.id,
 			class.name,
 			user.id,
@@ -51,7 +51,7 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 	*/
 
 	@Query(value = """
-		SELECT new com.mezon.classmanagement.backend.dto.clazz.ClassDto(
+		SELECT new com.mezon.classmanagement.backend.domain.clazz.dto.ClassResponseDto(
 			clazz.id,
 			clazz.owner.id,
 			clazz.owner.displayName,
