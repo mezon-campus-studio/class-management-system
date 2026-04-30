@@ -141,7 +141,7 @@ export const useAuthInternal = () => {
         const userData: User = {
           id: accessToken.user_id || 0,
           username: accessToken.sub || "",
-          type: UserType.OAUTH2,
+          type: UserType.GOOGLE,
           avatarUrl: "",
           token: token.access_token,
         };
