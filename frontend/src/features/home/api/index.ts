@@ -1,4 +1,4 @@
-import type { ClassItems, ClassResponse } from "@features/home/types";
+import type { ClassItems, ClassResponse, ClassIdResponse } from "@features/home/types";
 import { apiClient } from "@services/api-client";
 import type { ResponseDTO } from "@shared/types";
 
@@ -44,9 +44,7 @@ export const homeAPI = {
     });
   },
 
-  joinClass: async (
-    code: string,
-  ): Promise<ResponseDTO<string>> => {
+  joinClass: async (code: string): Promise<ResponseDTO<string>> => {
     const authStorage = localStorage.getItem("auth-storage");
     let token = null;
 
@@ -80,12 +78,71 @@ export const homeAPI = {
     }
 
     // Gọi API thật tới Backend
-    const response = await apiClient.get<ResponseDTO<ClassItems[]>>("/classes", {
+    const response = await apiClient.get<ResponseDTO<ClassItems[]>>(
+      "/classes",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    return response.data;
+  },
+
+  // Rời khỏi lớp (ĐÃ XÓA ANY)
+  leaveClass: async (classId: number): Promise<ResponseDTO<ClassIdResponse>> => {
+    const authStorage = localStorage.getItem("auth-storage");
+    let token = null;
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      token = parsed.state.user?.token || parsed.state.user?.access_token;
+    }
+
+    return apiClient.delete<ResponseDTO<ClassIdResponse>>(`/classes/${classId}/leave`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    
-    return response.data;
+  },
+
+  // Xóa lớp (ĐÃ XÓA ANY)
+  deleteClass: async (classId: number): Promise<ResponseDTO<ClassIdResponse>> => {
+    const authStorage = localStorage.getItem("auth-storage");
+    let token = null;
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      token = parsed.state.user?.token || parsed.state.user?.access_token;
+    }
+
+    return apiClient.delete<ResponseDTO<ClassIdResponse>>(`/classes/${classId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  // Cập nhật/Sửa lớp
+  updateClass: async (
+    classId: number,
+    data: Partial<ClassResponse>, 
+  ): Promise<ResponseDTO<ClassResponse>> => {
+    const authStorage = localStorage.getItem("auth-storage");
+    let token = null;
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      token = parsed.state.user?.token || parsed.state.user?.access_token;
+    }
+
+    return apiClient.patch<ResponseDTO<ClassResponse>>(
+      `/classes/${classId}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
   },
 };

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import type { FundCampaign } from "@features/fund/types"
+import type { FundCampaign } from "@features/fund/types";
+import { Modal } from "@shared/components/ui/Modal";
 
 interface PaymentModalProps {
     isOpen: boolean;
@@ -44,19 +45,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-ink-1/40 backdrop-blur-sm">
-            <div className="bg-surface w-full max-w-md rounded-xl shadow-xl overflow-hidden animate-scale-in">
-                <div className="px-6 py-4 border-b border-rule flex justify-between items-center bg-surface-2">
-                    <h3 className="font-serif font-semibold text-xl text-ink-1">Đóng tiền quỹ</h3>
-                    <button onClick={onClose} className="text-ink-3 hover:text-ink-1">✕</button>
-                </div>
-
-                <div className="p-6">
-                    <div className="mb-6">
-                        <p className="text-2xs font-semibold tracking-label uppercase text-ink-3 mb-1">Khoản thu</p>
-                        <p className="font-serif font-semibold text-lg text-ink-1">{campaign.title}</p>
-                        <p className="text-sm text-ink-2 mt-1">Số tiền: <span className="font-bold text-warm-400">{campaign.amount.toLocaleString('vi-VN')}đ</span></p>
-                    </div>
+        <Modal isOpen={isOpen} onClose={onClose} title="Đóng tiền quỹ">
+            <div className="mb-6">
+                <p className="text-2xs font-semibold tracking-label uppercase text-ink-3 mb-1">Khoản thu</p>
+                <p className="font-serif font-semibold text-lg text-ink-1">{campaign.title}</p>
+                <p className="text-sm text-ink-2 mt-1">Số tiền: <span className="font-bold text-warm-400">{campaign.amount.toLocaleString('vi-VN')}đ</span></p>
+            </div>
 
                     {step === 'CHOICE' && (
                         <div className="space-y-3">
@@ -126,8 +120,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             </div>
                         </form>
                     )}
-                </div>
-            </div>
-        </div>
+        </Modal>
     );
 };

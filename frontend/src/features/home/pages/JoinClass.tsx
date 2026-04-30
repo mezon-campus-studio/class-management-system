@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { homeAPI } from '@features/home/api';
 import type { ClassItems } from '@features/home/types';
 import { useHome } from '@features/home/hooks/useHome';
+import { Modal } from '@shared/components/ui/Modal';
 
 interface JoinClassModalProps {
     isOpen: boolean;
@@ -15,7 +15,7 @@ export const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalPro
     const [code, setCode] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const [foundClass, setFoundClass] = useState<ClassItems | null>(null);
+    const [foundClass] = useState<ClassItems | null>(null);
 
     if (!isOpen) return null;
 
@@ -48,12 +48,10 @@ export const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalPro
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-            <div className="bg-surface rounded-2xl p-6 w-full max-w-[380px] shadow-2xl animate-in fade-in zoom-in duration-200">
-                
+        <Modal isOpen={isOpen} onClose={handleClose} title="Tham gia lớp học">
+            <div className="w-full max-w-[380px] mx-auto animate-in fade-in zoom-in duration-200">
                 {step === 'INPUT' && (
                     <>
-                        <h2 className="text-xl font-black text-ink-1 mb-2">Tham gia lớp học</h2>
                         <p className="text-sm text-ink-2 mb-6">Nhập mã lớp học để tham gia ngay.</p>
                         <form onSubmit={handleJoin} className="space-y-4">
                             <input 
@@ -79,7 +77,7 @@ export const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalPro
                     <div className="text-center py-4">
                         <div className="w-16 h-16 bg-ink-amber-fill text-ink-amber-text rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⏳</div>
                         <h2 className="text-xl font-bold text-ink-1 mb-2">Đã gửi yêu cầu</h2>
-                        <p className="text-sm text-ink-2 mb-6">Bạn đã yêu cầu tham gia lớp <b>{foundClass?.className}</b>. Vui lòng chờ duyệt.</p>
+                        <p className="text-sm text-ink-2 mb-6">Bạn đã yêu cầu tham gia lớp <b>{foundClass?.name}</b>. Vui lòng chờ duyệt.</p>
                         <button onClick={onClose} className="w-full py-3 bg-ink-1 text-white font-bold rounded-xl">Đóng</button>
                     </div>
                 )}
@@ -88,10 +86,10 @@ export const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalPro
                     <div className="text-center py-4">
                         <div className="w-16 h-16 bg-ink-green-fill text-ink-green-text rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">✅</div>
                         <h2 className="text-xl font-bold text-ink-1 mb-2">Thành công!</h2>
-                        <p className="text-sm text-ink-2">Bạn đã tham gia lớp <b>{foundClass?.className}</b>.</p>
+                        <p className="text-sm text-ink-2">Bạn đã tham gia lớp <b>{foundClass?.name}</b>.</p>
                     </div>
                 )}
             </div>
-        </div>
+        </Modal>
     );
 };
