@@ -49,7 +49,7 @@ public class ClassPermission {
 		return hasClassAccess(classId, Permission.MANAGE_ACTIVITY.name());
 	}
 
-	public boolean manageGroupUser(Long classId, Long groupId) {
+	public boolean manageGroupData(Long classId, Long groupId) {
 		return manageGroup(classId) || hasGroupAccess(classId, groupId);
 	}
 

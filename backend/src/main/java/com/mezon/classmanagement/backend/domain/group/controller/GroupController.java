@@ -10,12 +10,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -25,6 +28,7 @@ public class GroupController {
 
     GroupService groupService;
 
+    @PreAuthorize("@ClassPermission.manageGroup(#classId)")
     @PostMapping
     public ResponseDTO<GroupResponseDto> createGroup(
             @PathVariable Long classId,
@@ -39,8 +43,8 @@ public class GroupController {
                 .build();
     }
 
-    @PreAuthorize("@ClassPermission.manageGroup(#classId)")
-    @PutMapping("/{groupId}")
+    @PreAuthorize("@ClassPermission.manageGroupData(#classId, #groupId)")
+    @PatchMapping("/{groupId}")
     public ResponseDTO<GroupResponseDto> updateGroup(
             @PathVariable Long classId,
             @PathVariable Long groupId,
@@ -55,22 +59,32 @@ public class GroupController {
                 .build();
     }
 
-    @PreAuthorize("@ClassPermission.manageGroup(#classId)")
+    @PreAuthorize("@ClassPermission.manageGroupData(#classId, #groupId)")
     @DeleteMapping("/{groupId}")
     public ResponseDTO<GroupIdResponseDto> deleteGroup(
             @PathVariable Long classId,
             @PathVariable Long groupId
     ) {
-        groupService.deleteGroup(classId, groupId);
+        GroupIdResponseDto response = groupService.deleteGroup(classId, groupId);
 
         return ResponseDTO.<GroupIdResponseDto>builder()
                 .success(true)
                 .message("Delete group successful")
-                .data(
-                        GroupIdResponseDto.builder()
-                                .groupId(groupId)
-                                .build()
-                )
+                .data(response)
+                .build();
+    }
+
+    @PreAuthorize("@ClassPermission.isClassUser(#classId)")
+    @GetMapping
+    public ResponseDTO<List<GroupResponseDto>> getGroups(
+            @PathVariable Long classId
+    ) {
+        List<GroupResponseDto> response = groupService.getGroups(classId);
+
+        return ResponseDTO.<List<GroupResponseDto>>builder()
+                .success(true)
+                .message("Get groups successful")
+                .data(response)
                 .build();
     }
 

@@ -20,9 +20,6 @@ import lombok.experimental.FieldDefaults;
 @DTO
 public final class CreateAndUpdateGroupRequestDto {
 
-    @JsonProperty(value = "leader_user_id")
-    Long leaderUserId;
-
     @JsonProperty(value = "name")
     String name;
 

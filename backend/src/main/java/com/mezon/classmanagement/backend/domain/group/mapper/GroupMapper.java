@@ -17,10 +17,5 @@ public interface GroupMapper {
     void updateGroupFromRequestDto(CreateAndUpdateGroupRequestDto createAndUpdateGroupRequestDto, @MappingTarget Group group);
 
     @Mapping(source = "clazz.id", target = "classId")
-    @Mapping(source = "leader.id", target = "leaderUserId")
-    GroupResponseDto toCreateGroupResponseDto(Group group);
-
-    @Mapping(source = "clazz.id", target = "classId")
-    @Mapping(source = "leader.id", target = "leaderUserId")
-    GroupResponseDto toUpdateGroupResponseDto(Group group);
+    GroupResponseDto toGroupResponseDto(Group group);
 }

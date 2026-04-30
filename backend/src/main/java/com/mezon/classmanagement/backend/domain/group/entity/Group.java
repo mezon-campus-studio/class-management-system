@@ -40,10 +40,6 @@ public class Group {
 	@JoinColumn(name = "class_id", nullable = false)
 	Class clazz;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "leader_user_id", nullable = false)
-	User leader;
-
 	@Column(name = "name", nullable = true)
 	String name;
 
