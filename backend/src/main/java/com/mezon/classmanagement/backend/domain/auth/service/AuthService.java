@@ -1,0 +1,191 @@
+package com.mezon.classmanagement.backend.domain.auth.service;
+
+import com.mezon.classmanagement.backend.common.constant.JwtConstant;
+import com.mezon.classmanagement.backend.common.constant.WarningConstant;
+import com.mezon.classmanagement.backend.domain.auth.dto.signin.SignInRequestDto;
+import com.mezon.classmanagement.backend.domain.auth.dto.signout.SignOutRequestDto;
+import com.mezon.classmanagement.backend.domain.auth.dto.signup.SignUpRequestDto;
+import com.mezon.classmanagement.backend.domain.auth.dto.signin.SignInResponseDto;
+import com.mezon.classmanagement.backend.domain.auth.dto.signout.SignOutResponseDto;
+import com.mezon.classmanagement.backend.domain.auth.dto.signup.SignUpResponseDto;
+import com.mezon.classmanagement.backend.domain.auth.entity.InvalidatedToken;
+import com.mezon.classmanagement.backend.domain.auth.oauth2.entity.MezonUser;
+import com.mezon.classmanagement.backend.domain.auth.entity.User;
+import com.mezon.classmanagement.backend.domain.auth.oauth2.entity.GoogleUser;
+import com.mezon.classmanagement.backend.common.exeption.entity.GlobalException;
+import com.mezon.classmanagement.backend.domain.auth.repository.InvalidatedTokenRepository;
+import com.mezon.classmanagement.backend.common.security.service.JwtService;
+import com.mezon.classmanagement.backend.common.util.EmailProcessor;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.SignedJWT;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.stereotype.Service;
+
+import java.text.ParseException;
+import java.util.Date;
+
+@SuppressWarnings({WarningConstant.SPELL_CHECKING_INSPECTION})
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
+@Service
+public class AuthService {
+
+	AuthenticationManager authenticationManager;
+	UserService userService;
+	JwtService jwtService;
+	InvalidatedTokenRepository invalidatedTokenRepository;
+
+	public SignInResponseDto signIn(SignInRequestDto request) {
+		UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken
+				= new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
+		authenticationManager.authenticate(usernamePasswordAuthenticationToken);
+
+		User user = userService.findByUsernameOrThrow(request.getUsername());
+
+		String accessToken = jwtService.generateAccessToken(user.getId(), user.getUsername());
+		String refreshToken = jwtService.generateRefreshToken(user.getUsername());
+
+		return SignInResponseDto.builder()
+				.accessToken(accessToken)
+				.refreshToken(refreshToken)
+				.build();
+	}
+
+	public SignInResponseDto signInMezon(MezonUser mezonUser) {
+		String username = EmailProcessor.extractAndClean(mezonUser.getEmail()) + "-mezon-" + System.currentTimeMillis();
+
+		SignUpRequestDto signUpRequest = SignUpRequestDto.builder()
+				.provider(User.Provider.MEZON)
+				.providerId(mezonUser.getSub())
+				.username(username)
+				.displayName(mezonUser.getDisplayName())
+				.avatarUrl(mezonUser.getAvatar())
+				.email(mezonUser.getEmail())
+				.build();
+		SignUpResponseDto signUpResponse = signUp(signUpRequest);
+
+		String accessToken = jwtService.generateAccessToken(signUpResponse.getUserId(), signUpResponse.getUsername());
+		String refreshToken = jwtService.generateRefreshToken(signUpResponse.getUsername());
+
+		return SignInResponseDto.builder()
+				.accessToken(accessToken)
+				.refreshToken(refreshToken)
+				.build();
+	}
+
+	public SignInResponseDto signInGoogle(GoogleUser googleUser) {
+		String username = EmailProcessor.extractAndClean(googleUser.getEmail()) + "-google-" + System.currentTimeMillis();
+
+		SignUpRequestDto signUpRequest = SignUpRequestDto.builder()
+				.provider(User.Provider.GOOGLE)
+				.providerId(googleUser.getSub())
+				.username(username)
+				.displayName(googleUser.getDisplayName())
+				.avatarUrl(googleUser.getAvatarUrl())
+				.email(googleUser.getEmail())
+				.build();
+		SignUpResponseDto signUpResponse = signUp(signUpRequest);
+
+		String accessToken = jwtService.generateAccessToken(signUpResponse.getUserId(), signUpResponse.getUsername());
+		String refreshToken = jwtService.generateRefreshToken(signUpResponse.getUsername());
+
+		return SignInResponseDto.builder()
+				.accessToken(accessToken)
+				.refreshToken(refreshToken)
+				.build();
+	}
+
+	public SignUpResponseDto signUp(SignUpRequestDto request) {
+		userService.throwIfExistsByUsername(request.getUsername());
+
+		User newUser = userService.createUser(request);
+
+		return SignUpResponseDto.builder()
+				.userId(newUser.getId())
+				.username(newUser.getUsername())
+				.build();
+	}
+
+	@Deprecated
+	public SignOutResponseDto signOut(SignOutRequestDto request) {
+		try {
+			SignedJWT signedJWT = verifyToken(request.getAccessToken());
+
+			String jti = signedJWT.getJWTClaimsSet().getJWTID();
+			Date expiryDate = signedJWT.getJWTClaimsSet().getExpirationTime();
+
+			InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+					.jti(jti)
+					.expiryDate(expiryDate.toInstant())
+					.build();
+			invalidatedTokenRepository.save(invalidatedToken);
+
+			return SignOutResponseDto.builder()
+					.success(true)
+					.build();
+		} catch (Exception e) {
+			return SignOutResponseDto.builder()
+					.success(false)
+					.build();
+		}
+	}
+
+	public SignOutResponseDto signOut(Authentication authentication) {
+		try {
+			Jwt jwt = ((JwtAuthenticationToken) authentication).getToken();
+
+			InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+					.jti(jwt.getId())
+					.expiryDate(jwt.getExpiresAt())
+					.build();
+			invalidatedTokenRepository.save(invalidatedToken);
+
+			return SignOutResponseDto.builder()
+					.success(true)
+					.build();
+		} catch (Exception e) {
+			return SignOutResponseDto.builder()
+					.success(false)
+					.build();
+		}
+	}
+
+	public Authentication getAuthentication() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+		if (!(authentication instanceof JwtAuthenticationToken)) {
+			throw new GlobalException(GlobalException.Type.INVALID_AUTHENTICATION, "Invalid authentication");
+		}
+
+		return authentication;
+	}
+
+	@Deprecated
+	private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
+		JWSVerifier verifier = new MACVerifier(JwtConstant.SIGNER_KEY.getBytes());
+
+		SignedJWT signedJWT = SignedJWT.parse(token);
+
+		Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+
+		var verified = signedJWT.verify(verifier);
+
+		if (!(verified && expiryTime.after(new Date()))) {
+			//Exception throw
+			return null;
+		}
+
+		return signedJWT;
+	}
+
+}

@@ -1,0 +1,71 @@
+package com.mezon.classmanagement.backend.domain.clazz.repository;
+
+import com.mezon.classmanagement.backend.domain.clazz.dto.ClassResponseDto;
+import com.mezon.classmanagement.backend.domain.classuser.dto.ClassMemberResponseDto;
+import com.mezon.classmanagement.backend.domain.clazz.entity.Class;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface ClassRepository extends JpaRepository<Class, Long> {
+
+	Optional<Class> findByCode(String code);
+
+	@Query(value = """
+		SELECT new com.mezon.classmanagement.backend.dto.classmember.ClassMemberResponseDto(
+			class.id,
+			class.name,
+			user.id,
+			user.displayName,
+			user.avatarUrl,
+			classUser.role
+		)
+		FROM ClassUser classUser
+		JOIN classUser.clazz class
+		JOIN classUser.user user
+		WHERE class.id = :classId
+	""")
+	List<ClassMemberResponseDto> getClassMembers(Long classId);
+
+	/*
+	@Query(value = """
+		SELECT new com.mezon.classmanagement.backend.dto.clazz.ClassResponseDtoponseDto(
+			class.id,
+			owner.id,
+			class.name,
+			class.description,
+			class.code,
+			class.avatarUrl,
+			class.privacy,
+			class.createdAt
+		)
+		FROM Class class
+		JOIN class.owner owner
+		WHERE owner.id = :userId
+	""")
+	List<ClassResponseDto> getJoinedClasses(Long userId);
+	*/
+
+	@Query(value = """
+		SELECT new com.mezon.classmanagement.backend.dto.clazz.ClassDto(
+			clazz.id,
+			clazz.owner.id,
+			clazz.owner.displayName,
+			clazz.name,
+			clazz.description,
+			clazz.code,
+			clazz.avatarUrl,
+			clazz.privacy,
+			clazz.createdAt
+		)
+		FROM ClassUser classUser
+		JOIN classUser.clazz clazz
+		WHERE classUser.user.id = :userId
+	""")
+	List<ClassResponseDto> getJoinedClasses(Long userId);
+
+}
