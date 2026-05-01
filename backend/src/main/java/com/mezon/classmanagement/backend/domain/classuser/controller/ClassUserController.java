@@ -44,7 +44,7 @@ public class ClassUserController {
 	}
 
 	@PreAuthorize("@ClassPermission.manageGroup(#classId)")
-	@PatchMapping("/{userId}/role")
+	@PatchMapping("/{userId}/seat")
 	public ResponseDTO<ClassUserResponseDto> updateClassUserSeat(
 			@PathVariable Long classId,
 			@PathVariable Long userId,
