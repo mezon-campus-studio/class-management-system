@@ -1,4 +1,4 @@
-import type { ClassItems, ClassResponse, ClassIdResponse } from "@features/home/types";
+import type { ClassItems, ClassResponse, ClassIdResponse, ClassMember } from "@features/home/types";
 import { apiClient } from "@services/api-client";
 import type { ResponseDTO } from "@shared/types";
 
@@ -90,7 +90,7 @@ export const homeAPI = {
     return response.data;
   },
 
-  // Rời khỏi lớp (ĐÃ XÓA ANY)
+  // Rời khỏi lớp 
   leaveClass: async (classId: number): Promise<ResponseDTO<ClassIdResponse>> => {
     const authStorage = localStorage.getItem("auth-storage");
     let token = null;
@@ -106,7 +106,7 @@ export const homeAPI = {
     });
   },
 
-  // Xóa lớp (ĐÃ XÓA ANY)
+  // Xóa lớp 
   deleteClass: async (classId: number): Promise<ResponseDTO<ClassIdResponse>> => {
     const authStorage = localStorage.getItem("auth-storage");
     let token = null;
@@ -144,5 +144,20 @@ export const homeAPI = {
         },
       },
     );
+  },
+
+  getClassMembers: async (classId: number): Promise<ResponseDTO<ClassMember[]>> => {
+    const authStorage = localStorage.getItem("auth-storage");
+    let token = null;
+    if (authStorage) {
+      const parsed = JSON.parse(authStorage);
+      token = parsed.state.user?.token || parsed.state.user?.access_token;
+    }
+
+    return apiClient.get<ResponseDTO<ClassMember[]>>(`/classes/${classId}/members`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
   },
 };

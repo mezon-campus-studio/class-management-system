@@ -2,6 +2,7 @@ import type {
   ClassDiagramData,
   AttendanceStatus,
 } from "@features/classDiagram/types";
+import { homeAPI } from "@features/home/api";
 
 // Dữ liệu giả mô phỏng đúng thiết kế Figma
 const mockDiagramData: ClassDiagramData = {
@@ -133,23 +134,22 @@ export const classDiagramAPI = {
     );
     return new Promise((resolve) => setTimeout(resolve, 300));
   },
-  // Thêm vào classDiagramAPI
-  getMembers: async (
-    classId: string,
-  ): Promise<{ id: string; name: string }[]> => {
-    return new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve([
-            { id: "s1", name: "Phong Hào" },
-            { id: "s3", name: "Trần Việt Tuấn" },
-            { id: "s4", name: "Thiên Bảo" },
-            { id: "u1", name: "Học sinh mới A" },
-            { id: "u2", name: "Học sinh mới B" },
-          ]),
-        300,
-      ),
-    );
-    console.log("Đang lấy sơ đồ cho lớp có ID:", classId); //giả lập dùng vì kết nối api thật cần dùng classId
+ 
+  getMembers: async (classId: string): Promise<{ id: string; name: string }[]> => {
+    try {
+      const res = await homeAPI.getClassMembers(Number(classId));
+      
+      if (res.success) {
+        // 🚀 ĐÃ SỬA LẠI KHỚP 100% VỚI LOG CỦA BACKEND
+        return res.data.map((m) => ({
+          id: String(m.member_id),                   // Lấy ID học sinh
+          name: m.member_display_name || "Vô danh", // Lấy tên học sinh
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error("Lỗi lấy thành viên:", error);
+      return [];
+    }
   },
 };

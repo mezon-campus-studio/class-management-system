@@ -1,4 +1,4 @@
-import type { ClassPrivacy } from "@shared/domain/enums";
+import type { ClassPrivacy, ClassRole } from "@shared/domain/enums";
 
 export interface ClassItems {
   id: number;
@@ -23,4 +23,20 @@ export interface ClassResponse {
 
 export interface ClassIdResponse {
   classId: number;
+}
+
+// Interface cho thành viên trong lớp
+export interface ClassMember {
+  class_id: number;
+  class_name: string;
+  member_id: number;
+  member_display_name: string;
+  member_avatar_url: string | null;
+  member_role: ClassRole;
+}
+
+export interface ClassMemberResponse {
+  success: boolean;
+  message: string;
+  data: ClassMember[];
 }
