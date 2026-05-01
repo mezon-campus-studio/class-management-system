@@ -1,14 +1,13 @@
 package com.mezon.classmanagement.backend.domain.clazz.controller;
 
 import com.mezon.classmanagement.backend.common.dto.ResponseDTO;
+import com.mezon.classmanagement.backend.common.security.service.JwtService;
+import com.mezon.classmanagement.backend.domain.auth.service.AuthService;
 import com.mezon.classmanagement.backend.domain.clazz.dto.ClassResponseDto;
-import com.mezon.classmanagement.backend.domain.clazz.dto.join.JoinClassRequestDto;
 import com.mezon.classmanagement.backend.domain.clazz.dto.classid.ClassIdResponseDto;
 import com.mezon.classmanagement.backend.domain.clazz.dto.createandupdate.CreateAndUpdateClassRequestDto;
-import com.mezon.classmanagement.backend.domain.classuser.dto.ClassMemberResponseDto;
-import com.mezon.classmanagement.backend.domain.auth.service.AuthService;
+import com.mezon.classmanagement.backend.domain.clazz.dto.join.JoinClassRequestDto;
 import com.mezon.classmanagement.backend.domain.clazz.service.ClassService;
-import com.mezon.classmanagement.backend.common.security.service.JwtService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -36,11 +35,13 @@ public class ClassController {
 	JwtService jwtService;
 
 	@PostMapping
-	public ResponseDTO<ClassResponseDto> createClass(@RequestBody CreateAndUpdateClassRequestDto request) {
+	public ResponseDTO<ClassResponseDto> createClass(
+			@RequestBody CreateAndUpdateClassRequestDto request
+	) {
 		Authentication authentication = authService.getAuthentication();
-		Long ownerUserId = jwtService.extractUserId(authentication);
+		Long clientUserId = jwtService.extractUserId(authentication);
 
-		ClassResponseDto response = classService.createClass(ownerUserId, request);
+		ClassResponseDto response = classService.createClass(clientUserId, request);
 
 		return ResponseDTO.<ClassResponseDto>builder()
 				.success(true)
@@ -66,13 +67,15 @@ public class ClassController {
 
 	@PreAuthorize("@ClassPermission.adminOnly(#classId)")
 	@DeleteMapping("/{classId}")
-	public ResponseDTO<ClassIdResponseDto> deleteClass(@PathVariable Long classId) {
-		classService.deleteClass(classId);
+	public ResponseDTO<ClassIdResponseDto> deleteClass(
+			@PathVariable Long classId
+	) {
+		ClassIdResponseDto response = classService.deleteClass(classId);
 
 		return ResponseDTO.<ClassIdResponseDto>builder()
 				.success(true)
 				.message("Delete class successful")
-				.data(ClassIdResponseDto.builder().classId(classId).build())
+				.data(response)
 				.build();
 	}
 
@@ -92,6 +95,7 @@ public class ClassController {
 				.build();
 	}
 
+	@PreAuthorize("@ClassPermission.exceptAdmin(#classId)")
 	@DeleteMapping("/{classId}/leave")
 	public ResponseDTO<ClassIdResponseDto> leaveClass(
 			@PathVariable Long classId
@@ -119,15 +123,6 @@ public class ClassController {
 				.success(true)
 				.message("Get joined classes successful")
 				.data(response)
-				.build();
-	}
-
-	@GetMapping("/{classId}/members")
-	public ResponseDTO<List<ClassMemberResponseDto>> getClassMembers(@PathVariable Long classId) {
-		return ResponseDTO.<List<ClassMemberResponseDto>>builder()
-				.success(true)
-				.message("Class members founds")
-				.data(classService.getClassMembers(classId))
 				.build();
 	}
 

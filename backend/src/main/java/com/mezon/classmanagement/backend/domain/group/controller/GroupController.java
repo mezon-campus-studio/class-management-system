@@ -74,7 +74,7 @@ public class GroupController {
                 .build();
     }
 
-    @PreAuthorize("@ClassPermission.isClassUser(#classId)")
+    @PreAuthorize("@ClassPermission.everyoneInClass(#classId)")
     @GetMapping
     public ResponseDTO<List<GroupResponseDto>> getGroups(
             @PathVariable Long classId

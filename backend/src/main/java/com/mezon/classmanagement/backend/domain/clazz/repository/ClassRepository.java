@@ -1,7 +1,7 @@
 package com.mezon.classmanagement.backend.domain.clazz.repository;
 
 import com.mezon.classmanagement.backend.domain.clazz.dto.ClassResponseDto;
-import com.mezon.classmanagement.backend.domain.classuser.dto.ClassMemberResponseDto;
+import com.mezon.classmanagement.backend.domain.classuser.dto.ClassUserResponseDto;
 import com.mezon.classmanagement.backend.domain.clazz.entity.Class;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,22 +14,6 @@ import java.util.Optional;
 public interface ClassRepository extends JpaRepository<Class, Long> {
 
 	Optional<Class> findByCode(String code);
-
-	@Query(value = """
-		SELECT new com.mezon.classmanagement.backend.domain.classuser.dto.ClassMemberResponseDto(
-			class.id,
-			class.name,
-			user.id,
-			user.displayName,
-			user.avatarUrl,
-			classUser.role
-		)
-		FROM ClassUser classUser
-		JOIN classUser.clazz class
-		JOIN classUser.user user
-		WHERE class.id = :classId
-	""")
-	List<ClassMemberResponseDto> getClassMembers(Long classId);
 
 	/*
 	@Query(value = """

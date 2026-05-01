@@ -33,20 +33,20 @@ public class ClassPermission {
 	JwtService jwtService;
 
 	public boolean adminOnly(Long classId) {
-		classService.throwIfNotExistsById(classId);
-
 		Authentication authentication = authService.getAuthentication();
 		Long userId = jwtService.extractUserId(authentication);
-
-		userService.throwIfNotExistsById(userId);
 
 		ClassUser classUser = classUserService.findByClassIdAndUserIdOrThrow(classId, userId);
 
 		return classUserService.isAdmin(classUser);
 	}
 
+	public boolean exceptAdmin(Long classId) {
+		return !adminOnly(classId);
+	}
+
 	public boolean manageActivity(Long classId) {
-		return hasClassAccess(classId, Permission.MANAGE_ACTIVITY.name());
+		return hasClassAccess(classId, Permission.MANAGE_ACTIVITY);
 	}
 
 	public boolean manageGroupData(Long classId, Long groupId) {
@@ -54,15 +54,15 @@ public class ClassPermission {
 	}
 
 	public boolean manageGroup(Long classId) {
-		return hasClassAccess(classId, Permission.MANAGE_GROUP.name());
+		return hasClassAccess(classId, Permission.MANAGE_GROUP);
 	}
 
 	public boolean manageFund(Long classId) {
-		return hasClassAccess(classId, Permission.MANAGE_FUND.name());
+		return hasClassAccess(classId, Permission.MANAGE_FUND);
 	}
 
 	public boolean managePoint(Long classId) {
-		return hasClassAccess(classId, Permission.MANAGE_POINT.name());
+		return hasClassAccess(classId, Permission.MANAGE_POINT);
 	}
 
 	public boolean hasGroupAccess(Long classId, Long groupId) {
@@ -74,14 +74,14 @@ public class ClassPermission {
 		return groupUserService.isLeader(groupUser);
 	}
 
-	public boolean isClassUser(Long classId) {
+	public boolean everyoneInClass(Long classId) {
 		Authentication authentication = authService.getAuthentication();
 		Long userId = jwtService.extractUserId(authentication);
 
 		return classUserService.existsByClassIdAndUserId(classId, userId);
 	}
 
-	public boolean hasClassAccess(Long classId, String permission) {
+	public boolean hasClassAccess(Long classId, Permission permission) {
 		classService.throwIfNotExistsById(classId);
 
 		Authentication authentication = authService.getAuthentication();

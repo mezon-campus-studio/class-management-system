@@ -26,8 +26,5 @@ public interface ClassMapper {
 	 */
 
 	@Mapping(source = "owner.id", target = "ownerUserId")
-	ClassResponseDto toCreateClassResponseDto(Class clazz);
-
-	@Mapping(source = "owner.id", target = "ownerUserId")
-	ClassResponseDto toUpdateClassResponseDto(Class clazz);
+	ClassResponseDto toClassResponseDto(Class clazz);
 }

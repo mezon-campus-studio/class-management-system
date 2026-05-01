@@ -1,19 +1,21 @@
 package com.mezon.classmanagement.backend.domain.activity.service;
 
+import com.mezon.classmanagement.backend.common.exeption.entity.GlobalException;
 import com.mezon.classmanagement.backend.common.security.annotation.RequireClassPermission;
 import com.mezon.classmanagement.backend.domain.activity.dto.request.CreateAndUpdateActivityRequestDto;
+import com.mezon.classmanagement.backend.domain.activity.dto.response.ActivityIdResponseDto;
 import com.mezon.classmanagement.backend.domain.activity.dto.response.ActivityResponseDto;
 import com.mezon.classmanagement.backend.domain.activity.entity.Activity;
-import com.mezon.classmanagement.backend.domain.clazz.entity.Class;
-import com.mezon.classmanagement.backend.common.exeption.entity.GlobalException;
 import com.mezon.classmanagement.backend.domain.activity.mapper.ActivityMapper;
 import com.mezon.classmanagement.backend.domain.activity.repository.ActivityRepository;
-import com.mezon.classmanagement.backend.domain.clazz.service.ClassService;
+import com.mezon.classmanagement.backend.domain.clazz.entity.Class;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -32,49 +34,51 @@ public class ActivityService {
 
 	ActivityMapper activityMapper;
 
-	/**
-	 * Other services
-	 */
-
-	ClassService classService;
-
+	@RequireClassPermission
 	@Transactional
 	public ActivityResponseDto createActivity(Long classId, CreateAndUpdateActivityRequestDto request) {
-		classService.throwIfNotExistsById(classId);
-
 		Class clazz = Class.builder()
 				.id(classId)
 				.build();
+
 		Activity newActivity = activityMapper.toActivity(request);
 		newActivity.setClazz(clazz);
 
 		Activity responseActivity = save(newActivity);
 
-		return activityMapper.toCreateActivityResponseDto(responseActivity);
+		return activityMapper.toActivityResponseDto(responseActivity);
 	}
 
 	@RequireClassPermission
 	@Transactional
 	public ActivityResponseDto updateActivity(Long classId, Long activityId, CreateAndUpdateActivityRequestDto request) {
-		throwIfNotExistsByClassId(classId);
-
-		Activity currentActivity = findByIdOrThrow(activityId);
+		Activity currentActivity = findByClassIdAndActivityIdOrThrow(classId, activityId);
 
 		activityMapper.updateActivityFromRequestDto(request, currentActivity);
 
 		Activity responseActivity = save(currentActivity);
 
-		return activityMapper.toUpdateActivityResponseDto(responseActivity);
+		return activityMapper.toActivityResponseDto(responseActivity);
 	}
 
 	@RequireClassPermission
 	@Transactional
-	public void deleteActivity(Long classId, Long activityId) {
-		throwIfNotExistsByClassId(classId);
-
-		Activity currentActivity = findByIdOrThrow(activityId);
+	public ActivityIdResponseDto deleteActivity(Long classId, Long activityId) {
+		Activity currentActivity = findByClassIdAndActivityIdOrThrow(classId, activityId);
 
 		delete(currentActivity);
+
+		return ActivityIdResponseDto.builder()
+				.activityId(currentActivity.getId())
+				.build();
+	}
+
+	@RequireClassPermission
+	@Transactional(readOnly = true)
+	public List<ActivityResponseDto> getActivities(Long classId) {
+		return findByClassId(classId).stream()
+				.map(activityMapper::toActivityResponseDto)
+				.toList();
 	}
 
 	/**
@@ -95,29 +99,19 @@ public class ActivityService {
 	 * Find
 	 */
 
-	@Transactional
-	public Activity findByIdOrThrow(Long id) {
+	@Transactional(readOnly = true)
+	public List<Activity> findByClassId(Long classId) {
 		return activityRepository
-				.findById(id)
+				.findByClazz_Id(classId);
+	}
+
+	@Transactional(readOnly = true)
+	public Activity findByClassIdAndActivityIdOrThrow(Long classId, Long activityId) {
+		return activityRepository
+				.findByClazz_IdAndId(classId, activityId)
 				.orElseThrow(() ->
 						new GlobalException(GlobalException.Type.NOT_FOUND, "Activity not found")
 				);
-	}
-
-	/**
-	 * Exists
-	 */
-
-	@Transactional
-	public boolean existsByClassId(Long classId) {
-		return activityRepository.existsByClazz_Id(classId);
-	}
-
-	@Transactional
-	public void throwIfNotExistsByClassId(Long classId) {
-		if (!existsByClassId(classId)) {
-			throw new GlobalException(GlobalException.Type.NOT_FOUND, "Activity not found");
-		}
 	}
 
 }

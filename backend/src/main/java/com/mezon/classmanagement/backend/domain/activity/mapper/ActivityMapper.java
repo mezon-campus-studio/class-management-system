@@ -17,8 +17,5 @@ public interface ActivityMapper {
 	void updateActivityFromRequestDto(CreateAndUpdateActivityRequestDto createAndUpdateActivityRequestDto, @MappingTarget Activity activity);
 
 	@Mapping(source = "clazz.id", target = "classId")
-	ActivityResponseDto toCreateActivityResponseDto(Activity activity);
-
-	@Mapping(source = "clazz.id", target = "classId")
-	ActivityResponseDto toUpdateActivityResponseDto(Activity activity);
+	ActivityResponseDto toActivityResponseDto(Activity activity);
 }

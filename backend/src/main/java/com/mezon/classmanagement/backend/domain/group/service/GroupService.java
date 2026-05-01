@@ -10,11 +10,11 @@ import com.mezon.classmanagement.backend.domain.group.dto.GroupResponseDto;
 import com.mezon.classmanagement.backend.domain.group.entity.Group;
 import com.mezon.classmanagement.backend.domain.group.mapper.GroupMapper;
 import com.mezon.classmanagement.backend.domain.group.repository.GroupRepository;
-import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -76,10 +76,9 @@ public class GroupService {
     }
 
     @RequireClassPermission
-    @Transactional
+    @Transactional(readOnly = true)
     public List<GroupResponseDto> getGroups(Long classId) {
-        return findByClassId(classId)
-                .stream()
+        return findByClassId(classId).stream()
                 .map(groupMapper::toGroupResponseDto)
                 .toList();
     }
@@ -102,13 +101,13 @@ public class GroupService {
      * Find
      */
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Group> findByClassId(Long classId) {
         return groupRepository
                 .findByClazz_Id(classId);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Group findByClassIdAndGroupIdOrThrow(Long classId, Long groupId) {
         return groupRepository
                 .findByClazz_IdAndId(classId, groupId)
@@ -121,12 +120,12 @@ public class GroupService {
      * Exists
      */
 
-    @Transactional
+    @Transactional(readOnly = true)
     public boolean existsByClassIdAndGroupId(Long classId, Long groupId) {
         return groupRepository.existsByClazz_IdAndId(classId, groupId);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public void throwIfNotExistsByClassIdAndGroupId(Long classId, Long groupId) {
         if (!existsByClassIdAndGroupId(classId, groupId)) {
             throw new GlobalException(GlobalException.Type.NOT_FOUND, "Group not found");

@@ -1,10 +1,10 @@
 package com.mezon.classmanagement.backend.domain.groupuser.controller;
 
 import com.mezon.classmanagement.backend.common.dto.ResponseDTO;
-import com.mezon.classmanagement.backend.domain.groupuser.dto.request.UpdateGroupUserRequestDto;
+import com.mezon.classmanagement.backend.domain.groupuser.dto.request.CreateGroupUserRequestDto;
+import com.mezon.classmanagement.backend.domain.groupuser.dto.request.UpdateGroupUserRoleRequestDto;
 import com.mezon.classmanagement.backend.domain.groupuser.dto.response.GroupUserIdResponseDto;
 import com.mezon.classmanagement.backend.domain.groupuser.dto.response.GroupUserResponseDto;
-import com.mezon.classmanagement.backend.domain.groupuser.entity.GroupUser;
 import com.mezon.classmanagement.backend.domain.groupuser.service.GroupUserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,20 +23,20 @@ import java.util.List;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-@RequestMapping("/api/classes/{classId}/groups/{groupId}/groupusers")
+@RequestMapping("/api/classes/{classId}/groups/{groupId}/members")
 @RestController
 public class GroupUserController {
 
 	GroupUserService groupUserService;
 
 	@PreAuthorize("@ClassPermission.manageGroupData(#classId, #groupId)")
-	@PostMapping("/member/{userId}")
-	public ResponseDTO<GroupUserResponseDto> createGroupUserAsMember(
+	@PostMapping
+	public ResponseDTO<GroupUserResponseDto> createGroupUser(
 			@PathVariable Long classId,
 			@PathVariable Long groupId,
-			@PathVariable Long userId
+			@RequestBody CreateGroupUserRequestDto request
 	) {
-		GroupUserResponseDto response = groupUserService.createGroupUser(classId, groupId, userId, GroupUser.Role.GROUP_MEMBER);
+		GroupUserResponseDto response = groupUserService.createGroupUser(classId, groupId, request);
 
 		return ResponseDTO.<GroupUserResponseDto>builder()
 				.success(true)
@@ -46,28 +46,12 @@ public class GroupUserController {
 	}
 
 	@PreAuthorize("@ClassPermission.manageGroup(#classId)")
-	@PostMapping("/leader/{userId}")
-	public ResponseDTO<GroupUserResponseDto> createGroupUserAsLeader(
-			@PathVariable Long classId,
-			@PathVariable Long groupId,
-			@PathVariable Long userId
-	) {
-		GroupUserResponseDto response = groupUserService.createGroupUser(classId, groupId, userId, GroupUser.Role.GROUP_LEADER);
-
-		return ResponseDTO.<GroupUserResponseDto>builder()
-				.success(true)
-				.message("Create group user successful")
-				.data(response)
-				.build();
-	}
-
-	@PreAuthorize("@ClassPermission.manageGroupData(#classId, #groupId)")
-	@PatchMapping("/{userId}")
+	@PatchMapping("/{userId}/role")
 	public ResponseDTO<GroupUserResponseDto> updateGroupUser(
 			@PathVariable Long classId,
 			@PathVariable Long groupId,
 			@PathVariable Long userId,
-			@RequestBody UpdateGroupUserRequestDto request
+			@RequestBody UpdateGroupUserRoleRequestDto request
 	) {
 		GroupUserResponseDto response = groupUserService.updateGroupUser(classId, groupId, userId, request);
 
@@ -94,7 +78,7 @@ public class GroupUserController {
 				.build();
 	}
 
-	@PreAuthorize("@ClassPermission.isClassUser(#classId)")
+	@PreAuthorize("@ClassPermission.everyoneInClass(#classId)")
 	@GetMapping
 	public ResponseDTO<List<GroupUserResponseDto>> getGroupUsers(
 			@PathVariable Long classId,

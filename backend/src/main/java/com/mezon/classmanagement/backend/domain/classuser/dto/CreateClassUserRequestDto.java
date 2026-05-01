@@ -1,4 +1,4 @@
-package com.mezon.classmanagement.backend.domain.groupuser.dto.request;
+package com.mezon.classmanagement.backend.domain.classuser.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mezon.classmanagement.backend.common.annotation.DTO;
@@ -17,15 +17,9 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @DTO
-public final class UpdateGroupUserRequestDto {
+public final class CreateClassUserRequestDto {
 
-	@JsonProperty(value = "group_id")
-	Long groupId;
-
-	@JsonProperty(value = "desk")
-	Short desk;
-
-	@JsonProperty(value = "desk_position")
-	Short deskPosition;
+	@JsonProperty(value = "user_id")
+	Long userId;
 
 }
