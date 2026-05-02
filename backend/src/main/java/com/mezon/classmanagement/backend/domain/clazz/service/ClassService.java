@@ -45,8 +45,8 @@ public class ClassService {
      * Other services
      */
 
-    ClassUserService classUserService;
     UserService userService;
+    ClassUserService classUserService;
 
     @Transactional
     public ClassResponseDto createClass(Long clientUserId, CreateAndUpdateClassRequestDto request) {
@@ -102,12 +102,20 @@ public class ClassService {
 
         classUserService.throwIfExistsByClassIdAndUserId(currentClass.getId(), clientUserId);
 
+        ClassUser.Role role = null;
+        if (isPublic(currentClass)) {
+            role = ClassUser.Role.CLASS_MEMBER;
+        }
+        if (isPrivate(currentClass)) {
+            role = ClassUser.Role.PENDING_CLASS_MEMBER;
+        }
+
         classUserService.createClassUser(
                 currentClass.getId(),
                 CreateClassUserRequestDto.builder()
                         .userId(clientUserId)
                         .build(),
-                null
+                role
         );
 
         return ClassIdResponseDto.builder()
@@ -193,11 +201,15 @@ public class ClassService {
     @Transactional
     public boolean isPublic(Long id) {
         Class clazz = findByIdOrThrow(id);
-        return Class.Privacy.PUBLIC.equals(clazz.getPrivacy());
+        return Class.Privacy.PUBLIC == clazz.getPrivacy();
     }
 
     public boolean isPublic(Class.Privacy privacy) {
-        return Class.Privacy.PUBLIC.equals(privacy);
+        return Class.Privacy.PUBLIC == privacy;
+    }
+
+    public boolean isPublic(Class clazz) {
+        return Class.Privacy.PUBLIC == clazz.getPrivacy();
     }
 
     @Transactional
@@ -208,6 +220,10 @@ public class ClassService {
 
     public boolean isPrivate(Class.Privacy privacy) {
         return Class.Privacy.PRIVATE.equals(privacy);
+    }
+
+    public boolean isPrivate(Class clazz) {
+        return Class.Privacy.PRIVATE == clazz.getPrivacy();
     }
     
 }

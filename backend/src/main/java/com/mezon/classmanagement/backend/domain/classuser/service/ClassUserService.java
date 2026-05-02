@@ -7,11 +7,14 @@ import com.mezon.classmanagement.backend.domain.auth.entity.User;
 import com.mezon.classmanagement.backend.domain.classuser.dto.ClassUserIdResponseDto;
 import com.mezon.classmanagement.backend.domain.classuser.dto.ClassUserResponseDto;
 import com.mezon.classmanagement.backend.domain.classuser.dto.CreateClassUserRequestDto;
+import com.mezon.classmanagement.backend.domain.classuser.dto.UpdateClassUserPermissionsRequestDto;
+import com.mezon.classmanagement.backend.domain.classuser.dto.UpdateClassUserRoleRequestDto;
+import com.mezon.classmanagement.backend.domain.classuser.dto.UpdateClassUserSeatRequestDto;
 import com.mezon.classmanagement.backend.domain.classuser.entity.ClassUser;
 import com.mezon.classmanagement.backend.domain.classuser.mapper.ClassUserMapper;
 import com.mezon.classmanagement.backend.domain.classuser.repository.ClassUserRepository;
 import com.mezon.classmanagement.backend.domain.clazz.entity.Class;
-import com.mezon.classmanagement.backend.domain.clazz.service.ClassService;
+import com.mezon.classmanagement.backend.domain.clazz.repository.ClassRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -29,6 +32,7 @@ public class ClassUserService {
 	 * Repository
 	 */
 
+	ClassRepository classRepository;
 	ClassUserRepository classUserRepository;
 
 	/**
@@ -37,34 +41,17 @@ public class ClassUserService {
 
 	ClassUserMapper classUserMapper;
 
-	/**
-	 * Other services
-	 */
-
-	ClassService classService;
-
 	@RequireClassPermission
 	@Transactional
 	public ClassUserResponseDto createClassUser(Long classId, CreateClassUserRequestDto request, ClassUser.Role role) {
 		throwIfExistsByClassIdAndUserId(classId, request.getUserId());
 
-		Class currentClass = classService.findByIdOrThrow(classId);
-
 		Class clazz = Class.builder()
-				.id(currentClass.getId())
+				.id(classId)
 				.build();
 		User user = User.builder()
 				.id(request.getUserId())
 				.build();
-
-		if (role == null) {
-			if (classService.isPublic(currentClass.getPrivacy())) {
-				role = ClassUser.Role.CLASS_MEMBER;
-			}
-			if (classService.isPrivate(currentClass.getPrivacy())) {
-				role = ClassUser.Role.PENDING_CLASS_MEMBER;
-			}
-		}
 
 		ClassUser newClassUser = ClassUser.builder()
 				.clazz(clazz)
@@ -79,10 +66,34 @@ public class ClassUserService {
 
 	@RequireClassPermission
 	@Transactional
-	public <T> ClassUserResponseDto updateClassUser(Long classId, Long userId, T request) {
+	public ClassUserResponseDto updateClassUserSeat(Long classId, Long userId, UpdateClassUserSeatRequestDto request) {
 		ClassUser currentClassUser = findByClassIdAndUserIdOrThrow(classId, userId);
 
-		classUserMapper.updateClassUserFromRequestDto(request, currentClassUser);
+		classUserMapper.updateClassUserFromSeatRequestDto(request, currentClassUser);
+
+		ClassUser responseClassUser = save(currentClassUser);
+
+		return classUserMapper.toClassUserResponseDto(responseClassUser);
+	}
+
+	@RequireClassPermission
+	@Transactional
+	public ClassUserResponseDto updateClassUserRole(Long classId, Long userId, UpdateClassUserRoleRequestDto request) {
+		ClassUser currentClassUser = findByClassIdAndUserIdOrThrow(classId, userId);
+
+		classUserMapper.updateClassUserFromRoleRequestDto(request, currentClassUser);
+
+		ClassUser responseClassUser = save(currentClassUser);
+
+		return classUserMapper.toClassUserResponseDto(responseClassUser);
+	}
+
+	@RequireClassPermission
+	@Transactional
+	public ClassUserResponseDto updateClassUserPermissions(Long classId, Long userId, UpdateClassUserPermissionsRequestDto request) {
+		ClassUser currentClassUser = findByClassIdAndUserIdOrThrow(classId, userId);
+
+		classUserMapper.updateClassUserFromPermissionsRequestDto(request, currentClassUser);
 
 		ClassUser responseClassUser = save(currentClassUser);
 

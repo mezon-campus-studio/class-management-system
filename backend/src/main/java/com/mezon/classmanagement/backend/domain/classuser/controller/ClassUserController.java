@@ -50,7 +50,7 @@ public class ClassUserController {
 			@PathVariable Long userId,
 			@RequestBody UpdateClassUserSeatRequestDto request
 	) {
-		ClassUserResponseDto response = classUserService.updateClassUser(classId, userId, request);
+		ClassUserResponseDto response = classUserService.updateClassUserSeat(classId, userId, request);
 
 		return ResponseDTO.<ClassUserResponseDto>builder()
 				.success(true)
@@ -60,13 +60,13 @@ public class ClassUserController {
 	}
 
 	@PreAuthorize("@ClassPermission.adminOnly(#classId)")
-	@PatchMapping("/{userId/role}")
+	@PatchMapping("/{userId}/role")
 	public ResponseDTO<ClassUserResponseDto> updateClassUserRole(
 			@PathVariable Long classId,
 			@PathVariable Long userId,
 			@RequestBody UpdateClassUserRoleRequestDto request
 	) {
-		ClassUserResponseDto response = classUserService.updateClassUser(classId, userId, request);
+		ClassUserResponseDto response = classUserService.updateClassUserRole(classId, userId, request);
 
 		return ResponseDTO.<ClassUserResponseDto>builder()
 				.success(true)
@@ -82,7 +82,7 @@ public class ClassUserController {
 			@PathVariable Long userId,
 			@RequestBody UpdateClassUserPermissionsRequestDto request
 	) {
-		ClassUserResponseDto response = classUserService.updateClassUser(classId, userId, request);
+		ClassUserResponseDto response = classUserService.updateClassUserPermissions(classId, userId, request);
 
 		return ResponseDTO.<ClassUserResponseDto>builder()
 				.success(true)

@@ -19,8 +19,7 @@ public interface ClassUserRepository extends JpaRepository<ClassUser, Long> {
 			user.id,
 			user.displayName,
 			user.avatarUrl,
-			classUser.role,
-			classUser.permissionCodes
+			classUser.joinedAt
 		)
 		FROM ClassUser classUser
 		JOIN classUser.clazz class

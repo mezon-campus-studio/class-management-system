@@ -1,7 +1,6 @@
 package com.mezon.classmanagement.backend.domain.clazz.repository;
 
 import com.mezon.classmanagement.backend.domain.clazz.dto.ClassResponseDto;
-import com.mezon.classmanagement.backend.domain.classuser.dto.ClassUserResponseDto;
 import com.mezon.classmanagement.backend.domain.clazz.entity.Class;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
