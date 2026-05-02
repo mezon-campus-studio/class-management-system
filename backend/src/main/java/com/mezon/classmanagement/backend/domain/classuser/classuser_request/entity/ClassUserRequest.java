@@ -1,4 +1,4 @@
-package com.mezon.classmanagement.backend.domain.absencerequest.entity;
+package com.mezon.classmanagement.backend.domain.classuser.classuser_request.entity;
 
 import com.mezon.classmanagement.backend.domain.auth.entity.User;
 import com.mezon.classmanagement.backend.domain.clazz.entity.Class;
@@ -14,9 +14,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.FutureOrPresent;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,12 +31,11 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "absence_requests")
-public class AbsenceRequest {
-
+@Table(name = "classuser_requests")
+public class ClassUserRequest {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "id")
+	@Column(name = "id", nullable = false)
 	Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -50,23 +46,16 @@ public class AbsenceRequest {
 	@JoinColumn(name = "user_id", nullable = false)
 	User user;
 
-	@Column(name = "reason", nullable = false)
-	String reason;
-
-	@FutureOrPresent
-	@Column(name = "from", nullable = false)
-	Instant from;
-
-	@Future
-	@Column(name = "to", nullable = false)
-	Instant to;
-
-	@Column(name = "proof_url", nullable = true)
-	String proofUrl;
-
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false)
 	Status status;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "actor_user_id", nullable = true)
+	User actor;
+
+	@Column(name = "acted_at", nullable = true)
+	Instant actedAt;
 
 	@Column(name = "created_at", nullable = false, insertable = false, updatable = false)
 	Instant createdAt;
@@ -74,7 +63,8 @@ public class AbsenceRequest {
 	public enum Status {
 		APPROVED,
 		REJECTED,
-		PENDING
+		PENDING,
+		CANCELLED
 	}
 
 	@PrePersist
@@ -83,5 +73,4 @@ public class AbsenceRequest {
 			status = Status.PENDING;
 		}
 	}
-
 }

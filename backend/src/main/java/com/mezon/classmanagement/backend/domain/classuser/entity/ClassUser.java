@@ -64,14 +64,13 @@ public class ClassUser {
 
 	public enum Role {
 		CLASS_ADMIN,
-		CLASS_MEMBER,
-		PENDING_CLASS_MEMBER
+		CLASS_MEMBER
 	}
 
 	@PrePersist
 	public void prePersist() {
 		if (role == null) {
-			role = Role.PENDING_CLASS_MEMBER;
+			role = Role.CLASS_MEMBER;
 		}
 	}
 }

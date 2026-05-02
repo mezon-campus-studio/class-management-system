@@ -22,6 +22,7 @@ public class GlobalException extends RuntimeException {
 		INVALID_AUTHENTICATION(HttpStatus.UNAUTHORIZED.value()),
 		OAUTH_ERROR(1000),
 		FORBIDDEN(HttpStatus.FORBIDDEN.value()),
+		INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR.value()),
 		INVALID_REQUEST(HttpStatus.BAD_REQUEST.value());
 
 		int code;

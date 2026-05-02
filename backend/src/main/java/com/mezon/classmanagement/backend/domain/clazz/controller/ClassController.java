@@ -5,6 +5,8 @@ import com.mezon.classmanagement.backend.common.security.service.JwtService;
 import com.mezon.classmanagement.backend.domain.auth.service.AuthService;
 import com.mezon.classmanagement.backend.domain.classuser.dto.ClassUserResponseDto;
 import com.mezon.classmanagement.backend.domain.classuser.dto.CreateClassUserRequestDto;
+import com.mezon.classmanagement.backend.domain.classuser.dto.response.CreateClassUserResponseDto;
+import com.mezon.classmanagement.backend.domain.classuser.entity.ClassUser;
 import com.mezon.classmanagement.backend.domain.clazz.dto.ClassResponseDto;
 import com.mezon.classmanagement.backend.domain.clazz.dto.classid.ClassIdResponseDto;
 import com.mezon.classmanagement.backend.domain.clazz.dto.createandupdate.CreateAndUpdateClassRequestDto;
@@ -87,7 +89,7 @@ public class ClassController {
 			@PathVariable Long classId,
 			@RequestBody CreateClassUserRequestDto request
 	) {
-		ClassUserResponseDto response = classService.addMemberClassUser(classId, request);
+		ClassUserResponseDto response = classService.createClassUser(classId, request, ClassUser.Role.CLASS_MEMBER);
 
 		return ResponseDTO.<ClassUserResponseDto>builder()
 				.success(true)
@@ -97,17 +99,17 @@ public class ClassController {
 	}
 
 	@PostMapping("/join")
-	public ResponseDTO<ClassIdResponseDto> joinClass(
+	public ResponseDTO<CreateClassUserResponseDto> joinClass(
 			@RequestBody JoinClassRequestDto request
 	) {
 		Authentication authentication = authService.getAuthentication();
 		Long userId = jwtService.extractUserId(authentication);
 
-		ClassIdResponseDto response = classService.joinClass(userId, request);
+		CreateClassUserResponseDto response = classService.joinClass(userId, request);
 
-		return ResponseDTO.<ClassIdResponseDto>builder()
+		return ResponseDTO.<CreateClassUserResponseDto>builder()
 				.success(true)
-				.message("Join class successful")
+				.message(response.getType().getMessage())
 				.data(response)
 				.build();
 	}

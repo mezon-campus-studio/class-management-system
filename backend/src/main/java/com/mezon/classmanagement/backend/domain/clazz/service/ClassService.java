@@ -5,8 +5,10 @@ import com.mezon.classmanagement.backend.common.exeption.entity.GlobalException;
 import com.mezon.classmanagement.backend.common.security.annotation.RequireClassPermission;
 import com.mezon.classmanagement.backend.domain.auth.entity.User;
 import com.mezon.classmanagement.backend.domain.auth.service.UserService;
+import com.mezon.classmanagement.backend.domain.classuser.classuser_request.service.ClassUserRequestService;
 import com.mezon.classmanagement.backend.domain.classuser.dto.ClassUserResponseDto;
 import com.mezon.classmanagement.backend.domain.classuser.dto.CreateClassUserRequestDto;
+import com.mezon.classmanagement.backend.domain.classuser.dto.response.CreateClassUserResponseDto;
 import com.mezon.classmanagement.backend.domain.classuser.entity.ClassUser;
 import com.mezon.classmanagement.backend.domain.classuser.service.ClassUserService;
 import com.mezon.classmanagement.backend.domain.clazz.dto.ClassResponseDto;
@@ -19,8 +21,13 @@ import com.mezon.classmanagement.backend.domain.clazz.repository.ClassRepository
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
 
@@ -48,6 +55,29 @@ public class ClassService {
 
     UserService userService;
     ClassUserService classUserService;
+    ClassUserRequestService classUserRequestService;
+
+    ApplicationEventPublisher applicationEventPublisher;
+
+    public record ClassCreatedEvent(Long classId, Long userId) {}
+
+    @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+    @RequiredArgsConstructor
+    @Component
+    public class ClassEventListener {
+
+        @Transactional(propagation = Propagation.REQUIRES_NEW)
+        @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+        public void handleClassCreated(ClassCreatedEvent event) {
+            createClassUser(
+                    event.classId(),
+                    CreateClassUserRequestDto.builder()
+                            .userId(event.userId())
+                            .build(),
+                    ClassUser.Role.CLASS_ADMIN
+            );
+        }
+    }
 
     @Transactional
     public ClassResponseDto createClass(Long clientUserId, CreateAndUpdateClassRequestDto request) {
@@ -62,11 +92,11 @@ public class ClassService {
 
         Class responseClass = save(newClass);
 
-        addAdminClassUser(
-                responseClass.getId(),
-                CreateClassUserRequestDto.builder()
-                        .userId(clientUserId)
-                        .build()
+        applicationEventPublisher.publishEvent(
+                new ClassCreatedEvent(
+                        responseClass.getId(),
+                        responseClass.getOwner().getId()
+                )
         );
 
         return classMapper.toClassResponseDto(responseClass);
@@ -96,51 +126,52 @@ public class ClassService {
                 .build();
     }
 
-    @Transactional
-    protected void addAdminClassUser(
-            Long classId,
-            CreateClassUserRequestDto request
-    ) {
-        throwIfNotExistsById(classId);
-
-        classUserService.createClassUser(classId, request, ClassUser.Role.CLASS_ADMIN);
-    }
-
     @RequireClassPermission
     @Transactional
-    public ClassUserResponseDto addMemberClassUser(
+    public ClassUserResponseDto createClassUser(
             Long classId,
-            CreateClassUserRequestDto request
+            CreateClassUserRequestDto request,
+            ClassUser.Role role
     ) {
         Class currentClass = findByIdOrThrow(classId);
-
-        ClassUser.Role role = null;
-        if (isPublic(currentClass)) {
-            role = ClassUser.Role.CLASS_MEMBER;
-        }
-        if (isPrivate(currentClass)) {
-            role = ClassUser.Role.PENDING_CLASS_MEMBER;
-        }
 
         return classUserService.createClassUser(classId, request, role);
     }
 
     @Transactional
-    public ClassIdResponseDto joinClass(Long clientUserId, JoinClassRequestDto request) {
+    public CreateClassUserResponseDto joinClass(Long clientUserId, JoinClassRequestDto request) {
         Class currentClass = findByCodeOrThrow(request.getClassCode());
 
         classUserService.throwIfExistsByClassIdAndUserId(currentClass.getId(), clientUserId);
 
-        ClassUserResponseDto response = addMemberClassUser(
-                currentClass.getId(),
-                CreateClassUserRequestDto.builder()
-                        .userId(clientUserId)
-                        .build()
-        );
+        if (isPrivate(currentClass.getPrivacy())) {
+            classUserRequestService.createClassUserRequest(
+                    currentClass.getId(),
+                    CreateClassUserRequestDto.builder()
+                            .userId(clientUserId)
+                            .build()
+            );
 
-        return ClassIdResponseDto.builder()
-                .classId(response.getClassId())
-                .build();
+            return CreateClassUserResponseDto.builder()
+                    .type(CreateClassUserResponseDto.Type.REQUESTED)
+                    .build();
+        }
+        if (isPublic(currentClass.getPrivacy())) {
+            ClassUserResponseDto response = createClassUser(
+                    currentClass.getId(),
+                    CreateClassUserRequestDto.builder()
+                            .userId(clientUserId)
+                            .build(),
+                    ClassUser.Role.CLASS_MEMBER
+            );
+
+            return CreateClassUserResponseDto.builder()
+                    .type(CreateClassUserResponseDto.Type.JOINED)
+                    .classId(response.getClassId())
+                    .build();
+        }
+
+        throw new GlobalException(GlobalException.Type.INTERNAL_SERVER_ERROR, "Internal server error");
     }
 
     @RequireClassPermission
