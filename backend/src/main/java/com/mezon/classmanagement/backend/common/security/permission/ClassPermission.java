@@ -1,13 +1,12 @@
 package com.mezon.classmanagement.backend.common.security.permission;
 
 import com.mezon.classmanagement.backend.common.constant.WarningConstant;
-import com.mezon.classmanagement.backend.domain.classuser.entity.ClassUser;
-import com.mezon.classmanagement.backend.domain.classuser.repository.ClassUserRepository;
-import com.mezon.classmanagement.backend.domain.auth.service.AuthService;
-import com.mezon.classmanagement.backend.domain.clazz.service.ClassService;
-import com.mezon.classmanagement.backend.domain.classuser.service.ClassUserService;
 import com.mezon.classmanagement.backend.common.security.service.JwtService;
+import com.mezon.classmanagement.backend.domain.auth.service.AuthService;
 import com.mezon.classmanagement.backend.domain.auth.service.UserService;
+import com.mezon.classmanagement.backend.domain.classuser.entity.ClassUser;
+import com.mezon.classmanagement.backend.domain.classuser.service.ClassUserService;
+import com.mezon.classmanagement.backend.domain.clazz.service.ClassService;
 import com.mezon.classmanagement.backend.domain.group.service.GroupService;
 import com.mezon.classmanagement.backend.domain.groupuser.entity.GroupUser;
 import com.mezon.classmanagement.backend.domain.groupuser.service.GroupUserService;
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Component;
 @Component("ClassPermission")
 public class ClassPermission {
 
-	ClassUserRepository classUserRepository;
 	AuthService authService;
 	ClassService classService;
 	UserService userService;

@@ -5,6 +5,7 @@ import com.mezon.classmanagement.backend.common.exeption.entity.GlobalException;
 import com.mezon.classmanagement.backend.common.security.annotation.RequireClassPermission;
 import com.mezon.classmanagement.backend.domain.auth.entity.User;
 import com.mezon.classmanagement.backend.domain.auth.service.UserService;
+import com.mezon.classmanagement.backend.domain.classuser.dto.ClassUserResponseDto;
 import com.mezon.classmanagement.backend.domain.classuser.dto.CreateClassUserRequestDto;
 import com.mezon.classmanagement.backend.domain.classuser.entity.ClassUser;
 import com.mezon.classmanagement.backend.domain.classuser.service.ClassUserService;
@@ -23,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@SuppressWarnings({WarningConstant.BOOLEAN_METHOD_IS_ALWAYS_INVERTED})
+@SuppressWarnings({WarningConstant.BOOLEAN_METHOD_IS_ALWAYS_INVERTED, WarningConstant.UNUSED})
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Service
@@ -61,12 +62,11 @@ public class ClassService {
 
         Class responseClass = save(newClass);
 
-        classUserService.createClassUser(
+        addAdminClassUser(
                 responseClass.getId(),
                 CreateClassUserRequestDto.builder()
                         .userId(clientUserId)
-                        .build(),
-                ClassUser.Role.CLASS_ADMIN
+                        .build()
         );
 
         return classMapper.toClassResponseDto(responseClass);
@@ -97,10 +97,22 @@ public class ClassService {
     }
 
     @Transactional
-    public ClassIdResponseDto joinClass(Long clientUserId, JoinClassRequestDto request) {
-        Class currentClass = findByCodeOrThrow(request.getClassCode());
+    protected void addAdminClassUser(
+            Long classId,
+            CreateClassUserRequestDto request
+    ) {
+        throwIfNotExistsById(classId);
 
-        classUserService.throwIfExistsByClassIdAndUserId(currentClass.getId(), clientUserId);
+        classUserService.createClassUser(classId, request, ClassUser.Role.CLASS_ADMIN);
+    }
+
+    @RequireClassPermission
+    @Transactional
+    public ClassUserResponseDto addMemberClassUser(
+            Long classId,
+            CreateClassUserRequestDto request
+    ) {
+        Class currentClass = findByIdOrThrow(classId);
 
         ClassUser.Role role = null;
         if (isPublic(currentClass)) {
@@ -110,16 +122,24 @@ public class ClassService {
             role = ClassUser.Role.PENDING_CLASS_MEMBER;
         }
 
-        classUserService.createClassUser(
+        return classUserService.createClassUser(classId, request, role);
+    }
+
+    @Transactional
+    public ClassIdResponseDto joinClass(Long clientUserId, JoinClassRequestDto request) {
+        Class currentClass = findByCodeOrThrow(request.getClassCode());
+
+        classUserService.throwIfExistsByClassIdAndUserId(currentClass.getId(), clientUserId);
+
+        ClassUserResponseDto response = addMemberClassUser(
                 currentClass.getId(),
                 CreateClassUserRequestDto.builder()
                         .userId(clientUserId)
-                        .build(),
-                role
+                        .build()
         );
 
         return ClassIdResponseDto.builder()
-                .classId(currentClass.getId())
+                .classId(response.getClassId())
                 .build();
     }
 

@@ -3,7 +3,6 @@ package com.mezon.classmanagement.backend.domain.classuser.controller;
 import com.mezon.classmanagement.backend.common.dto.ResponseDTO;
 import com.mezon.classmanagement.backend.domain.classuser.dto.ClassUserIdResponseDto;
 import com.mezon.classmanagement.backend.domain.classuser.dto.ClassUserResponseDto;
-import com.mezon.classmanagement.backend.domain.classuser.dto.CreateClassUserRequestDto;
 import com.mezon.classmanagement.backend.domain.classuser.dto.UpdateClassUserPermissionsRequestDto;
 import com.mezon.classmanagement.backend.domain.classuser.dto.UpdateClassUserRoleRequestDto;
 import com.mezon.classmanagement.backend.domain.classuser.dto.UpdateClassUserSeatRequestDto;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,20 +26,20 @@ public class ClassUserController {
 
 	ClassUserService classUserService;
 
-	@PreAuthorize("@ClassPermission.adminOnly(#classId)")
-	@PostMapping
-	public ResponseDTO<ClassUserResponseDto> createClassUser(
-			@PathVariable Long classId,
-			@RequestBody CreateClassUserRequestDto request
-	) {
-		ClassUserResponseDto response = classUserService.createClassUser(classId, request, null);
-
-		return ResponseDTO.<ClassUserResponseDto>builder()
-				.success(true)
-				.message("Create class user successful")
-				.data(response)
-				.build();
-	}
+//	@PreAuthorize("@ClassPermission.adminOnly(#classId)")
+//	@PostMapping
+//	public ResponseDTO<ClassUserResponseDto> createClassUser(
+//			@PathVariable Long classId,
+//			@RequestBody CreateClassUserRequestDto request
+//	) {
+//		ClassUserResponseDto response = classUserService.createClassUser(classId, request, null);
+//
+//		return ResponseDTO.<ClassUserResponseDto>builder()
+//				.success(true)
+//				.message("Create class user successful")
+//				.data(response)
+//				.build();
+//	}
 
 	@PreAuthorize("@ClassPermission.manageGroup(#classId)")
 	@PatchMapping("/{userId}/seat")

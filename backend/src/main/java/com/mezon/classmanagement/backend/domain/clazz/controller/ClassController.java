@@ -3,6 +3,8 @@ package com.mezon.classmanagement.backend.domain.clazz.controller;
 import com.mezon.classmanagement.backend.common.dto.ResponseDTO;
 import com.mezon.classmanagement.backend.common.security.service.JwtService;
 import com.mezon.classmanagement.backend.domain.auth.service.AuthService;
+import com.mezon.classmanagement.backend.domain.classuser.dto.ClassUserResponseDto;
+import com.mezon.classmanagement.backend.domain.classuser.dto.CreateClassUserRequestDto;
 import com.mezon.classmanagement.backend.domain.clazz.dto.ClassResponseDto;
 import com.mezon.classmanagement.backend.domain.clazz.dto.classid.ClassIdResponseDto;
 import com.mezon.classmanagement.backend.domain.clazz.dto.createandupdate.CreateAndUpdateClassRequestDto;
@@ -75,6 +77,21 @@ public class ClassController {
 		return ResponseDTO.<ClassIdResponseDto>builder()
 				.success(true)
 				.message("Delete class successful")
+				.data(response)
+				.build();
+	}
+
+	@PreAuthorize("@ClassPermission.adminOnly(#classId)")
+	@PostMapping("/{classId}/members")
+	public ResponseDTO<ClassUserResponseDto> addClassMember(
+			@PathVariable Long classId,
+			@RequestBody CreateClassUserRequestDto request
+	) {
+		ClassUserResponseDto response = classService.addMemberClassUser(classId, request);
+
+		return ResponseDTO.<ClassUserResponseDto>builder()
+				.success(true)
+				.message("Create class user successful")
 				.data(response)
 				.build();
 	}
