@@ -1,6 +1,16 @@
 package com.mezon.classmanagement.backend.domain.seat.service;
 
-import com.mezon.classmanagement.backend.common.exeption.entity.GlobalException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.mezon.classmanagement.backend.domain.group.entity.Group;
 import com.mezon.classmanagement.backend.domain.group.service.GroupService;
 import com.mezon.classmanagement.backend.domain.groupuser.dto.request.UpdateGroupUserSeatRequestDto;
@@ -11,19 +21,10 @@ import com.mezon.classmanagement.backend.domain.seat.dto.ClassSeatResponseDto;
 import com.mezon.classmanagement.backend.domain.seat.dto.DeskPositionSeatResponseDto;
 import com.mezon.classmanagement.backend.domain.seat.dto.DeskSeatResponseDto;
 import com.mezon.classmanagement.backend.domain.seat.dto.GroupSeatResponseDto;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -40,6 +41,7 @@ public class SeatService {
 	@Transactional
 	public ClassSeatResponseDto updateClassSeats(
 			Long classId,
+			Long userId,
 			UpdateGroupUserSeatRequestDto request
 	) {
 		Group targetGroup = groupService.findByClassIdAndGroupIdOrThrow(classId, request.getTargetGroupId());

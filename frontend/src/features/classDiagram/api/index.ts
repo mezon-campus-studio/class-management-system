@@ -87,46 +87,49 @@ export const classDiagramAPI = {
   },
 
   assignSeat: async (
-    studentId: string,
-    row: number,
-    col: number,
-    side: "left" | "right",
-    classId?: string 
-  ) => {
-    let group_id = 1;
-    let position_id = 1;
+  studentId: string,
+  row: number,
+  col: number,
+  side: "left" | "right",
+  classId?: string 
+) => {
+  let target_group_id = 1;
+  let target_desk_position = 1;
 
-    if (side === "left") {
-      if (col === 1) { group_id = 1; position_id = 1; }
-      if (col === 2) { group_id = 1; position_id = 2; }
-      if (col === 3) { group_id = 2; position_id = 1; }
-      if (col === 4) { group_id = 2; position_id = 2; }
-    } else { 
-      if (col === 1) { group_id = 3; position_id = 1; }
-      if (col === 2) { group_id = 3; position_id = 2; }
-      if (col === 3) { group_id = 4; position_id = 1; }
-      if (col === 4) { group_id = 4; position_id = 2; }
-    }
-    const desk_id = row;
+  // Tính toán tọa độ target
+  if (side === "left") {
+    if (col === 1) { target_group_id = 1; target_desk_position = 1; }
+    if (col === 2) { target_group_id = 1; target_desk_position = 2; }
+    if (col === 3) { target_group_id = 2; target_desk_position = 1; }
+    if (col === 4) { target_group_id = 2; target_desk_position = 2; }
+  } else { 
+    if (col === 1) { target_group_id = 3; target_desk_position = 1; }
+    if (col === 2) { target_group_id = 3; target_desk_position = 2; }
+    if (col === 3) { target_group_id = 4; target_desk_position = 1; }
+    if (col === 4) { target_group_id = 4; target_desk_position = 2; }
+  }
 
-    // LƯU Ý: Vì studentId đã được truyền trên URL, có thể BE không cần user_id trong payload nữa
-    // (Tùy thuộc vào DTO UpdateGroupUserSeatRequestDto của BE)
-    const payload = {
-      group_id: group_id,
-      desk_id: desk_id,
-      position_id: position_id
-    };
+  // PAYLOAD: Khớp chuẩn với JsonProperty của Backend
+  const payload = {
+    source_group_id: null,
+    source_desk: null,
+    source_desk_position: null,
+    target_group_id: target_group_id,
+    target_desk: row,           // row trong UI tương ứng với desk trong BE
+    target_desk_position: target_desk_position
+  };
 
-    console.log(`Bắn dữ liệu xếp chỗ SV ${studentId} lên lớp ${classId}:`, payload);
+  console.log(`Gửi API xếp chỗ: /api/seats/classes/${classId}/${studentId}`, payload);
 
-    try {
-      const response: any = await apiClient.patch(`/seats/classes/${classId}/${studentId}`, payload);
-      return response.data;
-    } catch (error) {
-      console.error("Lỗi xếp chỗ:", error);
-      throw error;
-    }
-  },
+  try {
+    // Gọi API với URL có chứa studentId
+    const response: any = await apiClient.patch(`/seats/classes/${classId}/${studentId}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi xếp chỗ:", error);
+    throw error;
+  }
+},
  
   getMembers: async (classId: string): Promise<{ id: string; name: string }[]> => {
     try {

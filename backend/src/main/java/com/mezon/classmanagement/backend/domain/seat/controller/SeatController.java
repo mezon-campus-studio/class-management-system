@@ -1,11 +1,14 @@
 package com.mezon.classmanagement.backend.domain.seat.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mezon.classmanagement.backend.common.dto.ResponseDTO;
+import com.mezon.classmanagement.backend.domain.groupuser.dto.request.UpdateGroupUserSeatRequestDto;
 import com.mezon.classmanagement.backend.domain.seat.dto.ClassSeatResponseDto;
 import com.mezon.classmanagement.backend.domain.seat.service.SeatService;
 
@@ -35,12 +38,13 @@ public class SeatController {
 	}
 
 	//@PreAuthorize("@ClassPermission.manageGroup(#classId)")
-	@PatchMapping
+	@PatchMapping("/{userId}")
 	public ResponseDTO<ClassSeatResponseDto> update(
 			@PathVariable Long classId,
+			@PathVariable Long userId,
 			@RequestBody UpdateGroupUserSeatRequestDto request
 	) {
-		ClassSeatResponseDto response = seatService.updateClassSeats(classId, request);
+		ClassSeatResponseDto response = seatService.updateClassSeats(classId, userId, request);
 
 		return ResponseDTO.<ClassSeatResponseDto>builder()
 				.success(true)
