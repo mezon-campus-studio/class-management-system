@@ -100,26 +100,31 @@ export const ClassDiagram = () => {
 
     if (mode === "setup" && selectedStudentId) {
       try {
-        // TRUYỀN THÊM classId! VÀO ĐÂY:
-        await classDiagramAPI.assignSeat(selectedStudentId, row, col, side, classId!); 
-        
-        // Reset lại khay chọn và load lại sơ đồ
-        setSelectedStudentId(null); 
-        refresh(); 
+        // 1. TÌM CHỖ NGỒI HIỆN TẠI (SOURCE) CỦA HỌC SINH ĐANG ĐƯỢC CHỌN
+        const currentSeat = data.seats.find((s) => s.id === selectedStudentId);
+
+        await classDiagramAPI.assignSeat(
+          selectedStudentId,
+          row,
+          col,
+          side,
+          classId!,
+          currentSeat, // <--- Cực kỳ quan trọng để tạo ra payload source_...
+        );
+        setSelectedStudentId(null);
+        refresh();
       } catch (error) {
-        console.error("Lỗi khi gọi API xếp chỗ:", error)
+        console.error("Lỗi khi gọi API xếp chỗ:", error);
         alert("Xếp chỗ thất bại, vui lòng thử lại!");
       }
     }
   };
-
   const firstRows = [1, 2, 3];
   const lastRows = [4, 5, 6];
   const cols = [1, 2, 3, 4];
 
   return (
     <div className="space-y-6 select-none max-w-7xl mx-auto p-2 md:p-4 bg-white min-h-screen">
-      
       {/* 1. THANH CÔNG CỤ (Đã cấu trúc lại để không bị chồng lấp) */}
       <div className="flex flex-col gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
@@ -147,7 +152,7 @@ export const ClassDiagram = () => {
                     {m === "view"
                       ? "Xem"
                       : m === "attendance"
-                        ? "D.Danh"
+                        ? "Điểm danh"
                         : "Xếp"}
                   </span>
                 </button>
@@ -214,7 +219,9 @@ export const ClassDiagram = () => {
         {/* Nút Góc nhìn (Dời xuống đây để không chèn ép thanh công cụ trên) */}
         <div className="flex justify-end w-full md:w-auto">
           <button
-            onClick={() => setPerspective(isTeacherView ? "student" : "teacher")}
+            onClick={() =>
+              setPerspective(isTeacherView ? "student" : "teacher")
+            }
             className="group flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-[11px] md:text-xs font-bold bg-white text-indigo-700 border-2 border-indigo-100 hover:bg-indigo-50 transition-all shadow-sm w-full sm:w-auto"
           >
             <span className="text-sm">{isTeacherView ? "👨‍🏫" : "🎓"}</span>
