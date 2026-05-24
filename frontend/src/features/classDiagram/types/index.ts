@@ -11,7 +11,7 @@ export type AttendanceStatus =
 export interface StudentSeat {
   id: string;
   name: string;
-  avatarUrl?: string | null; 
+  user_avatar_url?: string | null; 
   status: AttendanceStatus;
   
   // Lưu tọa độ thực tế từ Backend để dễ gọi API xếp chỗ

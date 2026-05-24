@@ -9,6 +9,7 @@ interface SeatProps {
 }
 
 export const Seat = ({ student, onClick, isTeacherView, isSelected }: SeatProps) => {
+  console.log("Dữ liệu của 1 học sinh truyền vào Seat:", student);
   const getStatusColor = () => {
     if (!student) return "bg-transparent";
     switch (student.status) {
@@ -20,7 +21,7 @@ export const Seat = ({ student, onClick, isTeacherView, isSelected }: SeatProps)
     }
   };
 
-  const defaultAvatar = `https://ui-avatars.com/api/?name=${student?.name || "?"}&background=random`;
+  const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(student?.name || "?")}&background=random`;
 
   return (
     <div
@@ -47,7 +48,7 @@ export const Seat = ({ student, onClick, isTeacherView, isSelected }: SeatProps)
           {/* Avatar dùng bg-surface-2 làm nền */}
           <div className="w-8 h-8 md:w-10 md:h-10 rounded-[var(--r-full)] overflow-hidden border border-[var(--rule)] shadow-[var(--shadow-xs)] mb-1 bg-[var(--bg-surface-2)] shrink-0">
             <img
-              src={student.avatarUrl || defaultAvatar}
+              src={student.user_avatar_url || defaultAvatar}
               alt={student.name}
               className="w-full h-full object-cover"
             />

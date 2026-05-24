@@ -1,6 +1,6 @@
 // src/features/classDiagram/pages/Group.tsx
 import type { GroupData } from "@features/classDiagram/types";
-import { Seat } from "./Seat";
+import { Seat } from "@features/classDiagram/pages/Seat";
 
 interface GroupProps {
   groupData: GroupData;

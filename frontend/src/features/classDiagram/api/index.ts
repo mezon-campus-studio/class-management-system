@@ -20,6 +20,7 @@ type RawStudentData = {
   user_id?: string | number;
   user_display_name?: string;
   avatar_url?: string;
+  user_avatar_url?: string;
   attendance_status?: string;
 };
 
@@ -120,7 +121,7 @@ export const classDiagramAPI = {
                       student = {
                         id: String(studentData.user_id),
                         name: studentData.user_display_name || "Vô danh",
-                        avatarUrl: studentData.avatar_url || null,
+                        user_avatar_url: studentData.user_avatar_url || studentData.avatar_url || null,
                         status: currentStatus,
                         groupId,
                         deskId,
